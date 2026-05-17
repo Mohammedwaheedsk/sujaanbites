@@ -723,7 +723,7 @@ h2 {
   border: 0;
   border-radius: 10px;
   background: transparent;
-  color: #34a67b;
+  color: var(--accent-dark);
   font-size: 1.7rem;
   font-weight: 800;
   line-height: 1;
@@ -731,7 +731,7 @@ h2 {
 }
 
 .menu-quantity span {
-  color: #34a67b;
+  color: var(--accent-dark);
   font-size: 1.5rem;
   font-weight: 800;
 }

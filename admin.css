@@ -260,6 +260,36 @@
   background: #fff;
 }
 
+.menu-item-preview {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 12px;
+  align-items: center;
+}
+
+.menu-item-preview img {
+  width: 84px;
+  height: 84px;
+  object-fit: cover;
+  border-radius: 10px;
+  border: 1px solid rgba(125, 77, 36, 0.14);
+}
+
+.menu-item-fields {
+  display: grid;
+  gap: 10px;
+}
+
+.menu-item-fields label {
+  display: grid;
+  gap: 6px;
+}
+
+.menu-item-fields input,
+.menu-item-fields textarea {
+  width: 100%;
+}
+
 .menu-item-card p {
   margin: 6px 0 0;
   color: var(--muted);

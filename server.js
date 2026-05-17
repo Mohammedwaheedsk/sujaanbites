@@ -32,6 +32,8 @@ const BUSINESS = {
   deliveryFee: 30,
 };
 
+const DEFAULT_STOCK_COUNT = 20;
+
 const DEFAULT_MENU = [
   {
     id: "butter",
@@ -41,6 +43,7 @@ const DEFAULT_MENU = [
     category: "classic",
     image: "assets/cookie-butter.png",
     available: true,
+    stockCount: DEFAULT_STOCK_COUNT,
   },
   {
     id: "choco-chip",
@@ -50,6 +53,7 @@ const DEFAULT_MENU = [
     category: "chocolate",
     image: "assets/cookie-chocolate.png",
     available: true,
+    stockCount: DEFAULT_STOCK_COUNT,
   },
   {
     id: "oatmeal",
@@ -59,6 +63,7 @@ const DEFAULT_MENU = [
     category: "classic",
     image: "assets/cookie-butter.png",
     available: true,
+    stockCount: DEFAULT_STOCK_COUNT,
   },
   {
     id: "filled-biscuit",
@@ -68,6 +73,7 @@ const DEFAULT_MENU = [
     category: "stuffed",
     image: "assets/cookie-jam.png",
     available: true,
+    stockCount: DEFAULT_STOCK_COUNT,
   },
   {
     id: "brownie-bite",
@@ -77,6 +83,7 @@ const DEFAULT_MENU = [
     category: "chocolate",
     image: "assets/cookie-chocolate.png",
     available: true,
+    stockCount: DEFAULT_STOCK_COUNT,
   },
   {
     id: "gift-pack",
@@ -86,6 +93,7 @@ const DEFAULT_MENU = [
     category: "packs",
     image: "assets/hero-food.png",
     available: true,
+    stockCount: DEFAULT_STOCK_COUNT,
   },
 ];
 
@@ -135,7 +143,7 @@ async function ensureJsonFile(filePath, fallback) {
   if (filePath === FILES.menu) {
     const current = await readJson(filePath, fallback);
     const normalized = Array.isArray(current)
-      ? current.map((item) => ({ available: true, ...item }))
+      ? current.map((item) => normalizeMenuItem(item))
       : fallback;
     await writeJson(filePath, normalized);
   }
@@ -161,15 +169,16 @@ function toMenuRow(item) {
     name: item.name,
     description: item.description,
     price: Number(item.price || 0),
-    category: item.category,
+    category: String(item.category || "").trim() || "other",
     image: item.image || "",
     available: item.available !== false,
+    stock_count: Number.isFinite(Number(item.stockCount)) ? Math.max(0, Math.floor(Number(item.stockCount))) : DEFAULT_STOCK_COUNT,
     updated_at: item.updatedAt || item.updated_at || new Date().toISOString(),
   };
 }
 
 function fromMenuRow(row) {
-  return {
+  return normalizeMenuItem({
     id: row.id,
     name: row.name,
     description: row.description,
@@ -177,7 +186,28 @@ function fromMenuRow(row) {
     category: row.category,
     image: row.image || "",
     available: row.available !== false,
+    stockCount: row.stock_count,
     updatedAt: row.updated_at || row.updatedAt || null,
+  });
+}
+
+function normalizeStockCount(value) {
+  const parsed = Number(value);
+  if (Number.isFinite(parsed)) return Math.max(0, Math.floor(parsed));
+  return DEFAULT_STOCK_COUNT;
+}
+
+function normalizeMenuItem(item = {}) {
+  return {
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    price: Number(item.price || 0),
+    category: String(item.category || "").trim() || "other",
+    image: item.image || "",
+    available: item.available !== false,
+    stockCount: normalizeStockCount(item.stockCount ?? item.stock_count),
+    updatedAt: item.updatedAt || item.updated_at || null,
   };
 }
 
@@ -346,14 +376,16 @@ async function getMenu() {
     }
   }
 
-  return readJson(FILES.menu, DEFAULT_MENU);
+  const menu = await readJson(FILES.menu, DEFAULT_MENU);
+  return Array.isArray(menu) ? menu.map(normalizeMenuItem) : DEFAULT_MENU;
 }
 
 async function saveMenu(menu) {
+  const normalized = Array.isArray(menu) ? menu.map(normalizeMenuItem) : [];
   if (USE_SUPABASE) {
     try {
       const supabase = await getSupabaseClient();
-      const rows = menu.map(toMenuRow);
+      const rows = normalized.map(toMenuRow);
       const { error } = await supabase.from("menu_items").upsert(rows, { onConflict: "id" });
       if (error) throw error;
       return;
@@ -362,7 +394,7 @@ async function saveMenu(menu) {
     }
   }
 
-  await writeJson(FILES.menu, menu);
+  await writeJson(FILES.menu, normalized);
 }
 
 async function getOrders() {
@@ -506,6 +538,7 @@ async function seedMenuIfNeeded() {
 
 function calculateOrder(menu, items, orderType) {
   const rows = [];
+  const requestedCounts = new Map();
 
   for (const item of items || []) {
     const menuItem = menu.find((dish) => dish.id === item.id);
@@ -514,6 +547,15 @@ function calculateOrder(menu, items, orderType) {
     if (menuItem.available === false) {
       throw new Error(`${menuItem.name} is currently unavailable`);
     }
+    const stockCount = normalizeStockCount(menuItem.stockCount);
+    const requested = (requestedCounts.get(menuItem.id) || 0) + quantity;
+    if (stockCount <= 0) {
+      throw new Error(`Only 0 of ${menuItem.name} are available at the moment`);
+    }
+    if (requested > stockCount) {
+      throw new Error(`Only ${stockCount} of ${menuItem.name} are available at the moment`);
+    }
+    requestedCounts.set(menuItem.id, requested);
     rows.push({
       id: menuItem.id,
       name: menuItem.name,
@@ -534,6 +576,27 @@ function calculateOrder(menu, items, orderType) {
       total: subtotal + delivery,
     },
   };
+}
+
+function applyMenuStockChange(menu, items, direction) {
+  const updated = menu.map((item) => ({ ...normalizeMenuItem(item) }));
+  for (const orderItem of items || []) {
+    const quantity = Math.max(0, Number(orderItem.quantity || 0));
+    if (quantity < 1) continue;
+    const index = updated.findIndex((item) => item.id === orderItem.id);
+    if (index === -1) continue;
+    const current = updated[index];
+    const nextStock = normalizeStockCount(current.stockCount) + direction * quantity;
+    if (direction < 0 && nextStock < 0) {
+      throw new Error(`Only ${current.stockCount} of ${current.name} are available at the moment`);
+    }
+    updated[index] = {
+      ...current,
+      stockCount: Math.max(0, nextStock),
+      updatedAt: new Date().toISOString(),
+    };
+  }
+  return updated;
 }
 
 function validateAddress(address) {
@@ -630,9 +693,20 @@ async function finalizeRazorpayOrder(body) {
     paymentVerifiedAt: new Date().toISOString(),
   };
 
+  const reservedMenu = applyMenuStockChange(menu, calculated.rows, -1);
   const orders = await getOrders();
   orders.push(order);
-  await saveOrders(orders);
+  try {
+    await saveMenu(reservedMenu);
+    await saveOrders(orders);
+  } catch (error) {
+    try {
+      await saveMenu(menu);
+    } catch {
+      // ignore rollback failures
+    }
+    throw error;
+  }
 
   paymentSession.status = "completed";
   paymentSession.order = order;
@@ -744,6 +818,7 @@ async function handleApi(req, res, url) {
     const category = String(body.category || "").trim() || "Cookies";
     const image = String(body.image || "").trim();
     const price = Number(body.price);
+    const stockCount = normalizeStockCount(body.stockCount);
 
     if (!name) {
       sendJson(res, 400, { error: "Menu item name is required" });
@@ -764,6 +839,7 @@ async function handleApi(req, res, url) {
       image,
       price,
       available: body.available === false ? false : true,
+      stockCount,
       updatedAt: new Date().toISOString(),
     };
     menu.push(item);
@@ -792,6 +868,7 @@ async function handleApi(req, res, url) {
       image: typeof body.image === "string" ? body.image.trim() || current.image : current.image,
       price: Number.isFinite(Number(body.price)) ? Math.max(0, Number(body.price)) : current.price,
       available: typeof body.available === "boolean" ? body.available : current.available,
+      stockCount: Number.isFinite(Number(body.stockCount)) ? Math.max(0, Math.floor(Number(body.stockCount))) : current.stockCount,
       updatedAt: new Date().toISOString(),
     };
 
@@ -876,9 +953,20 @@ async function handleApi(req, res, url) {
       notes: body.notes || "",
     };
 
+    const reservedMenu = applyMenuStockChange(menu, calculated.rows, -1);
     const orders = await getOrders();
     orders.push(order);
-    await saveOrders(orders);
+    try {
+      await saveMenu(reservedMenu);
+      await saveOrders(orders);
+    } catch (error) {
+      try {
+        await saveMenu(menu);
+      } catch {
+        // ignore rollback failures
+      }
+      throw error;
+    }
     sendJson(res, 201, { order });
     return;
   }
@@ -1080,8 +1168,10 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    const currentOrder = orders[index];
+    const menu = await getMenu();
     orders[index] = {
-      ...orders[index],
+      ...currentOrder,
       status: body.status,
       updatedAt: new Date().toISOString(),
     };
@@ -1113,7 +1203,25 @@ async function handleApi(req, res, url) {
       orders[index].completedAt = new Date().toISOString();
     }
 
-    await saveOrders(orders);
+    let nextMenu = menu;
+    try {
+      if (currentOrder.status !== "cancelled" && body.status === "cancelled") {
+        nextMenu = applyMenuStockChange(menu, currentOrder.items || [], 1);
+      } else if (currentOrder.status === "cancelled" && body.status !== "cancelled") {
+        nextMenu = applyMenuStockChange(menu, currentOrder.items || [], -1);
+      }
+      if (nextMenu !== menu) {
+        await saveMenu(nextMenu);
+      }
+      await saveOrders(orders);
+    } catch (error) {
+      try {
+        await saveMenu(menu);
+      } catch {
+        // ignore rollback failures
+      }
+      throw error;
+    }
     sendJson(res, 200, { order: orders[index] });
     return;
   }

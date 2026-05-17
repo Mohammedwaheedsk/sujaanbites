@@ -44,14 +44,6 @@ const state = {
   loadingMenu: false,
 };
 
-const MENU_CATEGORIES = [
-  { id: "all", label: "All" },
-  { id: "classic", label: "Classic" },
-  { id: "chocolate", label: "Chocolate" },
-  { id: "stuffed", label: "Stuffed" },
-  { id: "packs", label: "Packs" },
-];
-
 const DEFAULT_MENU = [
   {
     id: "butter",
@@ -61,6 +53,7 @@ const DEFAULT_MENU = [
     category: "classic",
     image: "assets/cookie-butter.png",
     available: true,
+    stockCount: 20,
   },
   {
     id: "choco-chip",
@@ -70,6 +63,7 @@ const DEFAULT_MENU = [
     category: "chocolate",
     image: "assets/cookie-chocolate.png",
     available: true,
+    stockCount: 20,
   },
   {
     id: "oatmeal",
@@ -79,6 +73,7 @@ const DEFAULT_MENU = [
     category: "classic",
     image: "assets/cookie-butter.png",
     available: true,
+    stockCount: 20,
   },
   {
     id: "filled-biscuit",
@@ -88,6 +83,7 @@ const DEFAULT_MENU = [
     category: "stuffed",
     image: "assets/cookie-jam.png",
     available: true,
+    stockCount: 20,
   },
   {
     id: "brownie-bite",
@@ -97,6 +93,7 @@ const DEFAULT_MENU = [
     category: "chocolate",
     image: "assets/cookie-chocolate.png",
     available: true,
+    stockCount: 20,
   },
   {
     id: "gift-pack",
@@ -106,10 +103,12 @@ const DEFAULT_MENU = [
     category: "packs",
     image: "assets/hero-food.png",
     available: true,
+    stockCount: 20,
   },
 ];
 
 const menuGrid = document.querySelector("#menuGrid");
+const menuFilters = document.querySelector("#menuFilters");
 const orderShell = document.querySelector("#orderShell");
 const accountButton = document.querySelector("#accountButton");
 const accountOverlay = document.querySelector("#accountOverlay");
@@ -180,6 +179,26 @@ function normalizePhone(value) {
 
 function withinServiceArea(location) {
   return Boolean(location && Number.isFinite(location.lat) && Number.isFinite(location.lng));
+}
+
+function normalizeCategory(value) {
+  return String(value || "").trim().toLowerCase();
+}
+
+function formatCategoryLabel(value) {
+  const cleaned = String(value || "").trim();
+  if (!cleaned) return "Other";
+  return cleaned
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function getMenuStock(item) {
+  const parsed = Number(item?.stockCount);
+  if (Number.isFinite(parsed)) return Math.max(0, Math.floor(parsed));
+  return 20;
 }
 
 function readStoredJson(key) {
@@ -654,15 +673,66 @@ function startAddressEdit(id) {
   openDrawer();
 }
 
+function getMenuCategories() {
+  const categories = new Map();
+  for (const item of state.menu) {
+    const normalized = normalizeCategory(item.category);
+    if (!normalized || categories.has(normalized)) continue;
+    categories.set(normalized, formatCategoryLabel(item.category));
+  }
+  return [{ id: "all", label: "All" }, ...[...categories.entries()].map(([id, label]) => ({ id, label }))];
+}
+
+function renderFilters() {
+  if (!menuFilters) return;
+  const categories = getMenuCategories();
+  menuFilters.innerHTML = categories
+    .map(
+      (category) => `
+        <button class="filter ${state.activeCategory === category.id ? "active" : ""}" type="button" data-category="${category.id}">
+          ${category.label}
+        </button>
+      `,
+    )
+    .join("");
+}
+
+function syncCartToStock() {
+  let changed = false;
+  for (const [id, quantity] of [...state.cart.entries()]) {
+    const item = state.menu.find((dish) => dish.id === id);
+    const stock = getMenuStock(item);
+    if (!item || item.available === false || stock <= 0) {
+      state.cart.delete(id);
+      changed = true;
+      continue;
+    }
+    if (quantity > stock) {
+      state.cart.set(id, stock);
+      changed = true;
+    }
+  }
+  if (changed) {
+    renderCart();
+  }
+}
+
 function renderMenu() {
-  const dishes = state.menu.filter(
-    (item) => state.activeCategory === "all" || item.category === state.activeCategory,
-  );
+  const activeCategory = normalizeCategory(state.activeCategory) || "all";
+  const dishes = state.menu.filter((item) => {
+    const category = normalizeCategory(item.category);
+    return activeCategory === "all" || category === activeCategory;
+  });
 
   menuGrid.innerHTML = dishes
     .map(
-      (item) => `
-        <article class="dish-card ${item.available === false ? "unavailable" : ""}">
+      (item) => {
+        const stockCount = getMenuStock(item);
+        const soldOut = item.available === false || stockCount <= 0;
+        const quantity = state.cart.get(item.id) || 0;
+        const canAddMore = !soldOut && quantity < stockCount;
+        return `
+        <article class="dish-card ${soldOut ? "unavailable" : ""}">
           <img class="dish-image" src="${item.image || "assets/hero-food.png"}" alt="${item.name}" />
           <div class="dish-top">
             <div>
@@ -672,25 +742,27 @@ function renderMenu() {
             <span class="price">${formatPrice(item.price)}</span>
           </div>
           <div class="dish-actions">
-            <span class="availability ${item.available === false ? "off" : "on"}">
-              ${item.available === false ? "Sold out" : "Available"}
+            <span class="availability ${soldOut ? "off" : "on"}">
+              ${soldOut ? "Sold out" : `${stockCount} left`}
             </span>
             ${
-              item.available === false
+              soldOut
                 ? `<button class="add-button" type="button" disabled>Unavailable</button>`
-                : (state.cart.get(item.id) || 0) > 0
+                : quantity > 0
                   ? `
                     <div class="menu-quantity" aria-label="Quantity for ${item.name}">
                       <button type="button" data-menu-decrease="${item.id}" aria-label="Remove one ${item.name}">−</button>
-                      <span>${state.cart.get(item.id) || 0}</span>
-                      <button type="button" data-menu-increase="${item.id}" aria-label="Add one ${item.name}">+</button>
+                      <span>${quantity}</span>
+                      <button type="button" data-menu-increase="${item.id}" aria-label="Add one ${item.name}" ${canAddMore ? "" : "disabled"}>+</button>
                     </div>
                   `
                   : `<button class="add-button" type="button" data-add="${item.id}">Add</button>`
             }
           </div>
+          ${!soldOut && quantity >= stockCount ? `<p class="form-note">Only ${stockCount} ${stockCount === 1 ? "item is" : "items are"} available at the moment.</p>` : ""}
         </article>
-      `,
+      `;
+      },
     )
     .join("");
 }
@@ -733,17 +805,17 @@ function renderCart() {
       .map(
         (item) => `
           <div class="cart-row">
-            <div>
-              <strong>${item.name}</strong>
-              <small>${formatPrice(item.price)} each</small>
-            </div>
-            <div class="quantity" aria-label="Quantity for ${item.name}">
-              <button type="button" data-decrease="${item.id}" aria-label="Remove one ${item.name}">−</button>
-              <span>${item.quantity}</span>
-              <button type="button" data-increase="${item.id}" aria-label="Add one ${item.name}">+</button>
-            </div>
-          </div>
-        `,
+        <div>
+          <strong>${item.name}</strong>
+          <small>${formatPrice(item.price)} each</small>
+        </div>
+        <div class="quantity" aria-label="Quantity for ${item.name}">
+          <button type="button" data-decrease="${item.id}" aria-label="Remove one ${item.name}">−</button>
+          <span>${item.quantity}</span>
+          <button type="button" data-increase="${item.id}" aria-label="Add one ${item.name}" ${item.quantity >= getMenuStock(item) ? "disabled" : ""}>+</button>
+        </div>
+      </div>
+    `,
       )
       .join("");
   }
@@ -754,8 +826,19 @@ function renderCart() {
 }
 
 function updateQuantity(id, change) {
+  const item = state.menu.find((dish) => dish.id === id);
+  if (!item) return;
+  const stockCount = getMenuStock(item);
+  if ((item.available === false || stockCount <= 0) && change > 0) {
+    alert(`${item.name} is sold out right now.`);
+    return;
+  }
   const current = state.cart.get(id) || 0;
   const next = Math.max(0, current + change);
+  if (change > 0 && next > stockCount) {
+    alert(`Only ${stockCount} ${stockCount === 1 ? "item is" : "items are"} available at the moment.`);
+    return;
+  }
   if (next === 0) {
     state.cart.delete(id);
   } else {
@@ -1072,6 +1155,12 @@ async function loadMenu() {
   try {
     const result = await apiRequest("/api/menu");
     state.menu = result.menu || [];
+    const availableCategories = new Set(state.menu.map((item) => normalizeCategory(item.category)).filter(Boolean));
+    if (state.activeCategory !== "all" && !availableCategories.has(normalizeCategory(state.activeCategory))) {
+      state.activeCategory = "all";
+    }
+    renderFilters();
+    syncCartToStock();
     renderMenu();
     renderCart();
   } catch (error) {
@@ -1592,13 +1681,12 @@ accountShell.addEventListener("click", async (event) => {
   }
 });
 
-document.querySelectorAll(".filter").forEach((button) => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll(".filter").forEach((filter) => filter.classList.remove("active"));
-    button.classList.add("active");
-    state.activeCategory = button.dataset.category;
-    renderMenu();
-  });
+menuFilters?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-category]");
+  if (!button) return;
+  state.activeCategory = normalizeCategory(button.dataset.category) || "all";
+  renderFilters();
+  renderMenu();
 });
 
 menuGrid.addEventListener("click", (event) => {

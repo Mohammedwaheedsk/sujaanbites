@@ -11,6 +11,8 @@ const adminStats = document.querySelector("#adminStats");
 const ordersList = document.querySelector("#ordersList");
 const menuManager = document.querySelector("#menuManager");
 const menuAddForm = document.querySelector("#menuAddForm");
+const menuStockCount = document.querySelector("#menuStockCount");
+const menuImageFile = document.querySelector("#menuImageFile");
 const historyFilters = document.querySelector("#historyFilters");
 const historyFrom = document.querySelector("#historyFrom");
 const historyTo = document.querySelector("#historyTo");
@@ -45,6 +47,25 @@ function formatDate(value) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function formatCategoryLabel(value) {
+  const cleaned = String(value || "").trim();
+  if (!cleaned) return "Other";
+  return cleaned
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
+function readFileAsDataUrl(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Could not read image file"));
+    reader.readAsDataURL(file);
+  });
 }
 
 function getSnapshot(orders) {
@@ -261,24 +282,57 @@ function renderMenuManager(menu) {
 
   menuManager.innerHTML = menu
     .map(
-      (item) => `
-        <article class="menu-item-card">
-          <div>
-            <strong>${item.name}</strong>
-            <p>${item.description}</p>
+      (item) => {
+        const stockCount = Number.isFinite(Number(item.stockCount)) ? Math.max(0, Math.floor(Number(item.stockCount))) : 0;
+        return `
+        <article class="menu-item-card" data-menu-item-id="${item.id}">
+          <div class="menu-item-preview">
+            <img src="${item.image || "assets/hero-food.png"}" alt="${item.name}" />
+            <div>
+              <strong>${item.name}</strong>
+              <p>${item.description}</p>
+            </div>
+          </div>
+          <div class="menu-item-fields">
+            <label>
+              Item name
+              <input type="text" data-menu-name="${item.id}" value="${item.name || ""}" />
+            </label>
+            <label>
+              Description
+              <textarea rows="2" data-menu-description="${item.id}">${item.description || ""}</textarea>
+            </label>
+            <label>
+              Category
+              <input type="text" data-menu-category="${item.id}" value="${item.category || ""}" />
+            </label>
+            <label>
+              Stock count
+              <input type="number" min="0" step="1" data-menu-stock="${item.id}" value="${stockCount}" />
+            </label>
+            <label>
+              Image URL
+              <input type="url" data-menu-image="${item.id}" value="${item.image || ""}" />
+            </label>
+            <label>
+              Replace image
+              <input type="file" accept="image/*" data-menu-file="${item.id}" />
+            </label>
           </div>
           <div class="menu-item-actions">
             <span class="availability ${item.available === false ? "off" : "on"}">
-              ${item.available === false ? "Unavailable" : "Available"}
+              ${item.available === false ? "Unavailable" : `${stockCount} in stock`}
             </span>
             <label class="toggle">
               <input type="checkbox" data-toggle-availability="${item.id}" ${item.available === false ? "" : "checked"} />
               <span>Visible to customers</span>
             </label>
+            <button class="secondary-button" type="button" data-save-menu="${item.id}">Save item</button>
             <button class="secondary-button danger" type="button" data-delete-menu="${item.id}">Remove item</button>
           </div>
         </article>
-      `,
+      `;
+      },
     )
     .join("");
 }
@@ -477,8 +531,44 @@ menuManager.addEventListener("change", async (event) => {
   }
 });
 
+async function getMenuImageValue(itemId) {
+  const fileInput = document.querySelector(`[data-menu-file="${itemId}"]`);
+  const urlInput = document.querySelector(`[data-menu-image="${itemId}"]`);
+  const file = fileInput?.files?.[0];
+  if (file) {
+    return readFileAsDataUrl(file);
+  }
+  return String(urlInput?.value || "").trim();
+}
+
 menuManager.addEventListener("click", async (event) => {
+  const saveButton = event.target.closest("[data-save-menu]");
   const deleteButton = event.target.closest("[data-delete-menu]");
+  if (saveButton) {
+    const itemId = saveButton.dataset.saveMenu;
+    const payload = {
+      name: String(document.querySelector(`[data-menu-name="${itemId}"]`)?.value || "").trim(),
+      description: String(document.querySelector(`[data-menu-description="${itemId}"]`)?.value || "").trim(),
+      category: String(document.querySelector(`[data-menu-category="${itemId}"]`)?.value || "").trim(),
+      stockCount: Number(document.querySelector(`[data-menu-stock="${itemId}"]`)?.value),
+      image: await getMenuImageValue(itemId),
+    };
+
+    try {
+      saveButton.disabled = true;
+      await adminRequest(`/api/admin/menu/${itemId}`, {
+        method: "PATCH",
+        body: JSON.stringify(payload),
+      });
+      markAdminSeen();
+      await loadDashboard();
+    } catch (error) {
+      alert(error.message);
+    } finally {
+      saveButton.disabled = false;
+    }
+    return;
+  }
   if (!deleteButton) return;
   if (!confirm("Remove this menu item from the site?")) return;
 
@@ -495,11 +585,17 @@ menuManager.addEventListener("click", async (event) => {
 
 menuAddForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
+  let image = String(document.querySelector("#menuImage").value || "").trim();
+  const imageFile = menuImageFile?.files?.[0];
+  if (imageFile) {
+    image = await readFileAsDataUrl(imageFile);
+  }
   const payload = {
     name: document.querySelector("#menuName").value.trim(),
     price: Number(document.querySelector("#menuPrice").value),
     category: document.querySelector("#menuCategory").value.trim(),
-    image: document.querySelector("#menuImage").value.trim(),
+    stockCount: Number(menuStockCount?.value),
+    image,
     description: document.querySelector("#menuDescription").value.trim(),
   };
 
@@ -509,6 +605,7 @@ menuAddForm?.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     menuAddForm.reset();
+    if (menuStockCount) menuStockCount.value = "20";
     markAdminSeen();
     await loadDashboard();
   } catch (error) {

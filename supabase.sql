@@ -6,6 +6,7 @@ create table if not exists public.menu_items (
   category text not null,
   image text not null default '',
   available boolean not null default true,
+  stock_count integer not null default 20,
   updated_at timestamptz not null default now()
 );
 
@@ -44,6 +45,19 @@ set
 
 create index if not exists orders_customer_phone_idx on public.orders (customer_phone);
 create index if not exists orders_created_at_idx on public.orders (created_at desc);
+
+alter table public.menu_items
+  add column if not exists stock_count integer not null default 20;
+
+update public.menu_items
+set
+  stock_count = case
+    when stock_count is null or stock_count <= 0 then 20
+    else stock_count
+  end;
+
+alter table public.menu_items
+  alter column stock_count set default 20;
 
 create table if not exists public.customers (
   phone text primary key,
