@@ -149,6 +149,7 @@ const trackingAddress = document.querySelector("#trackingAddress");
 let trackingMap = null;
 let trackingLayerGroup = null;
 let trackingOpen = false;
+let trackingCurrentOrder = null;
 
 function formatPrice(value) {
   return currency.format(value || 0);
@@ -227,8 +228,59 @@ function statusLabel(status) {
   return String(status || "").replaceAll("_", " ");
 }
 
+function getEtaRemainingMinutes(order) {
+  const eta = Number(order?.etaMinutes);
+  if (!Number.isFinite(eta) || eta <= 0) return null;
+  const startTime = new Date(order?.etaUpdatedAt || order?.acceptedAt || order?.updatedAt || order?.createdAt).getTime();
+  if (!Number.isFinite(startTime)) return eta;
+  const endTime = startTime + eta * 60 * 1000;
+  const remainingMs = endTime - Date.now();
+  return Math.max(0, Math.ceil(remainingMs / 60000));
+}
+
+function isEtaExpired(order) {
+  const eta = Number(order?.etaMinutes);
+  if (!Number.isFinite(eta) || eta <= 0) return false;
+  const startTime = new Date(order?.etaUpdatedAt || order?.acceptedAt || order?.updatedAt || order?.createdAt).getTime();
+  if (!Number.isFinite(startTime)) return false;
+  const endTime = startTime + eta * 60 * 1000;
+  return Date.now() >= endTime;
+}
+
+function updateTrackingEtaText(order) {
+  if (!trackingEta || !trackingBarEta) return;
+  if (!order) {
+    trackingBarEta.textContent = "Estimated delivery time will appear here.";
+    trackingEta.textContent = "";
+    return;
+  }
+
+  if (order.status === "cancelled") {
+    trackingBarEta.textContent = "Delivery issue update";
+    trackingEta.textContent = order.rejectionReason || "Order cannot be delivered.";
+    return;
+  }
+
+  if (!Number.isFinite(Number(order?.etaMinutes)) || Number(order.etaMinutes) <= 0) {
+    trackingBarEta.textContent = "Order confirmed by restaurant";
+    trackingEta.textContent = "Your order is confirmed by the restaurant. Delivery agent will call you for address and time confirmation.";
+    return;
+  }
+
+  if (isEtaExpired(order)) {
+    trackingBarEta.textContent = "Order on the way";
+    trackingEta.textContent = "Delivery agent will call you with latest arrival update.";
+    return;
+  }
+
+  const eta = Math.round(Number(order.etaMinutes));
+  trackingBarEta.textContent = `${eta} min to your location`;
+  trackingEta.textContent = `${eta} minutes to reach your location (estimated). Delivery agent will call you for address and time confirmation.`;
+}
+
 function renderTrackingMap(order) {
   if (!trackingMapEl || !window.L) return;
+  trackingCurrentOrder = order || null;
   const customerPin = order?.address?.location;
   const restaurantPin = order?.restaurantLocation;
   if (!customerPin || !Number.isFinite(customerPin.lat) || !Number.isFinite(customerPin.lng)) {
@@ -262,7 +314,10 @@ function renderTrackingMap(order) {
     );
     trackingLayerGroup.addLayer(restaurantMarker);
     trackingLayerGroup.addLayer(routeLine);
-    trackingMap.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
+    trackingMap.fitBounds(routeLine.getBounds(), {
+      padding: [28, 28],
+      maxZoom: 15,
+    });
   } else {
     trackingMap.setView([customerPin.lat, customerPin.lng], 14);
   }
@@ -283,17 +338,7 @@ function renderTrackingPanel(order) {
   trackingBarTitle.textContent = title;
   trackingStatusPill.textContent = statusLabel(order.status);
   trackingStatusPill.className = `tracking-toggle-right ${order.status || ""}`;
-
-  if (order.status === "cancelled") {
-    trackingBarEta.textContent = "Delivery issue update";
-    trackingEta.textContent = order.rejectionReason || "Order cannot be delivered.";
-  } else if (order.etaMinutes) {
-    trackingBarEta.textContent = `${order.etaMinutes} min to your location`;
-    trackingEta.textContent = `${order.etaMinutes} minutes to reach your location (estimated). Delivery agent will call you for address and time confirmation.`;
-  } else {
-    trackingBarEta.textContent = "Order confirmed by restaurant";
-    trackingEta.textContent = "Your order is confirmed by the restaurant. Delivery agent will call you for address and time confirmation.";
-  }
+  updateTrackingEtaText(order);
 
   trackingReceiptId.textContent = `Order ID: ${order.id}`;
   trackingItems.innerHTML = (order.items || [])
@@ -1361,7 +1406,12 @@ trackingToggle?.addEventListener("click", () => {
   trackingSheet?.classList.toggle("hidden", !trackingOpen);
   trackingToggle.setAttribute("aria-expanded", trackingOpen ? "true" : "false");
   if (trackingOpen) {
-    setTimeout(() => trackingMap?.invalidateSize(), 120);
+    setTimeout(() => {
+      trackingMap?.invalidateSize();
+      if (trackingCurrentOrder) {
+        renderTrackingMap(trackingCurrentOrder);
+      }
+    }, 160);
   }
 });
 
