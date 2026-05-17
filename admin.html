@@ -105,6 +105,26 @@
           <div id="menuManager"></div>
         </section>
       </div>
+
+      <section class="admin-history">
+        <div class="admin-subhead">
+          <h2>Order history analytics</h2>
+          <p>Check daily order count, income, and old records any time.</p>
+        </div>
+        <form class="history-filters" id="historyFilters">
+          <label>
+            From
+            <input type="date" id="historyFrom" />
+          </label>
+          <label>
+            To
+            <input type="date" id="historyTo" />
+          </label>
+          <button class="secondary-button" type="submit">Load history</button>
+        </form>
+        <div class="admin-stats" id="historyStats"></div>
+        <div class="history-list" id="historyList"></div>
+      </section>
     </section>
   </main>
 

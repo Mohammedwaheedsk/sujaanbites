@@ -813,6 +813,50 @@ function renderOrdersTab() {
   `;
 }
 
+function calculateSpends(orders) {
+  return (orders || []).reduce(
+    (acc, order) => {
+      if (order?.status === "cancelled") return acc;
+      const amount = Number(order?.totals?.total || 0);
+      acc.total += amount;
+      if (order?.paymentMethod === "cod") {
+        acc.cod += amount;
+      } else {
+        acc.upi += amount;
+      }
+      return acc;
+    },
+    { total: 0, cod: 0, upi: 0 },
+  );
+}
+
+function renderSpendsTab() {
+  accountShellTitle.textContent = "Past spends";
+  const spends = calculateSpends(state.previousOrders);
+  const totalOrders = state.previousOrders.filter((order) => order?.status !== "cancelled").length;
+
+  accountContent.innerHTML = `
+    <div class="spend-summary">
+      <article class="spend-card total">
+        <strong>${formatPrice(spends.total)}</strong>
+        <small>Total spend (COD + UPI combined)</small>
+      </article>
+      <article class="spend-card">
+        <strong>${formatPrice(spends.upi)}</strong>
+        <small>UPI spend</small>
+      </article>
+      <article class="spend-card">
+        <strong>${formatPrice(spends.cod)}</strong>
+        <small>COD spend</small>
+      </article>
+      <article class="spend-card total">
+        <strong>${totalOrders}</strong>
+        <small>Completed/active orders counted</small>
+      </article>
+    </div>
+  `;
+}
+
 function renderCareTab() {
   accountShellTitle.textContent = "Customer care";
   accountContent.innerHTML = `
@@ -839,6 +883,8 @@ function renderAccount() {
     renderAddresses();
   } else if (state.activeTab === "orders") {
     renderOrdersTab();
+  } else if (state.activeTab === "spends") {
+    renderSpendsTab();
   } else {
     renderCareTab();
   }
@@ -1310,7 +1356,7 @@ accountTabs.forEach((tab) => {
   tab.addEventListener("click", async () => {
     state.activeTab = tab.dataset.accountTab;
     state.drawerOpen = true;
-    if (state.activeTab === "orders") {
+    if (state.activeTab === "orders" || state.activeTab === "spends") {
       await loadOrdersForAccount();
     }
     renderAccount();
@@ -1431,7 +1477,7 @@ async function boot() {
   setInterval(async () => {
     if (!state.profile?.phone) return;
     await loadOrdersForAccount();
-    if (state.activeTab === "orders") renderAccount();
+    if (state.activeTab === "orders" || state.activeTab === "spends") renderAccount();
   }, 12000);
 }
 

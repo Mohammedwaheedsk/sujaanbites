@@ -11,6 +11,11 @@ const adminStats = document.querySelector("#adminStats");
 const ordersList = document.querySelector("#ordersList");
 const menuManager = document.querySelector("#menuManager");
 const menuAddForm = document.querySelector("#menuAddForm");
+const historyFilters = document.querySelector("#historyFilters");
+const historyFrom = document.querySelector("#historyFrom");
+const historyTo = document.querySelector("#historyTo");
+const historyStats = document.querySelector("#historyStats");
+const historyList = document.querySelector("#historyList");
 const adminLocationMap = document.querySelector("#adminLocationMap");
 const adminUseCurrentLocation = document.querySelector("#adminUseCurrentLocation");
 const adminSaveLocation = document.querySelector("#adminSaveLocation");
@@ -184,6 +189,54 @@ function renderMenuManager(menu) {
     .join("");
 }
 
+function renderHistory(payload) {
+  const summary = payload?.summary || {};
+  const days = payload?.days || [];
+
+  historyStats.innerHTML = `
+    <div class="stat-card"><strong>${summary.totalOrders || 0}</strong><span>Total orders</span></div>
+    <div class="stat-card"><strong>${formatPrice(summary.totalIncome || 0)}</strong><span>Total income</span></div>
+    <div class="stat-card"><strong>${summary.cancelledOrders || 0}</strong><span>Cancelled orders</span></div>
+    <div class="stat-card"><strong>${summary.dayCount || 0}</strong><span>Days in range</span></div>
+  `;
+
+  if (!days.length) {
+    historyList.innerHTML = '<p class="empty">No history found for selected dates.</p>';
+    return;
+  }
+
+  historyList.innerHTML = days
+    .map(
+      (day) => `
+        <article class="history-day">
+          <div class="history-day-head">
+            <strong>${day.date}</strong>
+            <span>${day.orders} orders • ${formatPrice(day.income)} income</span>
+          </div>
+          <small>COD: ${day.cod} • Prepaid: ${day.prepaid} • Cancelled: ${day.cancelled}</small>
+          <ul>
+            ${day.details
+              .map(
+                (entry) =>
+                  `<li>${entry.id} • ${entry.customerName || "Customer"} • ${formatPrice(entry.amount)} • ${entry.paymentMethod} • ${String(entry.status || "").replaceAll("_", " ")}</li>`,
+              )
+              .join("")}
+          </ul>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+async function loadHistory() {
+  const params = new URLSearchParams();
+  if (historyFrom?.value) params.set("from", historyFrom.value);
+  if (historyTo?.value) params.set("to", historyTo.value);
+  const suffix = params.toString() ? `?${params.toString()}` : "";
+  const payload = await adminRequest(`/api/admin/history${suffix}`);
+  renderHistory(payload);
+}
+
 function setAdminLocationStatus(text) {
   if (adminLocationStatus) adminLocationStatus.textContent = text;
 }
@@ -237,6 +290,7 @@ async function loadDashboard() {
     renderOrders(ordersPayload.orders || []);
     renderMenuManager(menuPayload.menu || []);
     initAdminLocationMap(locationPayload.adminLocation || null);
+    await loadHistory();
   } catch (error) {
     showDashboard(false);
     adminLoginMessage.textContent = error.message;
@@ -341,6 +395,15 @@ menuAddForm?.addEventListener("submit", async (event) => {
     });
     menuAddForm.reset();
     await loadDashboard();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+historyFilters?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  try {
+    await loadHistory();
   } catch (error) {
     alert(error.message);
   }

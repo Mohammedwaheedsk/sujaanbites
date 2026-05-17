@@ -547,6 +547,12 @@ function validateAddress(address) {
 
 }
 
+function getDateKey(value) {
+  const date = new Date(value || Date.now());
+  if (!Number.isFinite(date.getTime())) return new Date().toISOString().slice(0, 10);
+  return date.toISOString().slice(0, 10);
+}
+
 async function createRazorpayIntent(orderDraft) {
   const paymentSession = {
     id: makeId("pay_"),
@@ -968,6 +974,81 @@ async function handleApi(req, res, url) {
     const orders = await getOrders();
     orders.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
     sendJson(res, 200, { orders });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/history") {
+    if (!requireAdmin(req, res)) return;
+    const from = url.searchParams.get("from");
+    const to = url.searchParams.get("to");
+    const orders = await getOrders();
+
+    const filtered = orders.filter((order) => {
+      const dateKey = getDateKey(order.createdAt);
+      if (from && dateKey < from) return false;
+      if (to && dateKey > to) return false;
+      return true;
+    });
+
+    const byDay = new Map();
+    let totalOrders = 0;
+    let totalIncome = 0;
+    let cancelledOrders = 0;
+    let codOrders = 0;
+    let prepaidOrders = 0;
+
+    for (const order of filtered) {
+      totalOrders += 1;
+      const dateKey = getDateKey(order.createdAt);
+      const amount = Number(order?.totals?.total || 0);
+      const isCancelled = order.status === "cancelled";
+      if (isCancelled) cancelledOrders += 1;
+      if (order.paymentMethod === "cod") codOrders += 1;
+      if (order.paymentMethod === "prepaid") prepaidOrders += 1;
+      if (!isCancelled) totalIncome += amount;
+
+      if (!byDay.has(dateKey)) {
+        byDay.set(dateKey, {
+          date: dateKey,
+          orders: 0,
+          income: 0,
+          cancelled: 0,
+          cod: 0,
+          prepaid: 0,
+          details: [],
+        });
+      }
+
+      const bucket = byDay.get(dateKey);
+      bucket.orders += 1;
+      if (!isCancelled) bucket.income += amount;
+      if (isCancelled) bucket.cancelled += 1;
+      if (order.paymentMethod === "cod") bucket.cod += 1;
+      if (order.paymentMethod === "prepaid") bucket.prepaid += 1;
+      bucket.details.push({
+        id: order.id,
+        createdAt: order.createdAt,
+        status: order.status,
+        paymentMethod: order.paymentMethod,
+        paymentStatus: order.paymentStatus,
+        amount,
+        customerName: order.customerName || "",
+        customerPhone: order.customerPhone || "",
+      });
+    }
+
+    const days = [...byDay.values()].sort((a, b) => (a.date < b.date ? 1 : -1));
+    sendJson(res, 200, {
+      summary: {
+        totalOrders,
+        totalIncome,
+        cancelledOrders,
+        codOrders,
+        prepaidOrders,
+        dayCount: days.length,
+      },
+      days,
+    });
     return;
   }
 

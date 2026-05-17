@@ -203,6 +203,54 @@
   resize: vertical;
 }
 
+.admin-history {
+  margin-top: 18px;
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.history-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: end;
+}
+
+.history-filters label {
+  min-width: 170px;
+}
+
+.history-list {
+  display: grid;
+  gap: 10px;
+}
+
+.history-day {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  background: #fff;
+}
+
+.history-day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+}
+
+.history-day ul {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
 .menu-item-card {
   display: grid;
   gap: 12px;
