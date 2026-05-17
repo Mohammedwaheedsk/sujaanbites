@@ -604,15 +604,24 @@ function renderOrdersTab() {
     <div class="order-history">
       ${state.previousOrders
         .map(
-          (order) => `
+          (order) => {
+            const deliveryLine =
+              order.status === "cancelled"
+                ? "Order cannot be delivered."
+                : order.etaMinutes
+                  ? `${order.etaMinutes} minutes to reach your location`
+                  : "";
+            return `
             <article class="history-card">
               <strong>${order.id} - ${formatPrice(order.totals.total)}</strong>
               <span>${new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(order.createdAt))}</span>
               <span>Status: ${String(order.status || "").replaceAll("_", " ")}</span>
               <span>Payment: ${String(order.paymentStatus || "").replaceAll("_", " ")}</span>
+              ${deliveryLine ? `<span>${deliveryLine}</span>` : ""}
               <span>${order.items.map((item) => `${item.name} x ${item.quantity}`).join(", ")}</span>
             </article>
-          `,
+          `;
+          },
         )
         .join("")}
     </div>

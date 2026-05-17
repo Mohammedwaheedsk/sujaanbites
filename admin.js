@@ -10,6 +10,7 @@ const adminLogout = document.querySelector("#adminLogout");
 const adminStats = document.querySelector("#adminStats");
 const ordersList = document.querySelector("#ordersList");
 const menuManager = document.querySelector("#menuManager");
+const menuAddForm = document.querySelector("#menuAddForm");
 
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -98,6 +99,7 @@ function renderOrder(order) {
         <span>Payment: ${String(order.paymentStatus || "").replaceAll("_", " ")}</span>
         <span>Method: ${order.paymentMethod || "prepaid"}</span>
         <span>${order.customerPhone || "-"}</span>
+        ${order.etaMinutes ? `<span>ETA: ${order.etaMinutes} min</span>` : ""}
       </div>
 
       <div class="order-grid">
@@ -132,6 +134,7 @@ function renderOrder(order) {
       <div class="order-controls">
         <button class="secondary-button" type="button" data-order-action="accept" data-order-id="${order.id}">Accept</button>
         <button class="secondary-button danger" type="button" data-order-action="reject" data-order-id="${order.id}">Reject</button>
+        <input type="number" min="1" placeholder="ETA (min)" data-eta-for="${order.id}" />
         <select data-status-for="${order.id}">
           ${["pending_admin_acceptance", "received", "accepted", "preparing", "out_for_delivery", "completed", "cancelled"]
             .map((status) => `<option value="${status}" ${status === order.status ? "selected" : ""}>${status.replaceAll("_", " ")}</option>`)
@@ -165,6 +168,7 @@ function renderMenuManager(menu) {
               <input type="checkbox" data-toggle-availability="${item.id}" ${item.available === false ? "" : "checked"} />
               <span>Visible to customers</span>
             </label>
+            <button class="secondary-button danger" type="button" data-delete-menu="${item.id}">Remove item</button>
           </div>
         </article>
       `,
@@ -211,12 +215,25 @@ ordersList.addEventListener("click", async (event) => {
   const orderId = target.dataset.orderId || target.dataset.saveStatus;
   const status =
     acceptButton ? "accepted" : rejectButton ? "cancelled" : document.querySelector(`[data-status-for="${orderId}"]`).value;
+  const etaInput = document.querySelector(`[data-eta-for="${orderId}"]`);
+  let etaMinutes = Number(etaInput?.value);
+  if (status === "accepted" && (!Number.isFinite(etaMinutes) || etaMinutes <= 0)) {
+    const etaPrompt = prompt("Enter delivery time in minutes for customer:");
+    etaMinutes = Number(etaPrompt);
+  }
+  const payload = { status };
+  if (status === "accepted" && Number.isFinite(etaMinutes) && etaMinutes > 0) {
+    payload.etaMinutes = etaMinutes;
+  } else if (status === "accepted") {
+    alert("Please enter a valid ETA in minutes.");
+    return;
+  }
 
   target.disabled = true;
   try {
     await adminRequest(`/api/admin/orders/${orderId}`, {
       method: "PATCH",
-      body: JSON.stringify({ status }),
+      body: JSON.stringify(payload),
     });
     await loadDashboard();
   } catch (error) {
@@ -235,6 +252,43 @@ menuManager.addEventListener("change", async (event) => {
       method: "PATCH",
       body: JSON.stringify({ available: checkbox.checked }),
     });
+    await loadDashboard();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+menuManager.addEventListener("click", async (event) => {
+  const deleteButton = event.target.closest("[data-delete-menu]");
+  if (!deleteButton) return;
+  if (!confirm("Remove this menu item from the site?")) return;
+
+  try {
+    await adminRequest(`/api/admin/menu/${deleteButton.dataset.deleteMenu}`, {
+      method: "DELETE",
+    });
+    await loadDashboard();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+menuAddForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const payload = {
+    name: document.querySelector("#menuName").value.trim(),
+    price: Number(document.querySelector("#menuPrice").value),
+    category: document.querySelector("#menuCategory").value.trim(),
+    image: document.querySelector("#menuImage").value.trim(),
+    description: document.querySelector("#menuDescription").value.trim(),
+  };
+
+  try {
+    await adminRequest("/api/admin/menu", {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    menuAddForm.reset();
     await loadDashboard();
   } catch (error) {
     alert(error.message);

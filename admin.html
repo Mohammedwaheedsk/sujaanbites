@@ -62,9 +62,32 @@
 
         <section class="menu-manager">
           <div class="admin-subhead">
-            <h2>Menu availability</h2>
-            <p>Toggle cookie items live for customers.</p>
+            <h2>Menu catalog</h2>
+            <p>Add, remove, and toggle cookie items live for customers.</p>
           </div>
+          <form class="menu-add-form" id="menuAddForm">
+            <label>
+              Item name
+              <input id="menuName" type="text" placeholder="Triple Choco Cookie" required />
+            </label>
+            <label>
+              Price (INR)
+              <input id="menuPrice" type="number" min="0" step="1" placeholder="149" required />
+            </label>
+            <label>
+              Category
+              <input id="menuCategory" type="text" placeholder="Classic" />
+            </label>
+            <label>
+              Image URL
+              <input id="menuImage" type="url" placeholder="https://..." />
+            </label>
+            <label>
+              Description
+              <textarea id="menuDescription" rows="2" placeholder="Buttery cookie with dark chocolate chips"></textarea>
+            </label>
+            <button class="secondary-button" type="submit">Add menu item</button>
+          </form>
           <div id="menuManager"></div>
         </section>
       </div>

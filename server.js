@@ -687,6 +687,42 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "POST" && url.pathname === "/api/admin/menu") {
+    if (!requireAdmin(req, res)) return;
+    const body = await readBody(req);
+    const name = String(body.name || "").trim();
+    const description = String(body.description || "").trim();
+    const category = String(body.category || "").trim() || "Cookies";
+    const image = String(body.image || "").trim();
+    const price = Number(body.price);
+
+    if (!name) {
+      sendJson(res, 400, { error: "Menu item name is required" });
+      return;
+    }
+
+    if (!Number.isFinite(price) || price < 0) {
+      sendJson(res, 400, { error: "Valid price is required" });
+      return;
+    }
+
+    const menu = await getMenu();
+    const item = {
+      id: `item_${Date.now().toString(36)}`,
+      name,
+      description,
+      category,
+      image,
+      price,
+      available: body.available === false ? false : true,
+      updatedAt: new Date().toISOString(),
+    };
+    menu.push(item);
+    await saveMenu(menu);
+    sendJson(res, 201, { item });
+    return;
+  }
+
   if (req.method === "PATCH" && url.pathname.startsWith("/api/admin/menu/")) {
     if (!requireAdmin(req, res)) return;
     const menuId = url.pathname.split("/").pop();
@@ -704,6 +740,7 @@ async function handleApi(req, res, url) {
       name: typeof body.name === "string" ? body.name.trim() || current.name : current.name,
       description: typeof body.description === "string" ? body.description.trim() || current.description : current.description,
       category: typeof body.category === "string" ? body.category.trim() || current.category : current.category,
+      image: typeof body.image === "string" ? body.image.trim() || current.image : current.image,
       price: Number.isFinite(Number(body.price)) ? Math.max(0, Number(body.price)) : current.price,
       available: typeof body.available === "boolean" ? body.available : current.available,
       updatedAt: new Date().toISOString(),
@@ -711,6 +748,21 @@ async function handleApi(req, res, url) {
 
     await saveMenu(menu);
     sendJson(res, 200, { item: menu[index] });
+    return;
+  }
+
+  if (req.method === "DELETE" && url.pathname.startsWith("/api/admin/menu/")) {
+    if (!requireAdmin(req, res)) return;
+    const menuId = url.pathname.split("/").pop();
+    const menu = await getMenu();
+    const index = menu.findIndex((item) => item.id === menuId);
+    if (index === -1) {
+      sendJson(res, 404, { error: "Menu item not found" });
+      return;
+    }
+    const [deleted] = menu.splice(index, 1);
+    await saveMenu(menu);
+    sendJson(res, 200, { item: deleted });
     return;
   }
 
@@ -762,7 +814,7 @@ async function handleApi(req, res, url) {
     const order = {
       id: `ST${Date.now().toString().slice(-7)}`,
       createdAt: new Date().toISOString(),
-      status: "pending_admin_acceptance",
+      status: "received",
       adminStatus: "pending",
       paymentMethod,
       paymentStatus: "cod_pending",
@@ -890,6 +942,8 @@ async function handleApi(req, res, url) {
       "cancelled",
     ]);
 
+    const etaMinutes = Number(body.etaMinutes);
+    const hasEtaMinutes = Number.isFinite(etaMinutes) && etaMinutes > 0;
     if (!allowed.has(body.status)) {
       sendJson(res, 400, { error: "Invalid status" });
       return;
@@ -910,10 +964,18 @@ async function handleApi(req, res, url) {
     if (body.status === "accepted") {
       orders[index].adminStatus = "accepted";
       orders[index].acceptedAt = new Date().toISOString();
+      if (hasEtaMinutes) {
+        orders[index].etaMinutes = Math.round(etaMinutes);
+        orders[index].etaUpdatedAt = new Date().toISOString();
+      }
     }
     if (body.status === "cancelled") {
       orders[index].adminStatus = "rejected";
       orders[index].rejectedAt = new Date().toISOString();
+      orders[index].rejectionReason =
+        typeof body.rejectionReason === "string" && body.rejectionReason.trim()
+          ? body.rejectionReason.trim()
+          : "Order cannot be delivered to your location.";
     }
 
     await saveOrders(orders);

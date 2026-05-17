@@ -178,6 +178,19 @@
   gap: 12px;
 }
 
+.menu-add-form {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+}
+
+.menu-add-form textarea {
+  resize: vertical;
+}
+
 .menu-item-card {
   display: grid;
   gap: 12px;
