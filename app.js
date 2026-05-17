@@ -108,6 +108,7 @@ const orderShell = document.querySelector("#orderShell");
 const accountButton = document.querySelector("#accountButton");
 const accountOverlay = document.querySelector("#accountOverlay");
 const accountShell = document.querySelector("#accountShell");
+const accountLogoutButton = document.querySelector("#accountLogoutButton");
 const closeSidebarBtn = document.querySelector("#closeSidebarBtn");
 const accountShellTitle = document.querySelector("#accountShellTitle");
 const accountContent = document.querySelector("#accountContent");
@@ -176,6 +177,56 @@ function loadLocalState() {
 
   if (state.addresses.length > 0) {
     localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+  }
+}
+
+async function loadCustomerState() {
+  const phone = state.profile?.phone || getActiveAddress()?.phone;
+  if (!phone) return;
+
+  try {
+    const result = await apiRequest(`/api/customer/state?phone=${encodeURIComponent(phone)}`);
+    if (result.profile || Array.isArray(result.addresses)) {
+      state.profile = result.profile || state.profile;
+      state.addresses = Array.isArray(result.addresses) ? result.addresses.slice(0, MAX_ADDRESSES) : state.addresses;
+      state.selectedAddressId = result.selectedAddressId || state.addresses[0]?.id || state.selectedAddressId;
+      writeStoredJson(STORAGE_KEYS.profile, state.profile);
+      writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
+      if (state.selectedAddressId) {
+        localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+      }
+    }
+  } catch (error) {
+    console.warn("Customer state sync skipped:", error.message);
+  }
+}
+
+async function syncCustomerState() {
+  if (!state.profile?.phone) return;
+
+  try {
+    const result = await apiRequest("/api/customer/state", {
+      method: "PUT",
+      body: JSON.stringify({
+        phone: state.profile.phone,
+        profile: state.profile,
+        addresses: state.addresses,
+        selectedAddressId: state.selectedAddressId,
+      }),
+    });
+
+    if (result.profile || Array.isArray(result.addresses)) {
+      state.profile = result.profile || state.profile;
+      state.addresses = Array.isArray(result.addresses) ? result.addresses.slice(0, MAX_ADDRESSES) : state.addresses;
+      state.selectedAddressId = result.selectedAddressId || state.addresses[0]?.id || state.selectedAddressId;
+      writeStoredJson(STORAGE_KEYS.profile, state.profile);
+      writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
+      if (state.selectedAddressId) {
+        localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+      }
+    }
+  } catch (error) {
+    console.warn("Customer state save skipped:", error.message);
   }
 }
 
@@ -582,6 +633,7 @@ function renderCareTab() {
 function renderAccount() {
   accountShell.classList.toggle("open", state.drawerOpen);
   accountOverlay.classList.toggle("open", state.drawerOpen);
+  accountLogoutButton.classList.toggle("hidden", !state.profile);
 
   accountTabs.forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.accountTab === state.activeTab);
@@ -599,6 +651,16 @@ function renderAccount() {
 
   renderCart();
   syncCheckoutFields();
+}
+
+async function logoutCustomer() {
+  clearSession();
+  state.drawerOpen = true;
+  state.activeTab = "profile";
+  state.addressMode = "profile";
+  state.selectedLocation = null;
+  state.previousOrders = [];
+  renderAccount();
 }
 
 function syncCheckoutFields() {
@@ -758,7 +820,7 @@ function setMapPin(lat, lng, shouldReverseGeocode) {
   }
 }
 
-function saveProfileAndFirstAddress(form) {
+async function saveProfileAndFirstAddress(form) {
   const name = form.querySelector("#profileName").value.trim();
   const phone = normalizePhone(form.querySelector("#profilePhone").value);
   const houseNumber = form.querySelector("#houseNumber").value.trim();
@@ -800,10 +862,11 @@ function saveProfileAndFirstAddress(form) {
   writeStoredJson(STORAGE_KEYS.profile, profile);
   writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
   localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+  await syncCustomerState();
   renderAccount();
 }
 
-function saveAddress(form) {
+async function saveAddress(form) {
   const houseNumber = form.querySelector("#houseNumber").value.trim();
   const streetName = form.querySelector("#streetName").value.trim();
   const addressType = form.querySelector("#addressType").value;
@@ -848,10 +911,11 @@ function saveAddress(form) {
 
   writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
   localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+  await syncCustomerState();
   renderAccount();
 }
 
-function deleteAddress(id) {
+async function deleteAddress(id) {
   state.addresses = state.addresses.filter((entry) => entry.id !== id);
   if (state.selectedAddressId === id) {
     state.selectedAddressId = state.addresses[0]?.id || null;
@@ -864,6 +928,7 @@ function deleteAddress(id) {
     localStorage.removeItem(STORAGE_KEYS.selectedAddressId);
   }
 
+  await syncCustomerState();
   renderAccount();
 }
 
@@ -1053,27 +1118,23 @@ accountTabs.forEach((tab) => {
   });
 });
 
-accountContent.addEventListener("submit", (event) => {
+accountContent.addEventListener("submit", async (event) => {
   const form = event.target.closest("form");
   if (!form) return;
   if (form.id === "profileSetupForm") {
     event.preventDefault();
-    saveProfileAndFirstAddress(form);
+    await saveProfileAndFirstAddress(form);
   }
   if (form.id === "addressForm") {
     event.preventDefault();
-    saveAddress(form);
+    await saveAddress(form);
   }
 });
 
-accountContent.addEventListener("click", (event) => {
+accountContent.addEventListener("click", async (event) => {
   const action = event.target.closest("[data-account-action]")?.dataset.accountAction;
   if (action === "logout") {
-    clearSession();
-    state.drawerOpen = true;
-    state.activeTab = "profile";
-    state.addressMode = "profile";
-    renderAccount();
+    await logoutCustomer();
     return;
   }
 
@@ -1087,6 +1148,7 @@ accountContent.addEventListener("click", (event) => {
   if (selectAddress) {
     state.selectedAddressId = selectAddress.dataset.selectAddress;
     localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+    await syncCustomerState();
     renderAccount();
     return;
   }
@@ -1101,8 +1163,15 @@ accountContent.addEventListener("click", (event) => {
   const deleteAddressBtn = event.target.closest("[data-delete-address]");
   if (deleteAddressBtn) {
     if (confirm("Delete this address?")) {
-      deleteAddress(deleteAddressBtn.dataset.deleteAddress);
+      await deleteAddress(deleteAddressBtn.dataset.deleteAddress);
     }
+  }
+});
+
+accountShell.addEventListener("click", async (event) => {
+  const action = event.target.closest("[data-account-action]")?.dataset.accountAction;
+  if (action === "logout") {
+    await logoutCustomer();
   }
 });
 
@@ -1132,6 +1201,7 @@ checkout.addEventListener("submit", handleCheckout);
 
 async function boot() {
   loadLocalState();
+  await loadCustomerState();
   state.drawerOpen = !state.profile || !state.addresses.length;
   state.activeTab = state.drawerOpen ? "profile" : "profile";
   renderAccount();

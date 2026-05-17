@@ -299,6 +299,17 @@ textarea {
   align-items: flex-start;
 }
 
+.account-shell-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.account-logout {
+  min-width: 92px;
+}
+
 .account-shell.open {
   transform: translateX(0) !important;
   visibility: visible;

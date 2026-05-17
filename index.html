@@ -85,7 +85,10 @@
           <p class="eyebrow">Account</p>
           <h2 id="accountShellTitle">Your details</h2>
         </div>
-        <button class="close-button" id="closeSidebarBtn" type="button" aria-label="Close account panel">×</button>
+        <div class="account-shell-actions">
+          <button class="secondary-button account-logout hidden" id="accountLogoutButton" type="button" data-account-action="logout">Logout</button>
+          <button class="close-button" id="closeSidebarBtn" type="button" aria-label="Close account panel">×</button>
+        </div>
       </div>
       <div class="account-tabs" role="tablist" aria-label="Account sections">
         <button class="account-tab active" type="button" data-account-tab="profile">User name</button>
