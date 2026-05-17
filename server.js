@@ -367,6 +367,22 @@ async function getMenu() {
       const { data, error } = await supabase.from("menu_items").select("*").order("name", { ascending: true });
       if (error) throw error;
       if (Array.isArray(data) && data.length > 0) {
+        const hasStockCount = data.some((row) => Object.prototype.hasOwnProperty.call(row, "stock_count"));
+        if (!hasStockCount) {
+          const localMenu = await readJson(FILES.menu, DEFAULT_MENU);
+          const localStockById = new Map(
+            (Array.isArray(localMenu) ? localMenu : DEFAULT_MENU).map((item) => [
+              item.id,
+              normalizeStockCount(item.stockCount ?? item.stock_count),
+            ]),
+          );
+          return data.map((row) =>
+            fromMenuRow({
+              ...row,
+              stock_count: localStockById.get(row.id) ?? DEFAULT_STOCK_COUNT,
+            }),
+          );
+        }
         return data.map(fromMenuRow);
       }
       await saveMenu(DEFAULT_MENU);
@@ -388,9 +404,14 @@ async function saveMenu(menu) {
       const rows = normalized.map(toMenuRow);
       const { error } = await supabase.from("menu_items").upsert(rows, { onConflict: "id" });
       if (error) throw error;
+      await writeJson(FILES.menu, normalized);
       return;
     } catch (error) {
-      console.warn(`Supabase menu write failed, falling back to local files: ${error.message}`);
+      const message = String(error?.message || "");
+      if (message.includes("stock_count")) {
+        throw new Error("Supabase schema is missing stock_count. Run the latest supabase.sql and redeploy.");
+      }
+      console.warn(`Supabase menu write failed, falling back to local files: ${message}`);
     }
   }
 
