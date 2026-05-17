@@ -551,9 +551,19 @@ function renderMenu() {
             <span class="availability ${item.available === false ? "off" : "on"}">
               ${item.available === false ? "Sold out" : "Available"}
             </span>
-            <button class="add-button" type="button" data-add="${item.id}" ${item.available === false ? "disabled" : ""}>
-              ${item.available === false ? "Unavailable" : "Add to cart"}
-            </button>
+            ${
+              item.available === false
+                ? `<button class="add-button" type="button" disabled>Unavailable</button>`
+                : (state.cart.get(item.id) || 0) > 0
+                  ? `
+                    <div class="menu-quantity" aria-label="Quantity for ${item.name}">
+                      <button type="button" data-menu-decrease="${item.id}" aria-label="Remove one ${item.name}">−</button>
+                      <span>${state.cart.get(item.id) || 0}</span>
+                      <button type="button" data-menu-increase="${item.id}" aria-label="Add one ${item.name}">+</button>
+                    </div>
+                  `
+                  : `<button class="add-button" type="button" data-add="${item.id}">Add</button>`
+            }
           </div>
         </article>
       `,
@@ -628,6 +638,7 @@ function updateQuantity(id, change) {
     state.cart.set(id, next);
   }
   renderCart();
+  renderMenu();
 }
 
 function renderProfileSetup() {
@@ -1452,8 +1463,11 @@ document.querySelectorAll(".filter").forEach((button) => {
 
 menuGrid.addEventListener("click", (event) => {
   const button = event.target.closest("[data-add]");
-  if (!button) return;
-  updateQuantity(button.dataset.add, 1);
+  const increase = event.target.closest("[data-menu-increase]");
+  const decrease = event.target.closest("[data-menu-decrease]");
+  if (button) updateQuantity(button.dataset.add, 1);
+  if (increase) updateQuantity(increase.dataset.menuIncrease, 1);
+  if (decrease) updateQuantity(decrease.dataset.menuDecrease, -1);
 });
 
 cartItems.addEventListener("click", (event) => {

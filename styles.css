@@ -705,6 +705,37 @@ h2 {
   width: 100%;
 }
 
+.menu-quantity {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fff;
+  display: grid;
+  grid-template-columns: 44px minmax(24px, 1fr) 44px;
+  align-items: center;
+  justify-items: center;
+}
+
+.menu-quantity button {
+  min-height: 36px;
+  width: 36px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #34a67b;
+  font-size: 1.7rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.menu-quantity span {
+  color: #34a67b;
+  font-size: 1.5rem;
+  font-weight: 800;
+}
+
 .cart-header span {
   color: var(--muted);
   font-weight: 800;
