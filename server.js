@@ -264,6 +264,23 @@ function toCustomerRow(phone, state) {
   };
 }
 
+function fromSettingsRow(row) {
+  const payload = row?.payload && typeof row.payload === "object" ? row.payload : {};
+  return {
+    adminLocation: payload.adminLocation || null,
+  };
+}
+
+function toSettingsRow(settings) {
+  return {
+    id: "default",
+    updated_at: new Date().toISOString(),
+    payload: {
+      adminLocation: settings?.adminLocation || null,
+    },
+  };
+}
+
 function normalizePhone(phone) {
   return String(phone || "").replace(/\D/g, "").slice(-10);
 }
@@ -483,11 +500,43 @@ async function getPayments() {
 }
 
 async function getSettings() {
+  if (USE_SUPABASE) {
+    try {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase.from("settings").select("*").eq("id", "default").maybeSingle();
+      if (error) throw error;
+      if (data) {
+        const settings = fromSettingsRow(data);
+        await writeJson(FILES.settings, settings);
+        return settings;
+      }
+      const localSettings = await readJson(FILES.settings, { adminLocation: null });
+      const row = toSettingsRow(localSettings);
+      const { error: upsertError } = await supabase.from("settings").upsert(row, { onConflict: "id" });
+      if (upsertError) throw upsertError;
+      return localSettings;
+    } catch (error) {
+      console.warn(`Supabase settings read failed, falling back to local files: ${error.message}`);
+    }
+  }
   return readJson(FILES.settings, { adminLocation: null });
 }
 
 async function saveSettings(settings) {
-  await writeJson(FILES.settings, settings || { adminLocation: null });
+  const normalized = settings || { adminLocation: null };
+  if (USE_SUPABASE) {
+    try {
+      const supabase = await getSupabaseClient();
+      const row = toSettingsRow(normalized);
+      const { error } = await supabase.from("settings").upsert(row, { onConflict: "id" });
+      if (error) throw error;
+      await writeJson(FILES.settings, normalized);
+      return;
+    } catch (error) {
+      console.warn(`Supabase settings write failed, falling back to local files: ${error.message}`);
+    }
+  }
+  await writeJson(FILES.settings, normalized);
 }
 
 async function savePayments(payments) {

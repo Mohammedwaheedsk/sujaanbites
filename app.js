@@ -481,11 +481,15 @@ function renderTrackingMap(order) {
 
 function renderTrackingPanel(order) {
   if (!trackingDock) return;
-  if (!order) {
+  const isTerminal = order?.status === "completed" || order?.status === "cancelled";
+  if (!order || isTerminal) {
     trackingDock.classList.add("hidden");
     trackingOpen = false;
     trackingSheet?.classList.add("hidden");
     trackingToggle?.setAttribute("aria-expanded", "false");
+    if (isTerminal) {
+      trackingCurrentOrder = null;
+    }
     return;
   }
 

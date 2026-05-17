@@ -67,5 +67,15 @@ create table if not exists public.customers (
 
 create index if not exists customers_updated_at_idx on public.customers (updated_at desc);
 
+create table if not exists public.settings (
+  id text primary key,
+  updated_at timestamptz not null default now(),
+  payload jsonb not null
+);
+
+insert into public.settings (id, payload)
+values ('default', jsonb_build_object('adminLocation', null))
+on conflict (id) do nothing;
+
 -- This app uses the Supabase service-role key on the backend.
 -- Keep RLS disabled for these tables unless you later add public client access policies.
