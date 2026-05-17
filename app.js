@@ -20,6 +20,7 @@ const STORAGE_KEYS = {
   selectedAddressId: "spiceTableSelectedAddressId",
   lastAcceptedOrderShown: "spiceTableLastAcceptedOrderShown",
   lastCustomerMessageShown: "spiceTableLastCustomerMessageShown",
+  lastCancelledOrderShown: "spiceTableLastCancelledOrderShown",
 };
 
 const state = {
@@ -132,6 +133,8 @@ const razorpayRetryButton = document.querySelector("#razorpayRetryButton");
 const adminNotice = document.querySelector("#adminNotice");
 const orderReceivedOverlay = document.querySelector("#orderReceivedOverlay");
 const orderReceivedTitle = document.querySelector("#orderReceivedTitle");
+const orderReceivedSymbol = document.querySelector("#orderReceivedSymbol");
+const orderReceivedIcon = document.querySelector(".order-received-icon");
 const orderReceivedAddress = document.querySelector("#orderReceivedAddress");
 const orderReceivedEta = document.querySelector("#orderReceivedEta");
 const closeOrderReceivedOverlay = document.querySelector("#closeOrderReceivedOverlay");
@@ -192,6 +195,7 @@ function clearSession() {
   localStorage.removeItem(STORAGE_KEYS.selectedAddressId);
   localStorage.removeItem(STORAGE_KEYS.lastAcceptedOrderShown);
   localStorage.removeItem(STORAGE_KEYS.lastCustomerMessageShown);
+  localStorage.removeItem(STORAGE_KEYS.lastCancelledOrderShown);
   state.cart.clear();
 }
 
@@ -208,12 +212,18 @@ function closeOrderReceivedCard() {
 
 function openOrderReceivedCard(order) {
   if (!orderReceivedOverlay || !orderReceivedAddress || !orderReceivedEta) return;
+  const cancelled = order?.status === "cancelled";
   if (orderReceivedTitle) {
-    orderReceivedTitle.textContent = "Yay! Restaurant Accepted Your Order";
+    orderReceivedTitle.textContent = cancelled ? "Order Update" : "Yay! Restaurant Accepted Your Order";
   }
+  if (orderReceivedSymbol) {
+    orderReceivedSymbol.textContent = cancelled ? "✕" : "✓";
+  }
+  orderReceivedIcon?.classList.toggle("cancelled", cancelled);
   orderReceivedAddress.textContent = formatReceivedAddressLine(order.address);
-  orderReceivedEta.textContent =
-    order.etaMinutes && Number.isFinite(Number(order.etaMinutes))
+  orderReceivedEta.textContent = cancelled
+    ? "The order can not be delivered"
+    : order.etaMinutes && Number.isFinite(Number(order.etaMinutes))
       ? `${Math.round(Number(order.etaMinutes))} minutes to reach your location`
       : "Your order is confirmed by the restaurant.";
   orderReceivedOverlay.classList.remove("hidden");
@@ -225,6 +235,17 @@ function maybeShowAcceptedOrder(order) {
   if (shownId === order.id) return;
   localStorage.setItem(STORAGE_KEYS.lastAcceptedOrderShown, order.id);
   openOrderReceivedCard(order);
+}
+
+function maybeShowCancelledOrder(orders) {
+  const cancelledOrder = [...(orders || [])]
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
+    .find((order) => order.status === "cancelled");
+  if (!cancelledOrder) return;
+  const shownId = localStorage.getItem(STORAGE_KEYS.lastCancelledOrderShown) || "";
+  if (shownId === cancelledOrder.id) return;
+  localStorage.setItem(STORAGE_KEYS.lastCancelledOrderShown, cancelledOrder.id);
+  openOrderReceivedCard(cancelledOrder);
 }
 
 function getTrackableOrder(orders) {
@@ -1371,6 +1392,7 @@ async function loadOrdersForAccount() {
     const result = await apiRequest("/api/orders/my");
     state.previousOrders = result.orders || [];
     maybeShowCustomerMessage(state.previousOrders);
+    maybeShowCancelledOrder(state.previousOrders);
     const acceptedOrder = getTrackableOrder(state.previousOrders);
     maybeShowAcceptedOrder(acceptedOrder);
     renderTrackingPanel(acceptedOrder);
