@@ -1,0 +1,56 @@
+[
+  {
+    "available": true,
+    "id": "butter",
+    "name": "Butter Cookies",
+    "description": "Crisp, golden butter cookies with a light vanilla finish.",
+    "price": 120,
+    "category": "classic",
+    "image": "assets/cookie-butter.png"
+  },
+  {
+    "available": true,
+    "id": "choco-chip",
+    "name": "Chocolate Chip Cookies",
+    "description": "Soft-centred cookies loaded with rich chocolate chips.",
+    "price": 150,
+    "category": "chocolate",
+    "image": "assets/cookie-chocolate.png"
+  },
+  {
+    "available": true,
+    "id": "oatmeal",
+    "name": "Oatmeal Raisin Cookies",
+    "description": "Chewy oats with raisins and a warm cinnamon note.",
+    "price": 130,
+    "category": "classic",
+    "image": "assets/cookie-butter.png"
+  },
+  {
+    "available": true,
+    "id": "filled-biscuit",
+    "name": "Stuffed Jam Cookies",
+    "description": "Tender cookies with a sweet strawberry jam centre.",
+    "price": 160,
+    "category": "stuffed",
+    "image": "assets/cookie-jam.png"
+  },
+  {
+    "available": true,
+    "id": "brownie-bite",
+    "name": "Chocolate Fudge Cookies",
+    "description": "Dense cocoa cookies with a fudgy brownie-like bite.",
+    "price": 170,
+    "category": "chocolate",
+    "image": "assets/cookie-chocolate.png"
+  },
+  {
+    "available": true,
+    "id": "gift-pack",
+    "name": "Assorted Cookie Box",
+    "description": "A mixed box of 12 cookies, perfect for gifting.",
+    "price": 420,
+    "category": "packs",
+    "image": "assets/hero-food.png"
+  }
+]
