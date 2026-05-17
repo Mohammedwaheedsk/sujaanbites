@@ -131,6 +131,7 @@ const paymentSummary = document.querySelector("#paymentSummary");
 const razorpayRetryButton = document.querySelector("#razorpayRetryButton");
 const adminNotice = document.querySelector("#adminNotice");
 const orderReceivedOverlay = document.querySelector("#orderReceivedOverlay");
+const orderReceivedTitle = document.querySelector("#orderReceivedTitle");
 const orderReceivedAddress = document.querySelector("#orderReceivedAddress");
 const orderReceivedEta = document.querySelector("#orderReceivedEta");
 const closeOrderReceivedOverlay = document.querySelector("#closeOrderReceivedOverlay");
@@ -207,6 +208,9 @@ function closeOrderReceivedCard() {
 
 function openOrderReceivedCard(order) {
   if (!orderReceivedOverlay || !orderReceivedAddress || !orderReceivedEta) return;
+  if (orderReceivedTitle) {
+    orderReceivedTitle.textContent = "Yay! Restaurant Accepted Your Order";
+  }
   orderReceivedAddress.textContent = formatReceivedAddressLine(order.address);
   orderReceivedEta.textContent =
     order.etaMinutes && Number.isFinite(Number(order.etaMinutes))
