@@ -24,6 +24,11 @@ const adminLocationStatus = document.querySelector("#adminLocationStatus");
 let locationMap = null;
 let locationMarker = null;
 let selectedAdminLocation = null;
+let refreshTimer = null;
+let alertTimer = null;
+let lastOrderSnapshot = "";
+let lastDashboardFocusedAt = 0;
+let alertAudio = null;
 
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -40,6 +45,71 @@ function formatDate(value) {
     dateStyle: "medium",
     timeStyle: "short",
   }).format(new Date(value));
+}
+
+function getSnapshot(orders) {
+  return JSON.stringify(
+    (orders || [])
+      .map((order) => ({
+        id: order.id,
+        status: order.status,
+        updatedAt: order.updatedAt || order.createdAt || "",
+      }))
+      .sort((a, b) => (a.id < b.id ? -1 : 1)),
+  );
+}
+
+function ensureAlertAudio() {
+  if (alertAudio) return alertAudio;
+  alertAudio = new Audio(
+    "data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEARKwAABCxAgAEABAAZGF0YQAAAAA=",
+  );
+  alertAudio.loop = true;
+  alertAudio.volume = 0.25;
+  return alertAudio;
+}
+
+function startAlerting() {
+  const audio = ensureAlertAudio();
+  audio.play().catch(() => {});
+  if (alertTimer) return;
+  alertTimer = setInterval(() => {
+    if (document.hidden) return;
+    audio.currentTime = 0;
+    audio.play().catch(() => {});
+  }, 5000);
+}
+
+function stopAlerting() {
+  if (alertTimer) {
+    clearInterval(alertTimer);
+    alertTimer = null;
+  }
+  if (alertAudio) {
+    alertAudio.pause();
+    alertAudio.currentTime = 0;
+  }
+}
+
+function markAdminSeen() {
+  lastDashboardFocusedAt = Date.now();
+  stopAlerting();
+}
+
+async function pollDashboard() {
+  if (document.hidden || !getAdminPin()) return;
+  try {
+    const payload = await adminRequest("/api/admin/orders");
+    const nextSnapshot = getSnapshot(payload.orders || []);
+    if (lastOrderSnapshot && nextSnapshot !== lastOrderSnapshot && Date.now() - lastDashboardFocusedAt > 3000) {
+      startAlerting();
+    }
+    lastOrderSnapshot = nextSnapshot;
+    renderStats(payload.orders || []);
+    renderOrders(payload.orders || []);
+  } catch {
+    // keep silent; next refresh will try again
+  }
 }
 
 function getAdminPin() {
@@ -315,6 +385,12 @@ async function loadDashboard() {
     renderMenuManager(menuPayload.menu || []);
     initAdminLocationMap(locationPayload.adminLocation || null);
     await loadHistory();
+    const nextSnapshot = getSnapshot(ordersPayload.orders || []);
+    if (lastOrderSnapshot && nextSnapshot !== lastOrderSnapshot) {
+      startAlerting();
+    }
+    lastOrderSnapshot = nextSnapshot;
+    markAdminSeen();
   } catch (error) {
     showDashboard(false);
     adminLoginMessage.textContent = error.message;
@@ -325,6 +401,9 @@ adminLoginForm.addEventListener("submit", async (event) => {
   event.preventDefault();
   localStorage.setItem(ADMIN_STORAGE_KEY, adminPin.value.trim());
   await loadDashboard();
+  if (!refreshTimer) {
+    refreshTimer = setInterval(pollDashboard, 60_000);
+  }
 });
 
 refreshOrders.addEventListener("click", loadDashboard);
@@ -332,6 +411,11 @@ refreshOrders.addEventListener("click", loadDashboard);
 adminLogout.addEventListener("click", () => {
   localStorage.removeItem(ADMIN_STORAGE_KEY);
   showDashboard(false);
+  if (refreshTimer) {
+    clearInterval(refreshTimer);
+    refreshTimer = null;
+  }
+  stopAlerting();
 });
 
 ordersList.addEventListener("click", async (event) => {
@@ -368,6 +452,7 @@ ordersList.addEventListener("click", async (event) => {
       method: "PATCH",
       body: JSON.stringify(payload),
     });
+    markAdminSeen();
     await loadDashboard();
   } catch (error) {
     alert(error.message);
@@ -385,6 +470,7 @@ menuManager.addEventListener("change", async (event) => {
       method: "PATCH",
       body: JSON.stringify({ available: checkbox.checked }),
     });
+    markAdminSeen();
     await loadDashboard();
   } catch (error) {
     alert(error.message);
@@ -400,6 +486,7 @@ menuManager.addEventListener("click", async (event) => {
     await adminRequest(`/api/admin/menu/${deleteButton.dataset.deleteMenu}`, {
       method: "DELETE",
     });
+    markAdminSeen();
     await loadDashboard();
   } catch (error) {
     alert(error.message);
@@ -422,6 +509,7 @@ menuAddForm?.addEventListener("submit", async (event) => {
       body: JSON.stringify(payload),
     });
     menuAddForm.reset();
+    markAdminSeen();
     await loadDashboard();
   } catch (error) {
     alert(error.message);
@@ -472,4 +560,12 @@ adminSaveLocation?.addEventListener("click", async () => {
 
 if (getAdminPin()) {
   loadDashboard();
+  refreshTimer = setInterval(pollDashboard, 60_000);
 }
+
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    markAdminSeen();
+    if (getAdminPin()) pollDashboard();
+  }
+});
