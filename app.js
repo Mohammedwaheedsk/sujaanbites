@@ -19,6 +19,7 @@ const STORAGE_KEYS = {
   addresses: "spiceTableAddresses",
   selectedAddressId: "spiceTableSelectedAddressId",
   lastAcceptedOrderShown: "spiceTableLastAcceptedOrderShown",
+  lastCustomerMessageShown: "spiceTableLastCustomerMessageShown",
 };
 
 const state = {
@@ -145,6 +146,9 @@ const trackingReceiptId = document.querySelector("#trackingReceiptId");
 const trackingItems = document.querySelector("#trackingItems");
 const trackingTotal = document.querySelector("#trackingTotal");
 const trackingAddress = document.querySelector("#trackingAddress");
+const customerMessageDialog = document.querySelector("#customerMessageDialog");
+const customerMessageText = document.querySelector("#customerMessageText");
+const closeCustomerMessageDialog = document.querySelector("#closeCustomerMessageDialog");
 
 let trackingMap = null;
 let trackingLayerGroup = null;
@@ -186,6 +190,7 @@ function clearSession() {
   localStorage.removeItem(STORAGE_KEYS.addresses);
   localStorage.removeItem(STORAGE_KEYS.selectedAddressId);
   localStorage.removeItem(STORAGE_KEYS.lastAcceptedOrderShown);
+  localStorage.removeItem(STORAGE_KEYS.lastCustomerMessageShown);
   state.cart.clear();
 }
 
@@ -221,7 +226,22 @@ function maybeShowAcceptedOrder(order) {
 function getTrackableOrder(orders) {
   return [...(orders || [])]
     .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
-    .find((order) => ["accepted", "preparing", "out_for_delivery", "completed", "cancelled"].includes(order.status));
+    .find((order) => ["accepted", "preparing", "out_for_delivery"].includes(order.status));
+}
+
+function maybeShowCustomerMessage(orders) {
+  const latestWithMessage = [...(orders || [])]
+    .sort((a, b) => new Date(b.customerMessageAt || b.updatedAt || b.createdAt) - new Date(a.customerMessageAt || a.updatedAt || a.createdAt))
+    .find((order) => typeof order.customerMessage === "string" && order.customerMessage.trim());
+  if (!latestWithMessage) return;
+  const marker = `${latestWithMessage.id}:${latestWithMessage.customerMessageAt || latestWithMessage.customerMessage}`;
+  const shown = localStorage.getItem(STORAGE_KEYS.lastCustomerMessageShown) || "";
+  if (shown === marker) return;
+  localStorage.setItem(STORAGE_KEYS.lastCustomerMessageShown, marker);
+  if (customerMessageText) {
+    customerMessageText.textContent = latestWithMessage.customerMessage;
+  }
+  customerMessageDialog?.showModal();
 }
 
 function statusLabel(status) {
@@ -1335,6 +1355,7 @@ async function loadOrdersForAccount() {
   try {
     const result = await apiRequest("/api/orders/my");
     state.previousOrders = result.orders || [];
+    maybeShowCustomerMessage(state.previousOrders);
     const acceptedOrder = getTrackableOrder(state.previousOrders);
     maybeShowAcceptedOrder(acceptedOrder);
     renderTrackingPanel(acceptedOrder);
@@ -1460,6 +1481,7 @@ trackingToggle?.addEventListener("click", () => {
     }, 160);
   }
 });
+closeCustomerMessageDialog?.addEventListener("click", () => customerMessageDialog?.close());
 
 async function boot() {
   loadLocalState();

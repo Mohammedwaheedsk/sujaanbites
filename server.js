@@ -1085,6 +1085,10 @@ async function handleApi(req, res, url) {
       status: body.status,
       updatedAt: new Date().toISOString(),
     };
+    if (typeof body.customerMessage === "string" && body.customerMessage.trim()) {
+      orders[index].customerMessage = body.customerMessage.trim();
+      orders[index].customerMessageAt = new Date().toISOString();
+    }
     if (body.status === "accepted") {
       const settings = await getSettings();
       orders[index].adminStatus = "accepted";
@@ -1105,7 +1109,60 @@ async function handleApi(req, res, url) {
           ? body.rejectionReason.trim()
           : "Order cannot be delivered to your location.";
     }
+    if (body.status === "completed") {
+      orders[index].completedAt = new Date().toISOString();
+    }
 
+    await saveOrders(orders);
+    sendJson(res, 200, { order: orders[index] });
+    return;
+  }
+
+  const reviewMatch = url.pathname.match(/^\/api\/orders\/([^/]+)\/reviews$/);
+  if (req.method === "POST" && reviewMatch) {
+    const customerPhone = normalizePhone(req.headers["x-customer-phone"]);
+    const body = await readBody(req);
+    const orders = await getOrders();
+    const index = orders.findIndex((order) => order.id === reviewMatch[1]);
+    if (index === -1) {
+      sendJson(res, 404, { error: "Order not found" });
+      return;
+    }
+    if (!customerPhone || customerPhone !== normalizePhone(orders[index].customerPhone)) {
+      sendJson(res, 403, { error: "Not allowed for this order" });
+      return;
+    }
+
+    const type = body.type === "products" ? "products" : "delivery";
+    const review = orders[index].review && typeof orders[index].review === "object" ? orders[index].review : {};
+    if (type === "delivery") {
+      const rating = Number(body.deliveryRating);
+      if (!Number.isFinite(rating) || rating < 1 || rating > 5) {
+        sendJson(res, 400, { error: "Delivery rating must be between 1 and 5" });
+        return;
+      }
+      review.deliveryRating = Math.round(rating);
+      review.deliveryComment = typeof body.deliveryComment === "string" ? body.deliveryComment.trim() : "";
+      review.deliveryRatedAt = new Date().toISOString();
+    } else {
+      const entries = Array.isArray(body.productRatings) ? body.productRatings : [];
+      const valid = entries
+        .map((entry) => ({
+          id: String(entry.id || ""),
+          rating: Math.round(Number(entry.rating)),
+        }))
+        .filter((entry) => entry.id && Number.isFinite(entry.rating) && entry.rating >= 1 && entry.rating <= 5);
+      if (!valid.length) {
+        sendJson(res, 400, { error: "At least one product rating is required" });
+        return;
+      }
+      review.productRatings = valid;
+      review.productComment = typeof body.productComment === "string" ? body.productComment.trim() : "";
+      review.productRatedAt = new Date().toISOString();
+    }
+
+    orders[index].review = review;
+    orders[index].updatedAt = new Date().toISOString();
     await saveOrders(orders);
     sendJson(res, 200, { order: orders[index] });
     return;

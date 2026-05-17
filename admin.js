@@ -96,6 +96,10 @@ function renderOrder(order) {
     ? `https://www.google.com/maps/search/?api=1&query=${address.location.lat},${address.location.lng}`
     : "";
 
+  const dueReminder = isDeliveryCheckDue(order)
+    ? '<p class="form-note" style="color:#8d1f1f;font-weight:800;">ETA + 2 min passed. Please check with delivery agent and update status.</p>'
+    : "";
+
   return `
     <article class="order-card" data-order-id="${order.id}">
       <div class="order-card-top">
@@ -139,15 +143,20 @@ function renderOrder(order) {
           <p>
             Razorpay order: ${order.razorpayOrderId || "-"}<br>
             Razorpay payment: ${order.razorpayPaymentId || "-"}<br>
-            Verified at: ${order.paymentVerifiedAt ? formatDate(order.paymentVerifiedAt) : "-"}
+            Verified at: ${order.paymentVerifiedAt ? formatDate(order.paymentVerifiedAt) : "-"}<br>
+            Delivery rating: ${order.review?.deliveryRating || "-"}<br>
+            Product ratings: ${Array.isArray(order.review?.productRatings) ? order.review.productRatings.map((r) => `${r.id}:${r.rating}`).join(", ") || "-" : "-"}
           </p>
         </div>
       </div>
+
+      ${dueReminder}
 
       <div class="order-controls">
         <button class="secondary-button" type="button" data-order-action="accept" data-order-id="${order.id}">Accept</button>
         <button class="secondary-button danger" type="button" data-order-action="reject" data-order-id="${order.id}">Reject</button>
         <input type="number" min="1" placeholder="ETA (min)" data-eta-for="${order.id}" />
+        <input type="text" placeholder="Message for customer (optional)" data-message-for="${order.id}" />
         <select data-status-for="${order.id}">
           ${["pending_admin_acceptance", "received", "accepted", "preparing", "out_for_delivery", "completed", "cancelled"]
             .map((status) => `<option value="${status}" ${status === order.status ? "selected" : ""}>${status.replaceAll("_", " ")}</option>`)
@@ -157,6 +166,16 @@ function renderOrder(order) {
       </div>
     </article>
   `;
+}
+
+function isDeliveryCheckDue(order) {
+  if (!["accepted", "preparing", "out_for_delivery"].includes(order.status)) return false;
+  const eta = Number(order.etaMinutes);
+  if (!Number.isFinite(eta) || eta <= 0) return false;
+  const start = new Date(order.etaUpdatedAt || order.acceptedAt || order.updatedAt || order.createdAt).getTime();
+  if (!Number.isFinite(start)) return false;
+  const dueAt = start + (eta + 2) * 60 * 1000;
+  return Date.now() >= dueAt;
 }
 
 function renderMenuManager(menu) {
@@ -321,12 +340,16 @@ ordersList.addEventListener("click", async (event) => {
   const status =
     acceptButton ? "accepted" : rejectButton ? "cancelled" : document.querySelector(`[data-status-for="${orderId}"]`).value;
   const etaInput = document.querySelector(`[data-eta-for="${orderId}"]`);
+  const messageInput = document.querySelector(`[data-message-for="${orderId}"]`);
   let etaMinutes = Number(etaInput?.value);
   if (status === "accepted" && (!Number.isFinite(etaMinutes) || etaMinutes <= 0)) {
     const etaPrompt = prompt("Enter delivery time in minutes for customer:");
     etaMinutes = Number(etaPrompt);
   }
   const payload = { status };
+  if (messageInput?.value?.trim()) {
+    payload.customerMessage = messageInput.value.trim();
+  }
   if (status === "accepted" && Number.isFinite(etaMinutes) && etaMinutes > 0) {
     payload.etaMinutes = etaMinutes;
   } else if (status === "accepted") {

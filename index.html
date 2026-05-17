@@ -171,6 +171,54 @@
     </div>
   </section>
 
+  <dialog class="payment-dialog" id="deliveryRatingDialog">
+    <form method="dialog">
+      <button class="close-button" aria-label="Close delivery rating">×</button>
+    </form>
+    <div class="payment-content">
+      <p class="eyebrow">Rate delivery</p>
+      <h2>How was your delivery?</h2>
+      <form id="deliveryRatingForm" class="auth-form">
+        <label>Rating (1 to 5)
+          <input id="deliveryRatingInput" type="number" min="1" max="5" required />
+        </label>
+        <label>Comment (optional)
+          <textarea id="deliveryRatingComment" rows="3" placeholder="Share your feedback"></textarea>
+        </label>
+        <button class="pay-button" type="submit">Submit delivery rating</button>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog class="payment-dialog" id="productRatingDialog">
+    <form method="dialog">
+      <button class="close-button" aria-label="Close product rating">×</button>
+    </form>
+    <div class="payment-content">
+      <p class="eyebrow">Rate products</p>
+      <h2>Rate your ordered items</h2>
+      <form id="productRatingForm" class="auth-form">
+        <div id="productRatingItems"></div>
+        <label>Comment (optional)
+          <textarea id="productRatingComment" rows="3" placeholder="Tell us what you liked"></textarea>
+        </label>
+        <button class="pay-button" type="submit">Submit product ratings</button>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog class="payment-dialog" id="customerMessageDialog">
+    <form method="dialog">
+      <button class="close-button" aria-label="Close update">×</button>
+    </form>
+    <div class="payment-content">
+      <p class="eyebrow">Delivery update</p>
+      <h2>Message from Sujaan Bites</h2>
+      <p id="customerMessageText"></p>
+      <button class="secondary-button" id="closeCustomerMessageDialog" type="button">Okay</button>
+    </div>
+  </dialog>
+
   <footer>
     <p>Sujaan Bites • Fresh cookies made daily • UPI payment supported</p>
   </footer>
