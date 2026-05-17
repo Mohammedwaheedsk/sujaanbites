@@ -10,6 +10,9 @@ const ADMIN_PIN = process.env.ADMIN_PIN || "123456";
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "";
 const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || "";
+const SUPABASE_URL = process.env.SUPABASE_URL || "";
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
+const USE_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
 
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, "data");
@@ -17,6 +20,7 @@ const FILES = {
   orders: path.join(DATA_DIR, "orders.json"),
   menu: path.join(DATA_DIR, "menu.json"),
   payments: path.join(DATA_DIR, "payments.json"),
+  customers: path.join(DATA_DIR, "customers.json"),
 };
 
 const BUSINESS = {
@@ -93,6 +97,8 @@ const MIME_TYPES = {
   ".svg": "image/svg+xml",
 };
 
+let supabaseClient = null;
+
 function sendJson(res, status, payload) {
   res.writeHead(status, { "content-type": "application/json; charset=utf-8" });
   res.end(JSON.stringify(payload));
@@ -103,6 +109,17 @@ async function ensureStore() {
   await ensureJsonFile(FILES.menu, DEFAULT_MENU);
   await ensureJsonFile(FILES.orders, []);
   await ensureJsonFile(FILES.payments, []);
+  await ensureJsonFile(FILES.customers, []);
+}
+
+async function getSupabaseClient() {
+  if (!USE_SUPABASE) return null;
+  if (supabaseClient) return supabaseClient;
+  const { createClient } = await import("@supabase/supabase-js");
+  supabaseClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  return supabaseClient;
 }
 
 async function ensureJsonFile(filePath, fallback) {
@@ -134,6 +151,85 @@ async function readJson(filePath, fallback) {
 
 async function writeJson(filePath, value) {
   await fs.writeFile(filePath, JSON.stringify(value, null, 2));
+}
+
+function toMenuRow(item) {
+  return {
+    id: item.id,
+    name: item.name,
+    description: item.description,
+    price: Number(item.price || 0),
+    category: item.category,
+    image: item.image || "",
+    available: item.available !== false,
+    updated_at: item.updatedAt || item.updated_at || new Date().toISOString(),
+  };
+}
+
+function fromMenuRow(row) {
+  return {
+    id: row.id,
+    name: row.name,
+    description: row.description,
+    price: Number(row.price || 0),
+    category: row.category,
+    image: row.image || "",
+    available: row.available !== false,
+    updatedAt: row.updated_at || row.updatedAt || null,
+  };
+}
+
+function fromOrderRow(row) {
+  const payload = row.payload && typeof row.payload === "object" ? row.payload : {};
+  return {
+    ...payload,
+    id: payload.id || row.id,
+    createdAt: payload.createdAt || row.created_at || row.createdAt,
+    updatedAt: payload.updatedAt || row.updated_at || row.updatedAt || null,
+    customerPhone: payload.customerPhone || row.customer_phone || "",
+    paymentMethod: payload.paymentMethod || row.payment_method || "prepaid",
+    paymentStatus: payload.paymentStatus || row.payment_status || "",
+    status: payload.status || row.status || "",
+    adminStatus: payload.adminStatus || row.admin_status || "",
+  };
+}
+
+function toOrderRow(order) {
+  return {
+    id: order.id,
+    customer_phone: order.customerPhone || "",
+    status: order.status || "",
+    admin_status: order.adminStatus || "",
+    payment_method: order.paymentMethod || "",
+    payment_status: order.paymentStatus || "",
+    created_at: order.createdAt || new Date().toISOString(),
+    updated_at: order.updatedAt || new Date().toISOString(),
+    payload: order,
+  };
+}
+
+function fromCustomerRow(row) {
+  const payload = row.payload && typeof row.payload === "object" ? row.payload : {};
+  return {
+    phone: row.phone || payload.phone || "",
+    profile: payload.profile || null,
+    addresses: Array.isArray(payload.addresses) ? payload.addresses : [],
+    selectedAddressId: payload.selectedAddressId || null,
+    updatedAt: row.updated_at || payload.updatedAt || null,
+  };
+}
+
+function toCustomerRow(phone, state) {
+  return {
+    phone,
+    updated_at: new Date().toISOString(),
+    payload: {
+      profile: state.profile || null,
+      addresses: Array.isArray(state.addresses) ? state.addresses.slice(0, 10) : [],
+      selectedAddressId: state.selectedAddressId || null,
+      updatedAt: new Date().toISOString(),
+    },
+  };
 }
 
 function normalizePhone(phone) {
@@ -233,18 +329,97 @@ function requireAdmin(req, res) {
 }
 
 async function getMenu() {
+  if (USE_SUPABASE) {
+    try {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase.from("menu_items").select("*").order("name", { ascending: true });
+      if (error) throw error;
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map(fromMenuRow);
+      }
+      await saveMenu(DEFAULT_MENU);
+      return DEFAULT_MENU;
+    } catch (error) {
+      console.warn(`Supabase menu read failed, falling back to local files: ${error.message}`);
+    }
+  }
+
   return readJson(FILES.menu, DEFAULT_MENU);
 }
 
 async function saveMenu(menu) {
+  if (USE_SUPABASE) {
+    try {
+      const supabase = await getSupabaseClient();
+      const rows = menu.map(toMenuRow);
+      const { error } = await supabase.from("menu_items").upsert(rows, { onConflict: "id" });
+      if (error) throw error;
+      return;
+    } catch (error) {
+      console.warn(`Supabase menu write failed, falling back to local files: ${error.message}`);
+    }
+  }
+
   await writeJson(FILES.menu, menu);
 }
 
 async function getOrders() {
+  if (USE_SUPABASE) {
+    try {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase.from("orders").select("*").order("created_at", { ascending: false });
+      if (error) throw error;
+      if (Array.isArray(data)) {
+        return data.map(fromOrderRow);
+      }
+    } catch (error) {
+      console.warn(`Supabase orders read failed, falling back to local files: ${error.message}`);
+    }
+  }
+
   return readJson(FILES.orders, []);
 }
 
+async function getOrdersForPhone(phone) {
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) return [];
+
+  if (USE_SUPABASE) {
+    try {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase
+        .from("orders")
+        .select("*")
+        .eq("customer_phone", normalizedPhone)
+        .order("created_at", { ascending: false });
+      if (error) throw error;
+      if (Array.isArray(data)) {
+        return data.map(fromOrderRow);
+      }
+    } catch (error) {
+      console.warn(`Supabase customer order read failed, falling back to local files: ${error.message}`);
+    }
+  }
+
+  const orders = await readJson(FILES.orders, []);
+  return orders
+    .filter((order) => order.customerPhone === normalizedPhone)
+    .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+}
+
 async function saveOrders(orders) {
+  if (USE_SUPABASE) {
+    try {
+      const supabase = await getSupabaseClient();
+      const rows = orders.map(toOrderRow);
+      const { error } = await supabase.from("orders").upsert(rows, { onConflict: "id" });
+      if (error) throw error;
+      return;
+    } catch (error) {
+      console.warn(`Supabase orders write failed, falling back to local files: ${error.message}`);
+    }
+  }
+
   await writeJson(FILES.orders, orders);
 }
 
@@ -254,6 +429,69 @@ async function getPayments() {
 
 async function savePayments(payments) {
   await writeJson(FILES.payments, payments);
+}
+
+async function getCustomerRecord(phone) {
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) return null;
+
+  if (USE_SUPABASE) {
+    try {
+      const supabase = await getSupabaseClient();
+      const { data, error } = await supabase.from("customers").select("*").eq("phone", normalizedPhone).maybeSingle();
+      if (error) throw error;
+      if (data) return fromCustomerRow(data);
+      return null;
+    } catch (error) {
+      console.warn(`Supabase customer read failed, falling back to local files: ${error.message}`);
+    }
+  }
+
+  const customers = await readJson(FILES.customers, []);
+  return fromCustomerRow(customers.find((entry) => entry.phone === normalizedPhone) || {});
+}
+
+async function saveCustomerRecord(phone, state) {
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) {
+    throw new Error("A valid phone number is required");
+  }
+
+  const record = toCustomerRow(normalizedPhone, state);
+
+  if (USE_SUPABASE) {
+    try {
+      const supabase = await getSupabaseClient();
+      const { error } = await supabase.from("customers").upsert(record, { onConflict: "phone" });
+      if (error) throw error;
+      return fromCustomerRow(record);
+    } catch (error) {
+      console.warn(`Supabase customer write failed, falling back to local files: ${error.message}`);
+    }
+  }
+
+  const customers = await readJson(FILES.customers, []);
+  const next = customers.filter((entry) => entry.phone !== normalizedPhone);
+  next.push(record);
+  await writeJson(FILES.customers, next);
+  return fromCustomerRow(record);
+}
+
+async function seedMenuIfNeeded() {
+  if (!USE_SUPABASE) return;
+
+  try {
+    const supabase = await getSupabaseClient();
+    const { count, error } = await supabase.from("menu_items").select("id", { count: "exact", head: true });
+    if (error) throw error;
+    if (!count) {
+      const rows = DEFAULT_MENU.map(toMenuRow);
+      const { error: seedError } = await supabase.from("menu_items").upsert(rows, { onConflict: "id" });
+      if (seedError) throw seedError;
+    }
+  } catch (error) {
+    console.warn(`Supabase menu seed skipped: ${error.message}`);
+  }
 }
 
 function calculateOrder(menu, items, orderType) {
@@ -396,6 +634,52 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/customer/state") {
+    const phone = normalizePhone(url.searchParams.get("phone") || req.headers["x-customer-phone"]);
+    if (!phone) {
+      sendJson(res, 200, { profile: null, addresses: [], selectedAddressId: null });
+      return;
+    }
+
+    const customer = await getCustomerRecord(phone);
+    if (!customer) {
+      sendJson(res, 200, { profile: null, addresses: [], selectedAddressId: null });
+      return;
+    }
+
+    sendJson(res, 200, {
+      profile: customer.profile,
+      addresses: customer.addresses,
+      selectedAddressId: customer.selectedAddressId,
+    });
+    return;
+  }
+
+  if (req.method === "PUT" && url.pathname === "/api/customer/state") {
+    const body = await readBody(req);
+    const phone = normalizePhone(body.phone || body.profile?.phone || req.headers["x-customer-phone"]);
+    if (!phone) {
+      sendJson(res, 400, { error: "A valid phone number is required" });
+      return;
+    }
+
+    const profile = body.profile && typeof body.profile === "object" ? body.profile : null;
+    const addresses = Array.isArray(body.addresses) ? body.addresses.slice(0, 10) : [];
+    const selectedAddressId = body.selectedAddressId || addresses[0]?.id || null;
+    const saved = await saveCustomerRecord(phone, {
+      profile: profile ? { ...profile, phone } : null,
+      addresses,
+      selectedAddressId,
+    });
+
+    sendJson(res, 200, {
+      profile: saved.profile,
+      addresses: saved.addresses,
+      selectedAddressId: saved.selectedAddressId,
+    });
+    return;
+  }
+
   if (req.method === "GET" && url.pathname === "/api/admin/menu") {
     if (!requireAdmin(req, res)) return;
     const menu = await getMenu();
@@ -437,8 +721,7 @@ async function handleApi(req, res, url) {
       return;
     }
 
-    const orders = await getOrders();
-    const mine = orders.filter((order) => order.customerPhone === phone).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    const mine = await getOrdersForPhone(phone);
     sendJson(res, 200, { orders: mine });
     return;
   }
@@ -678,8 +961,9 @@ async function route(req, res) {
 
 async function main() {
   await ensureStore();
+  await seedMenuIfNeeded();
   http.createServer(route).listen(PORT, () => {
-    console.log(`Food ordering app running at http://localhost:${PORT}`);
+    console.log(`Sujaan Bites server running at http://localhost:${PORT}`);
     console.log(`Admin panel: http://localhost:${PORT}/admin`);
     console.log(`Default admin PIN: ${ADMIN_PIN}`);
   });
