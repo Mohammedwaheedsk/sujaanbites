@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sujaan Bites | Order Food Online</title>
+  <link rel="preconnect" href="https://api.qrserver.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <a class="brand" href="#menu" aria-label="Sujaan Bites home">
+      <span class="brand-mark">SB</span>
+      <span>
+        <strong>Sujaan Bites</strong>
+        <small>Fresh baked cookies</small>
+      </span>
+    </a>
+    <nav class="nav">
+      <button class="nav-button" id="accountButton" type="button">Account</button>
+      <a href="#menu">Menu</a>
+      <a href="#cart">Cart</a>
+      <a href="#checkout">Checkout</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="hero-title">
+      <img src="assets/hero-food.png" alt="A tray of baked cookies with a warm cookie shop feel" />
+      <div class="hero-copy">
+        <p class="eyebrow">Order today</p>
+        <h1 id="hero-title">Sujaan Bites</h1>
+        <p>Fresh cookies, warm boxes, and simple checkout for both prepaid and cash on delivery orders.</p>
+        <a class="primary-link" href="#menu">Start order</a>
+      </div>
+    </section>
+
+    <section class="demo-menu" aria-labelledby="demo-menu-title">
+      <div class="section-head demo-head">
+        <div>
+          <p class="eyebrow">Demo menu</p>
+          <h2 id="demo-menu-title">Our cookie best sellers</h2>
+        </div>
+        <p class="demo-note">A quick preview of what customers can order from Sujaan Bites.</p>
+      </div>
+      <div class="demo-grid">
+        <article class="demo-card">
+          <img class="demo-card-image" src="assets/cookie-butter.png" alt="Butter cookies" />
+          <span class="demo-chip">Classic</span>
+          <h3>Butter Cookies</h3>
+          <p>Golden, crisp, and finished with a soft vanilla note.</p>
+          <strong>₹120</strong>
+        </article>
+        <article class="demo-card">
+          <img class="demo-card-image" src="assets/cookie-chocolate.png" alt="Chocolate chip cookies" />
+          <span class="demo-chip">Chocolate</span>
+          <h3>Chocolate Chip Cookies</h3>
+          <p>Soft-centred cookies with rich chocolate chips.</p>
+          <strong>₹150</strong>
+        </article>
+        <article class="demo-card">
+          <img class="demo-card-image" src="assets/cookie-jam.png" alt="Stuffed jam cookies" />
+          <span class="demo-chip">Stuffed</span>
+          <h3>Stuffed Jam Cookies</h3>
+          <p>Tender cookies with a sweet jam centre.</p>
+          <strong>₹160</strong>
+        </article>
+        <article class="demo-card">
+          <img class="demo-card-image" src="assets/hero-food.png" alt="Assorted cookie box" />
+          <span class="demo-chip">Pack</span>
+          <h3>Assorted Cookie Box</h3>
+          <p>A gift-ready box with 12 mixed cookies.</p>
+          <strong>₹420</strong>
+        </article>
+      </div>
+    </section>
+
+    <div class="account-shell-overlay" id="accountOverlay"></div>
+    <aside class="account-shell" id="accountShell" aria-label="Customer account">
+      <div class="account-shell-head">
+        <div>
+          <p class="eyebrow">Account</p>
+          <h2 id="accountShellTitle">Your details</h2>
+        </div>
+        <button class="close-button" id="closeSidebarBtn" type="button" aria-label="Close account panel">×</button>
+      </div>
+      <div class="account-tabs" role="tablist" aria-label="Account sections">
+        <button class="account-tab active" type="button" data-account-tab="profile">User name</button>
+        <button class="account-tab" type="button" data-account-tab="addresses">Saved addresses</button>
+        <button class="account-tab" type="button" data-account-tab="orders">Previous orders</button>
+        <button class="account-tab" type="button" data-account-tab="care">Customer care</button>
+      </div>
+      <div class="account-section" id="accountContent"></div>
+    </aside>
+
+    <section class="order-shell" id="orderShell" aria-label="Food ordering app">
+      <div class="menu-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Menu</p>
+            <h2 id="menu">Choose your cookies</h2>
+          </div>
+          <div class="filters" role="tablist" aria-label="Menu categories">
+            <button class="filter active" type="button" data-category="all">All</button>
+            <button class="filter" type="button" data-category="classic">Classic</button>
+            <button class="filter" type="button" data-category="chocolate">Chocolate</button>
+            <button class="filter" type="button" data-category="stuffed">Stuffed</button>
+            <button class="filter" type="button" data-category="packs">Packs</button>
+          </div>
+        </div>
+        <div class="menu-grid" id="menuGrid"></div>
+      </div>
+
+      <aside class="checkout-panel" id="cart" aria-label="Cart and checkout">
+        <div class="cart-header">
+          <div>
+            <p class="eyebrow">Cart</p>
+            <h2>Your order</h2>
+          </div>
+          <span id="itemCount">0 items</span>
+        </div>
+
+        <div class="cart-items" id="cartItems">
+          <p class="empty">Add cookies from the menu to begin.</p>
+        </div>
+
+        <div class="totals">
+          <div><span>Subtotal</span><strong id="subtotal">₹0</strong></div>
+          <div><span>Delivery</span><strong id="deliveryFee">₹0</strong></div>
+          <div class="grand-total"><span>Total</span><strong id="grandTotal">₹0</strong></div>
+        </div>
+
+        <div class="selected-address" id="selectedAddressSummary">
+          <strong>Saved address</strong>
+          <p id="selectedAddressText">No address saved yet.</p>
+        </div>
+
+        <form class="customer-form" id="checkout" autocomplete="on">
+          <input type="hidden" id="customerName" name="name" />
+          <input type="hidden" id="customerPhone" name="phone" />
+          <input type="hidden" id="orderType" name="orderType" value="delivery" />
+          <label>
+            Payment method
+            <select id="paymentMethod" name="paymentMethod" required>
+              <option value="prepaid">Prepaid by UPI</option>
+              <option value="cod">Cash on delivery</option>
+            </select>
+          </label>
+          <button class="pay-button" type="submit">Place order</button>
+        </form>
+      </aside>
+    </section>
+  </main>
+
+  <dialog class="payment-dialog" id="paymentDialog">
+    <form method="dialog">
+      <button class="close-button" aria-label="Close payment window">×</button>
+    </form>
+    <div class="payment-content">
+      <p class="eyebrow">Payment</p>
+      <h2>Complete your payment</h2>
+      <p id="paymentSummary"></p>
+      <button class="pay-button hidden" id="razorpayRetryButton" type="button">Open Razorpay payment</button>
+      <small id="adminNotice">Payment will be verified by the server before the order is sent to the admin.</small>
+    </div>
+  </dialog>
+
+  <footer>
+    <p>Sujaan Bites • Fresh cookies made daily • UPI payment supported</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script src="app.js"></script>
+</body>
+
+</html>

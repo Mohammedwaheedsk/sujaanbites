@@ -1,0 +1,252 @@
+.admin-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 34px auto 56px;
+}
+
+.admin-login,
+.admin-dashboard {
+  display: grid;
+  gap: 18px;
+  padding: clamp(18px, 3vw, 30px);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: var(--shadow);
+}
+
+.admin-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+  gap: 18px;
+}
+
+.admin-subhead {
+  display: grid;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.admin-subhead h2 {
+  margin: 0;
+  font-size: 1.2rem;
+}
+
+.admin-subhead p {
+  margin: 0;
+  color: var(--muted);
+}
+
+.admin-login {
+  max-width: 520px;
+}
+
+.admin-login h1,
+.admin-heading h1 {
+  margin: 0;
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+}
+
+.admin-form {
+  display: grid;
+  gap: 14px;
+}
+
+.admin-heading,
+.admin-actions,
+.order-card-top,
+.order-meta,
+.order-controls {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.admin-actions,
+.order-meta,
+.order-controls {
+  flex-wrap: wrap;
+}
+
+.admin-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+.stat-card,
+.order-card {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.stat-card {
+  padding: 16px;
+}
+
+.stat-card strong,
+.stat-card span {
+  display: block;
+}
+
+.stat-card strong {
+  font-size: 1.8rem;
+}
+
+.stat-card span {
+  color: var(--muted);
+}
+
+.orders-list {
+  display: grid;
+  gap: 14px;
+}
+
+.order-card {
+  display: grid;
+  gap: 16px;
+  padding: 16px;
+}
+
+.order-card h2 {
+  font-size: 1.2rem;
+}
+
+.status-pill {
+  display: inline-flex;
+  min-height: 32px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 12px;
+  color: #fff;
+  background: var(--mint);
+  font-size: 0.84rem;
+  font-weight: 900;
+  text-transform: capitalize;
+}
+
+.status-pill.payment_pending {
+  background: var(--gold);
+  color: var(--ink);
+}
+
+.status-pill.cancelled {
+  background: #8d1f1f;
+}
+
+.order-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.order-section {
+  display: grid;
+  gap: 8px;
+}
+
+.order-section h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.order-section p,
+.order-section ul {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.order-section ul {
+  padding-left: 18px;
+}
+
+.order-controls select {
+  min-width: 190px;
+}
+
+.menu-manager {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+#menuManager {
+  display: grid;
+  gap: 12px;
+}
+
+.menu-item-card {
+  display: grid;
+  gap: 12px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.menu-item-card p {
+  margin: 6px 0 0;
+  color: var(--muted);
+}
+
+.menu-item-actions {
+  display: grid;
+  gap: 10px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-weight: 700;
+}
+
+.toggle input {
+  width: 18px;
+  height: 18px;
+}
+
+.availability {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 28px;
+  align-items: center;
+  border-radius: 999px;
+  padding: 0 10px;
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.availability.on {
+  color: #165c45;
+  background: rgba(19, 121, 91, 0.12);
+}
+
+.availability.off {
+  color: #8d1f1f;
+  background: rgba(141, 31, 31, 0.1);
+}
+
+.danger {
+  color: #8d1f1f;
+}
+
+@media (max-width: 760px) {
+  .admin-heading,
+  .order-card-top {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .admin-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .order-grid {
+    grid-template-columns: 1fr;
+  }
+}
