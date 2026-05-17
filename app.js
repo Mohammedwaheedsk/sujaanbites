@@ -18,6 +18,7 @@ const STORAGE_KEYS = {
   profile: "spiceTableProfile",
   addresses: "spiceTableAddresses",
   selectedAddressId: "spiceTableSelectedAddressId",
+  lastAcceptedOrderShown: "spiceTableLastAcceptedOrderShown",
 };
 
 const state = {
@@ -128,6 +129,22 @@ const paymentDialog = document.querySelector("#paymentDialog");
 const paymentSummary = document.querySelector("#paymentSummary");
 const razorpayRetryButton = document.querySelector("#razorpayRetryButton");
 const adminNotice = document.querySelector("#adminNotice");
+const orderReceivedOverlay = document.querySelector("#orderReceivedOverlay");
+const orderReceivedAddress = document.querySelector("#orderReceivedAddress");
+const orderReceivedEta = document.querySelector("#orderReceivedEta");
+const closeOrderReceivedOverlay = document.querySelector("#closeOrderReceivedOverlay");
+const trackingPanel = document.querySelector("#trackingPanel");
+const trackingTitle = document.querySelector("#trackingTitle");
+const trackingStatusPill = document.querySelector("#trackingStatusPill");
+const trackingEta = document.querySelector("#trackingEta");
+const trackingMapEl = document.querySelector("#trackingMap");
+const trackingReceiptId = document.querySelector("#trackingReceiptId");
+const trackingItems = document.querySelector("#trackingItems");
+const trackingTotal = document.querySelector("#trackingTotal");
+const trackingAddress = document.querySelector("#trackingAddress");
+
+let trackingMap = null;
+let trackingLayerGroup = null;
 
 function formatPrice(value) {
   return currency.format(value || 0);
@@ -163,7 +180,117 @@ function clearSession() {
   localStorage.removeItem(STORAGE_KEYS.profile);
   localStorage.removeItem(STORAGE_KEYS.addresses);
   localStorage.removeItem(STORAGE_KEYS.selectedAddressId);
+  localStorage.removeItem(STORAGE_KEYS.lastAcceptedOrderShown);
   state.cart.clear();
+}
+
+function formatReceivedAddressLine(address) {
+  if (!address) return "Address not available";
+  const line = [address.houseNumber, address.streetName, address.address].filter(Boolean).join(", ");
+  const label = address.type ? `${address.type}: ` : "";
+  return `${label}${line || "Address not available"}`;
+}
+
+function closeOrderReceivedCard() {
+  orderReceivedOverlay?.classList.add("hidden");
+}
+
+function openOrderReceivedCard(order) {
+  if (!orderReceivedOverlay || !orderReceivedAddress || !orderReceivedEta) return;
+  orderReceivedAddress.textContent = formatReceivedAddressLine(order.address);
+  orderReceivedEta.textContent =
+    order.etaMinutes && Number.isFinite(Number(order.etaMinutes))
+      ? `${Math.round(Number(order.etaMinutes))} minutes to reach your location`
+      : "Your order is confirmed by the restaurant.";
+  orderReceivedOverlay.classList.remove("hidden");
+}
+
+function maybeShowAcceptedOrder(order) {
+  if (!order || order.status !== "accepted") return;
+  const shownId = localStorage.getItem(STORAGE_KEYS.lastAcceptedOrderShown) || "";
+  if (shownId === order.id) return;
+  localStorage.setItem(STORAGE_KEYS.lastAcceptedOrderShown, order.id);
+  openOrderReceivedCard(order);
+}
+
+function getTrackableOrder(orders) {
+  return [...(orders || [])]
+    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
+    .find((order) => ["accepted", "preparing", "out_for_delivery", "completed", "cancelled"].includes(order.status));
+}
+
+function statusLabel(status) {
+  return String(status || "").replaceAll("_", " ");
+}
+
+function renderTrackingMap(order) {
+  if (!trackingMapEl || !window.L) return;
+  const customerPin = order?.address?.location;
+  const restaurantPin = order?.restaurantLocation;
+  if (!customerPin || !Number.isFinite(customerPin.lat) || !Number.isFinite(customerPin.lng)) {
+    trackingMapEl.innerHTML = "<p class='empty'>Map unavailable for this order.</p>";
+    return;
+  }
+
+  if (!trackingMap) {
+    trackingMap = L.map(trackingMapEl).setView([customerPin.lat, customerPin.lng], 13);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19,
+    }).addTo(trackingMap);
+    trackingLayerGroup = L.layerGroup().addTo(trackingMap);
+  } else {
+    trackingMap.invalidateSize();
+    trackingLayerGroup.clearLayers();
+  }
+
+  const customerMarker = L.marker([customerPin.lat, customerPin.lng]).bindPopup("Customer address");
+  trackingLayerGroup.addLayer(customerMarker);
+
+  if (restaurantPin && Number.isFinite(restaurantPin.lat) && Number.isFinite(restaurantPin.lng)) {
+    const restaurantMarker = L.marker([restaurantPin.lat, restaurantPin.lng]).bindPopup("Restaurant location");
+    const routeLine = L.polyline(
+      [
+        [restaurantPin.lat, restaurantPin.lng],
+        [customerPin.lat, customerPin.lng],
+      ],
+      { color: "#ef5707", weight: 4, opacity: 0.9 },
+    );
+    trackingLayerGroup.addLayer(restaurantMarker);
+    trackingLayerGroup.addLayer(routeLine);
+    trackingMap.fitBounds(routeLine.getBounds(), { padding: [20, 20] });
+  } else {
+    trackingMap.setView([customerPin.lat, customerPin.lng], 14);
+  }
+}
+
+function renderTrackingPanel(order) {
+  if (!trackingPanel) return;
+  if (!order) {
+    trackingPanel.classList.add("hidden");
+    return;
+  }
+
+  trackingPanel.classList.remove("hidden");
+  trackingTitle.textContent = order.status === "cancelled" ? "Order update" : "Order confirmed";
+  trackingStatusPill.textContent = statusLabel(order.status);
+  trackingStatusPill.className = `status-pill ${order.status || ""}`;
+
+  if (order.status === "cancelled") {
+    trackingEta.textContent = order.rejectionReason || "Order cannot be delivered.";
+  } else if (order.etaMinutes) {
+    trackingEta.textContent = `${order.etaMinutes} minutes to reach your location`;
+  } else {
+    trackingEta.textContent = "Your order is confirmed by the restaurant.";
+  }
+
+  trackingReceiptId.textContent = `Order ID: ${order.id}`;
+  trackingItems.innerHTML = (order.items || [])
+    .map((item) => `<li>${item.name} x ${item.quantity} — ${formatPrice(item.lineTotal || item.price * item.quantity)}</li>`)
+    .join("");
+  trackingTotal.textContent = `Total: ${formatPrice(order?.totals?.total || 0)} (${statusLabel(order.paymentMethod)})`;
+  trackingAddress.textContent = formatAddressLine(order.address);
+  renderTrackingMap(order);
 }
 
 function loadLocalState() {
@@ -1035,7 +1162,7 @@ function openRazorpayCheckout(intent, paymentSessionId) {
           }),
         });
 
-        paymentSummary.textContent = `${result.order.id} has been received and sent to admin.`;
+        paymentSummary.textContent = `${result.order.id} payment verified. Waiting for restaurant confirmation.`;
         adminNotice.textContent = "Payment verified by the server.";
         razorpayRetryButton.classList.add("hidden");
         state.cart.clear();
@@ -1080,7 +1207,7 @@ async function handleCheckout(event) {
     const method = paymentMethod.value;
     if (method === "cod") {
       const order = await createCodOrder();
-      alert(`${order.id} placed and sent to admin for acceptance.`);
+      alert(`${order.id} placed successfully. We will update once the restaurant confirms it.`);
       return;
     }
 
@@ -1103,8 +1230,12 @@ async function loadOrdersForAccount() {
   try {
     const result = await apiRequest("/api/orders/my");
     state.previousOrders = result.orders || [];
+    const acceptedOrder = getTrackableOrder(state.previousOrders);
+    maybeShowAcceptedOrder(acceptedOrder);
+    renderTrackingPanel(acceptedOrder);
   } catch {
     state.previousOrders = [];
+    renderTrackingPanel(null);
   }
 }
 
@@ -1207,6 +1338,10 @@ cartItems.addEventListener("click", (event) => {
 });
 
 checkout.addEventListener("submit", handleCheckout);
+closeOrderReceivedOverlay?.addEventListener("click", closeOrderReceivedCard);
+orderReceivedOverlay?.addEventListener("click", (event) => {
+  if (event.target === orderReceivedOverlay) closeOrderReceivedCard();
+});
 
 async function boot() {
   loadLocalState();
@@ -1221,6 +1356,11 @@ async function boot() {
   }
   renderAccount();
   setInterval(loadMenu, 15000);
+  setInterval(async () => {
+    if (!state.profile?.phone) return;
+    await loadOrdersForAccount();
+    if (state.activeTab === "orders") renderAccount();
+  }, 12000);
 }
 
 boot();

@@ -11,6 +11,14 @@ const adminStats = document.querySelector("#adminStats");
 const ordersList = document.querySelector("#ordersList");
 const menuManager = document.querySelector("#menuManager");
 const menuAddForm = document.querySelector("#menuAddForm");
+const adminLocationMap = document.querySelector("#adminLocationMap");
+const adminUseCurrentLocation = document.querySelector("#adminUseCurrentLocation");
+const adminSaveLocation = document.querySelector("#adminSaveLocation");
+const adminLocationStatus = document.querySelector("#adminLocationStatus");
+
+let locationMap = null;
+let locationMarker = null;
+let selectedAdminLocation = null;
 
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -176,16 +184,59 @@ function renderMenuManager(menu) {
     .join("");
 }
 
+function setAdminLocationStatus(text) {
+  if (adminLocationStatus) adminLocationStatus.textContent = text;
+}
+
+function setAdminLocation(lat, lng, address = "") {
+  selectedAdminLocation = { lat: Number(lat), lng: Number(lng), address };
+  if (!locationMap || !window.L) return;
+  if (!locationMarker) {
+    locationMarker = L.marker([lat, lng], { draggable: true }).addTo(locationMap);
+    locationMarker.on("dragend", () => {
+      const point = locationMarker.getLatLng();
+      setAdminLocation(point.lat, point.lng, selectedAdminLocation?.address || "");
+    });
+  } else {
+    locationMarker.setLatLng([lat, lng]);
+  }
+  locationMap.setView([lat, lng], Math.max(locationMap.getZoom(), 15));
+  setAdminLocationStatus(`Selected location: ${lat.toFixed(5)}, ${lng.toFixed(5)}`);
+}
+
+function initAdminLocationMap(savedLocation) {
+  if (!adminLocationMap || !window.L) return;
+  const start = savedLocation || { lat: 16.3067, lng: 80.4365 };
+  if (!locationMap) {
+    locationMap = L.map(adminLocationMap).setView([start.lat, start.lng], 12);
+    L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      attribution: "&copy; OpenStreetMap contributors",
+      maxZoom: 19,
+    }).addTo(locationMap);
+    locationMap.on("click", (event) => setAdminLocation(event.latlng.lat, event.latlng.lng, ""));
+  } else {
+    locationMap.invalidateSize();
+    locationMap.setView([start.lat, start.lng], 12);
+  }
+  if (savedLocation) {
+    setAdminLocation(savedLocation.lat, savedLocation.lng, savedLocation.address || "");
+  } else {
+    setAdminLocationStatus("Tap on the map to set store location.");
+  }
+}
+
 async function loadDashboard() {
   try {
-    const [ordersPayload, menuPayload] = await Promise.all([
+    const [ordersPayload, menuPayload, locationPayload] = await Promise.all([
       adminRequest("/api/admin/orders"),
       adminRequest("/api/admin/menu"),
+      adminRequest("/api/admin/location"),
     ]);
     showDashboard(true);
     renderStats(ordersPayload.orders || []);
     renderOrders(ordersPayload.orders || []);
     renderMenuManager(menuPayload.menu || []);
+    initAdminLocationMap(locationPayload.adminLocation || null);
   } catch (error) {
     showDashboard(false);
     adminLoginMessage.textContent = error.message;
@@ -292,6 +343,39 @@ menuAddForm?.addEventListener("submit", async (event) => {
     await loadDashboard();
   } catch (error) {
     alert(error.message);
+  }
+});
+
+adminUseCurrentLocation?.addEventListener("click", () => {
+  if (!navigator.geolocation) {
+    setAdminLocationStatus("Browser does not support location access.");
+    return;
+  }
+  setAdminLocationStatus("Requesting location...");
+  navigator.geolocation.getCurrentPosition(
+    (position) => {
+      setAdminLocation(position.coords.latitude, position.coords.longitude, "");
+    },
+    () => {
+      setAdminLocationStatus("Could not get current location. Tap map to set manually.");
+    },
+    { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
+  );
+});
+
+adminSaveLocation?.addEventListener("click", async () => {
+  if (!selectedAdminLocation) {
+    setAdminLocationStatus("Please pick a location first.");
+    return;
+  }
+  try {
+    await adminRequest("/api/admin/location", {
+      method: "PUT",
+      body: JSON.stringify({ location: selectedAdminLocation }),
+    });
+    setAdminLocationStatus("Store location saved.");
+  } catch (error) {
+    setAdminLocationStatus(error.message);
   }
 });
 

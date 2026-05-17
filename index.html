@@ -156,6 +156,30 @@
         </form>
       </aside>
     </section>
+
+    <section class="tracking-panel hidden" id="trackingPanel" aria-label="Order tracking">
+      <div class="tracking-header">
+        <div>
+          <p class="eyebrow">Order status</p>
+          <h2 id="trackingTitle">Order confirmed</h2>
+        </div>
+        <span class="status-pill accepted" id="trackingStatusPill">Accepted</span>
+      </div>
+      <p class="tracking-eta" id="trackingEta">Your order is being prepared.</p>
+      <div class="tracking-mini-map map-canvas" id="trackingMap"></div>
+      <div class="tracking-grid">
+        <article class="tracking-card">
+          <h3>Receipt</h3>
+          <p id="trackingReceiptId"></p>
+          <ul id="trackingItems"></ul>
+          <strong id="trackingTotal"></strong>
+        </article>
+        <article class="tracking-card">
+          <h3>Delivery address</h3>
+          <p id="trackingAddress"></p>
+        </article>
+      </div>
+    </section>
   </main>
 
   <dialog class="payment-dialog" id="paymentDialog">
@@ -170,6 +194,18 @@
       <small id="adminNotice">Payment will be verified by the server before the order is sent to the admin.</small>
     </div>
   </dialog>
+
+  <section class="order-received-overlay hidden" id="orderReceivedOverlay" aria-live="polite">
+    <div class="order-received-card">
+      <div class="order-received-icon" aria-hidden="true">
+        <span>✓</span>
+      </div>
+      <h2>Yay! Order Received</h2>
+      <p class="order-received-address" id="orderReceivedAddress"></p>
+      <p class="order-received-eta" id="orderReceivedEta"></p>
+      <button class="secondary-button" id="closeOrderReceivedOverlay" type="button">Close</button>
+    </div>
+  </section>
 
   <footer>
     <p>Sujaan Bites • Fresh cookies made daily • UPI payment supported</p>

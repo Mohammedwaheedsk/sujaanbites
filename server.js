@@ -21,6 +21,7 @@ const FILES = {
   menu: path.join(DATA_DIR, "menu.json"),
   payments: path.join(DATA_DIR, "payments.json"),
   customers: path.join(DATA_DIR, "customers.json"),
+  settings: path.join(DATA_DIR, "settings.json"),
 };
 
 const BUSINESS = {
@@ -110,6 +111,7 @@ async function ensureStore() {
   await ensureJsonFile(FILES.orders, []);
   await ensureJsonFile(FILES.payments, []);
   await ensureJsonFile(FILES.customers, []);
+  await ensureJsonFile(FILES.settings, { adminLocation: null });
 }
 
 async function getSupabaseClient() {
@@ -427,6 +429,14 @@ async function getPayments() {
   return readJson(FILES.payments, []);
 }
 
+async function getSettings() {
+  return readJson(FILES.settings, { adminLocation: null });
+}
+
+async function saveSettings(settings) {
+  await writeJson(FILES.settings, settings || { adminLocation: null });
+}
+
 async function savePayments(payments) {
   await writeJson(FILES.payments, payments);
 }
@@ -684,6 +694,39 @@ async function handleApi(req, res, url) {
     if (!requireAdmin(req, res)) return;
     const menu = await getMenu();
     sendJson(res, 200, { menu });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/location") {
+    if (!requireAdmin(req, res)) return;
+    const settings = await getSettings();
+    sendJson(res, 200, { adminLocation: settings.adminLocation || null });
+    return;
+  }
+
+  if (req.method === "PUT" && url.pathname === "/api/admin/location") {
+    if (!requireAdmin(req, res)) return;
+    const body = await readBody(req);
+    const location = body?.location;
+    if (
+      !location ||
+      !Number.isFinite(Number(location.lat)) ||
+      !Number.isFinite(Number(location.lng))
+    ) {
+      sendJson(res, 400, { error: "Valid location coordinates are required" });
+      return;
+    }
+
+    const nextLocation = {
+      lat: Number(location.lat),
+      lng: Number(location.lng),
+      address: typeof location.address === "string" ? location.address.trim() : "",
+      updatedAt: new Date().toISOString(),
+    };
+    const settings = await getSettings();
+    settings.adminLocation = nextLocation;
+    await saveSettings(settings);
+    sendJson(res, 200, { adminLocation: nextLocation });
     return;
   }
 
@@ -962,8 +1005,12 @@ async function handleApi(req, res, url) {
       updatedAt: new Date().toISOString(),
     };
     if (body.status === "accepted") {
+      const settings = await getSettings();
       orders[index].adminStatus = "accepted";
       orders[index].acceptedAt = new Date().toISOString();
+      if (settings.adminLocation) {
+        orders[index].restaurantLocation = settings.adminLocation;
+      }
       if (hasEtaMinutes) {
         orders[index].etaMinutes = Math.round(etaMinutes);
         orders[index].etaUpdatedAt = new Date().toISOString();

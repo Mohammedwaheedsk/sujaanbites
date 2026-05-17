@@ -173,6 +173,18 @@
   background: #fff;
 }
 
+.admin-location-panel {
+  display: grid;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.admin-location-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
 #menuManager {
   display: grid;
   gap: 12px;
