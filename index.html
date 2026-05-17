@@ -38,46 +38,6 @@
       </div>
     </section>
 
-    <section class="demo-menu" aria-labelledby="demo-menu-title">
-      <div class="section-head demo-head">
-        <div>
-          <p class="eyebrow">Demo menu</p>
-          <h2 id="demo-menu-title">Our cookie best sellers</h2>
-        </div>
-        <p class="demo-note">A quick preview of what customers can order from Sujaan Bites.</p>
-      </div>
-      <div class="demo-grid">
-        <article class="demo-card">
-          <img class="demo-card-image" src="assets/cookie-butter.png" alt="Butter cookies" />
-          <span class="demo-chip">Classic</span>
-          <h3>Butter Cookies</h3>
-          <p>Golden, crisp, and finished with a soft vanilla note.</p>
-          <strong>₹120</strong>
-        </article>
-        <article class="demo-card">
-          <img class="demo-card-image" src="assets/cookie-chocolate.png" alt="Chocolate chip cookies" />
-          <span class="demo-chip">Chocolate</span>
-          <h3>Chocolate Chip Cookies</h3>
-          <p>Soft-centred cookies with rich chocolate chips.</p>
-          <strong>₹150</strong>
-        </article>
-        <article class="demo-card">
-          <img class="demo-card-image" src="assets/cookie-jam.png" alt="Stuffed jam cookies" />
-          <span class="demo-chip">Stuffed</span>
-          <h3>Stuffed Jam Cookies</h3>
-          <p>Tender cookies with a sweet jam centre.</p>
-          <strong>₹160</strong>
-        </article>
-        <article class="demo-card">
-          <img class="demo-card-image" src="assets/hero-food.png" alt="Assorted cookie box" />
-          <span class="demo-chip">Pack</span>
-          <h3>Assorted Cookie Box</h3>
-          <p>A gift-ready box with 12 mixed cookies.</p>
-          <strong>₹420</strong>
-        </article>
-      </div>
-    </section>
-
     <div class="account-shell-overlay" id="accountOverlay"></div>
     <aside class="account-shell" id="accountShell" aria-label="Customer account">
       <div class="account-shell-head">
@@ -157,15 +117,18 @@
       </aside>
     </section>
 
-    <section class="tracking-panel hidden" id="trackingPanel" aria-label="Order tracking">
-      <div class="tracking-header">
-        <div>
-          <p class="eyebrow">Order status</p>
-          <h2 id="trackingTitle">Order confirmed</h2>
-        </div>
-        <span class="status-pill accepted" id="trackingStatusPill">Accepted</span>
-      </div>
-      <p class="tracking-eta" id="trackingEta">Your order is being prepared.</p>
+  </main>
+
+  <section class="tracking-dock hidden" id="trackingDock" aria-label="Order tracking panel">
+    <button class="tracking-toggle" id="trackingToggle" type="button" aria-expanded="false">
+      <span class="tracking-toggle-left">
+        <strong id="trackingBarTitle">Order confirmed</strong>
+        <small id="trackingBarEta">Estimated delivery time will appear here.</small>
+      </span>
+      <span class="tracking-toggle-right" id="trackingStatusPill">Accepted</span>
+    </button>
+    <div class="tracking-sheet hidden" id="trackingSheet">
+      <p class="tracking-note" id="trackingEta">Your order is being prepared.</p>
       <div class="tracking-mini-map map-canvas" id="trackingMap"></div>
       <div class="tracking-grid">
         <article class="tracking-card">
@@ -179,8 +142,8 @@
           <p id="trackingAddress"></p>
         </article>
       </div>
-    </section>
-  </main>
+    </div>
+  </section>
 
   <dialog class="payment-dialog" id="paymentDialog">
     <form method="dialog">

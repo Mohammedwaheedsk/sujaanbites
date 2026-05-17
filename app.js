@@ -133,8 +133,11 @@ const orderReceivedOverlay = document.querySelector("#orderReceivedOverlay");
 const orderReceivedAddress = document.querySelector("#orderReceivedAddress");
 const orderReceivedEta = document.querySelector("#orderReceivedEta");
 const closeOrderReceivedOverlay = document.querySelector("#closeOrderReceivedOverlay");
-const trackingPanel = document.querySelector("#trackingPanel");
-const trackingTitle = document.querySelector("#trackingTitle");
+const trackingDock = document.querySelector("#trackingDock");
+const trackingToggle = document.querySelector("#trackingToggle");
+const trackingSheet = document.querySelector("#trackingSheet");
+const trackingBarTitle = document.querySelector("#trackingBarTitle");
+const trackingBarEta = document.querySelector("#trackingBarEta");
 const trackingStatusPill = document.querySelector("#trackingStatusPill");
 const trackingEta = document.querySelector("#trackingEta");
 const trackingMapEl = document.querySelector("#trackingMap");
@@ -145,6 +148,7 @@ const trackingAddress = document.querySelector("#trackingAddress");
 
 let trackingMap = null;
 let trackingLayerGroup = null;
+let trackingOpen = false;
 
 function formatPrice(value) {
   return currency.format(value || 0);
@@ -265,23 +269,30 @@ function renderTrackingMap(order) {
 }
 
 function renderTrackingPanel(order) {
-  if (!trackingPanel) return;
+  if (!trackingDock) return;
   if (!order) {
-    trackingPanel.classList.add("hidden");
+    trackingDock.classList.add("hidden");
+    trackingOpen = false;
+    trackingSheet?.classList.add("hidden");
+    trackingToggle?.setAttribute("aria-expanded", "false");
     return;
   }
 
-  trackingPanel.classList.remove("hidden");
-  trackingTitle.textContent = order.status === "cancelled" ? "Order update" : "Order confirmed";
+  trackingDock.classList.remove("hidden");
+  const title = order.status === "cancelled" ? "Order update" : "Order confirmed";
+  trackingBarTitle.textContent = title;
   trackingStatusPill.textContent = statusLabel(order.status);
-  trackingStatusPill.className = `status-pill ${order.status || ""}`;
+  trackingStatusPill.className = `tracking-toggle-right ${order.status || ""}`;
 
   if (order.status === "cancelled") {
+    trackingBarEta.textContent = "Delivery issue update";
     trackingEta.textContent = order.rejectionReason || "Order cannot be delivered.";
   } else if (order.etaMinutes) {
-    trackingEta.textContent = `${order.etaMinutes} minutes to reach your location`;
+    trackingBarEta.textContent = `${order.etaMinutes} min to your location`;
+    trackingEta.textContent = `${order.etaMinutes} minutes to reach your location (estimated). Delivery agent will call you for address and time confirmation.`;
   } else {
-    trackingEta.textContent = "Your order is confirmed by the restaurant.";
+    trackingBarEta.textContent = "Order confirmed by restaurant";
+    trackingEta.textContent = "Your order is confirmed by the restaurant. Delivery agent will call you for address and time confirmation.";
   }
 
   trackingReceiptId.textContent = `Order ID: ${order.id}`;
@@ -290,6 +301,8 @@ function renderTrackingPanel(order) {
     .join("");
   trackingTotal.textContent = `Total: ${formatPrice(order?.totals?.total || 0)} (${statusLabel(order.paymentMethod)})`;
   trackingAddress.textContent = formatAddressLine(order.address);
+  trackingSheet?.classList.toggle("hidden", !trackingOpen);
+  trackingToggle?.setAttribute("aria-expanded", trackingOpen ? "true" : "false");
   renderTrackingMap(order);
 }
 
@@ -1224,6 +1237,7 @@ async function handleCheckout(event) {
 async function loadOrdersForAccount() {
   if (!state.profile?.phone) {
     state.previousOrders = [];
+    renderTrackingPanel(null);
     return;
   }
 
@@ -1341,6 +1355,14 @@ checkout.addEventListener("submit", handleCheckout);
 closeOrderReceivedOverlay?.addEventListener("click", closeOrderReceivedCard);
 orderReceivedOverlay?.addEventListener("click", (event) => {
   if (event.target === orderReceivedOverlay) closeOrderReceivedCard();
+});
+trackingToggle?.addEventListener("click", () => {
+  trackingOpen = !trackingOpen;
+  trackingSheet?.classList.toggle("hidden", !trackingOpen);
+  trackingToggle.setAttribute("aria-expanded", trackingOpen ? "true" : "false");
+  if (trackingOpen) {
+    setTimeout(() => trackingMap?.invalidateSize(), 120);
+  }
 });
 
 async function boot() {
