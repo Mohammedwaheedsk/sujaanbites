@@ -1061,6 +1061,17 @@ textarea {
   font-weight: 800;
 }
 
+.rating-item {
+  display: grid;
+  gap: 8px;
+  padding: 10px 0;
+}
+
+.rating-item span {
+  color: var(--ink);
+  font-weight: 800;
+}
+
 .secondary-link {
   border: 1px solid var(--line);
   color: var(--mint);

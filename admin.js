@@ -95,6 +95,11 @@ function renderOrder(order) {
   const mapsUrl = address.location
     ? `https://www.google.com/maps/search/?api=1&query=${address.location.lat},${address.location.lng}`
     : "";
+  const itemNames = new Map((order.items || []).map((item) => [item.id, item.name]));
+  const reviewSummary =
+    Array.isArray(order.review?.productRatings) && order.review.productRatings.length
+      ? order.review.productRatings.map((rating) => `${itemNames.get(rating.id) || rating.id}:${rating.rating}`).join(", ")
+      : "-";
 
   const dueReminder = isDeliveryCheckDue(order)
     ? '<p class="form-note" style="color:#8d1f1f;font-weight:800;">ETA + 2 min passed. Please check with delivery agent and update status.</p>'
@@ -145,7 +150,7 @@ function renderOrder(order) {
             Razorpay payment: ${order.razorpayPaymentId || "-"}<br>
             Verified at: ${order.paymentVerifiedAt ? formatDate(order.paymentVerifiedAt) : "-"}<br>
             Delivery rating: ${order.review?.deliveryRating || "-"}<br>
-            Product ratings: ${Array.isArray(order.review?.productRatings) ? order.review.productRatings.map((r) => `${r.id}:${r.rating}`).join(", ") || "-" : "-"}
+            Product ratings: ${reviewSummary}
           </p>
         </div>
       </div>

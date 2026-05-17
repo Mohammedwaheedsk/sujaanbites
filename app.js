@@ -21,6 +21,9 @@ const STORAGE_KEYS = {
   lastAcceptedOrderShown: "spiceTableLastAcceptedOrderShown",
   lastCustomerMessageShown: "spiceTableLastCustomerMessageShown",
   lastCancelledOrderShown: "spiceTableLastCancelledOrderShown",
+  lastCompletedOrderShown: "spiceTableLastCompletedOrderShown",
+  lastDeliveryRatingShown: "spiceTableLastDeliveryRatingShown",
+  lastProductRatingShown: "spiceTableLastProductRatingShown",
 };
 
 const state = {
@@ -131,6 +134,14 @@ const paymentDialog = document.querySelector("#paymentDialog");
 const paymentSummary = document.querySelector("#paymentSummary");
 const razorpayRetryButton = document.querySelector("#razorpayRetryButton");
 const adminNotice = document.querySelector("#adminNotice");
+const deliveryRatingDialog = document.querySelector("#deliveryRatingDialog");
+const deliveryRatingForm = document.querySelector("#deliveryRatingForm");
+const deliveryRatingInput = document.querySelector("#deliveryRatingInput");
+const deliveryRatingComment = document.querySelector("#deliveryRatingComment");
+const productRatingDialog = document.querySelector("#productRatingDialog");
+const productRatingForm = document.querySelector("#productRatingForm");
+const productRatingItems = document.querySelector("#productRatingItems");
+const productRatingComment = document.querySelector("#productRatingComment");
 const orderReceivedOverlay = document.querySelector("#orderReceivedOverlay");
 const orderReceivedTitle = document.querySelector("#orderReceivedTitle");
 const orderReceivedSymbol = document.querySelector("#orderReceivedSymbol");
@@ -196,6 +207,9 @@ function clearSession() {
   localStorage.removeItem(STORAGE_KEYS.lastAcceptedOrderShown);
   localStorage.removeItem(STORAGE_KEYS.lastCustomerMessageShown);
   localStorage.removeItem(STORAGE_KEYS.lastCancelledOrderShown);
+  localStorage.removeItem(STORAGE_KEYS.lastCompletedOrderShown);
+  localStorage.removeItem(STORAGE_KEYS.lastDeliveryRatingShown);
+  localStorage.removeItem(STORAGE_KEYS.lastProductRatingShown);
   state.cart.clear();
 }
 
@@ -213,8 +227,13 @@ function closeOrderReceivedCard() {
 function openOrderReceivedCard(order) {
   if (!orderReceivedOverlay || !orderReceivedAddress || !orderReceivedEta) return;
   const cancelled = order?.status === "cancelled";
+  const completed = order?.status === "completed";
   if (orderReceivedTitle) {
-    orderReceivedTitle.textContent = cancelled ? "Order Update" : "Yay! Restaurant Accepted Your Order";
+    orderReceivedTitle.textContent = cancelled
+      ? "Order Update"
+      : completed
+        ? "Delivery Completed"
+        : "Yay! Restaurant Accepted Your Order";
   }
   if (orderReceivedSymbol) {
     orderReceivedSymbol.textContent = cancelled ? "✕" : "✓";
@@ -223,9 +242,11 @@ function openOrderReceivedCard(order) {
   orderReceivedAddress.textContent = formatReceivedAddressLine(order.address);
   orderReceivedEta.textContent = cancelled
     ? "The order can not be delivered"
-    : order.etaMinutes && Number.isFinite(Number(order.etaMinutes))
-      ? `${Math.round(Number(order.etaMinutes))} minutes to reach your location`
-      : "Your order is confirmed by the restaurant.";
+    : completed
+      ? "Delivery completed. Please rate the delivery and products."
+      : order.etaMinutes && Number.isFinite(Number(order.etaMinutes))
+        ? `${Math.round(Number(order.etaMinutes))} minutes to reach your location`
+        : "Your order is confirmed by the restaurant.";
   orderReceivedOverlay.classList.remove("hidden");
 }
 
@@ -237,21 +258,80 @@ function maybeShowAcceptedOrder(order) {
   openOrderReceivedCard(order);
 }
 
-function maybeShowCancelledOrder(orders) {
-  const cancelledOrder = [...(orders || [])]
+function maybeShowCancelledOrder(order) {
+  if (!order || order.status !== "cancelled") return;
+  const marker = `${order.id}:${order.updatedAt || order.createdAt}`;
+  const shown = localStorage.getItem(STORAGE_KEYS.lastCancelledOrderShown) || "";
+  if (shown === marker) return;
+  localStorage.setItem(STORAGE_KEYS.lastCancelledOrderShown, marker);
+  openOrderReceivedCard(order);
+}
+
+function maybeShowCompletedOrder(order) {
+  if (!order || order.status !== "completed") return;
+  const marker = `${order.id}:${order.completedAt || order.updatedAt || order.createdAt}`;
+  const shown = localStorage.getItem(STORAGE_KEYS.lastCompletedOrderShown) || "";
+  if (shown === marker) return;
+  localStorage.setItem(STORAGE_KEYS.lastCompletedOrderShown, marker);
+  openOrderReceivedCard(order);
+}
+
+function getLatestOrder(orders) {
+  return [...(orders || [])]
     .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
-    .find((order) => order.status === "cancelled");
-  if (!cancelledOrder) return;
-  const shownId = localStorage.getItem(STORAGE_KEYS.lastCancelledOrderShown) || "";
-  if (shownId === cancelledOrder.id) return;
-  localStorage.setItem(STORAGE_KEYS.lastCancelledOrderShown, cancelledOrder.id);
-  openOrderReceivedCard(cancelledOrder);
+    .find(Boolean);
 }
 
 function getTrackableOrder(orders) {
-  return [...(orders || [])]
-    .sort((a, b) => new Date(b.updatedAt || b.createdAt) - new Date(a.updatedAt || a.createdAt))
-    .find((order) => ["accepted", "preparing", "out_for_delivery"].includes(order.status));
+  return getLatestOrder(orders);
+}
+
+function renderDeliveryRatingItems(order) {
+  const items = Array.isArray(order?.items) ? order.items : [];
+  if (!productRatingItems) return;
+  productRatingItems.innerHTML = items
+    .map(
+      (item) => `
+        <label class="rating-item">
+          <span>${item.name} x ${item.quantity}</span>
+          <select data-product-rating="${item.id}" required>
+            <option value="5">5 - Excellent</option>
+            <option value="4">4 - Good</option>
+            <option value="3">3 - Okay</option>
+            <option value="2">2 - Poor</option>
+            <option value="1">1 - Bad</option>
+          </select>
+        </label>
+      `,
+    )
+    .join("");
+}
+
+function promptDeliveryRating(order) {
+  if (!order || order.status !== "completed") return;
+  if (order.review?.deliveryRating) return;
+  const marker = `${order.id}:${order.completedAt || order.updatedAt || order.createdAt}`;
+  const shown = localStorage.getItem(STORAGE_KEYS.lastDeliveryRatingShown) || "";
+  if (shown === marker) return;
+  localStorage.setItem(STORAGE_KEYS.lastDeliveryRatingShown, marker);
+  deliveryRatingDialog?.showModal();
+  if (deliveryRatingInput) deliveryRatingInput.value = "";
+  if (deliveryRatingComment) deliveryRatingComment.value = "";
+}
+
+function promptProductRating(order) {
+  if (!order || order.status !== "completed") return;
+  if (Array.isArray(order.review?.productRatings) && order.review.productRatings.length) return;
+  const completedAt = new Date(order.completedAt || order.updatedAt || order.createdAt).getTime();
+  if (!Number.isFinite(completedAt)) return;
+  if (Date.now() < completedAt + 5 * 60 * 1000) return;
+  const marker = `${order.id}:${order.completedAt || order.updatedAt || order.createdAt}`;
+  const shown = localStorage.getItem(STORAGE_KEYS.lastProductRatingShown) || "";
+  if (shown === marker) return;
+  localStorage.setItem(STORAGE_KEYS.lastProductRatingShown, marker);
+  renderDeliveryRatingItems(order);
+  productRatingDialog?.showModal();
+  if (productRatingComment) productRatingComment.value = "";
 }
 
 function maybeShowCustomerMessage(orders) {
@@ -303,6 +383,18 @@ function updateTrackingEtaText(order) {
   if (order.status === "cancelled") {
     trackingBarEta.textContent = "Delivery issue update";
     trackingEta.textContent = order.rejectionReason || "Order cannot be delivered.";
+    return;
+  }
+
+  if (order.status === "completed") {
+    trackingBarEta.textContent = "Delivery completed";
+    trackingEta.textContent = "Your order has been delivered. Please check your rating popups.";
+    return;
+  }
+
+  if (["pending_admin_acceptance", "received"].includes(order.status)) {
+    trackingBarEta.textContent = "Waiting for restaurant confirmation";
+    trackingEta.textContent = "Your order was placed successfully. The restaurant will confirm it soon.";
     return;
   }
 
@@ -379,7 +471,14 @@ function renderTrackingPanel(order) {
   }
 
   trackingDock.classList.remove("hidden");
-  const title = order.status === "cancelled" ? "Order update" : "Order confirmed";
+  const title =
+    order.status === "cancelled"
+      ? "Order update"
+      : order.status === "completed"
+        ? "Delivery completed"
+        : ["pending_admin_acceptance", "received"].includes(order.status)
+          ? "Order placed"
+          : "Order confirmed";
   trackingBarTitle.textContent = title;
   trackingStatusPill.textContent = statusLabel(order.status);
   trackingStatusPill.className = `tracking-toggle-right ${order.status || ""}`;
@@ -1327,6 +1426,7 @@ function openRazorpayCheckout(intent, paymentSessionId) {
         razorpayRetryButton.classList.add("hidden");
         state.cart.clear();
         await loadPreviousOrders();
+        await loadOrdersForAccount();
         renderCart();
       } catch (error) {
         paymentSummary.textContent = `Payment response received, but verification failed. ${error.message}`;
@@ -1368,6 +1468,7 @@ async function handleCheckout(event) {
     if (method === "cod") {
       const order = await createCodOrder();
       alert(`${order.id} placed successfully. We will update once the restaurant confirms it.`);
+      await loadOrdersForAccount();
       return;
     }
 
@@ -1392,10 +1493,23 @@ async function loadOrdersForAccount() {
     const result = await apiRequest("/api/orders/my");
     state.previousOrders = result.orders || [];
     maybeShowCustomerMessage(state.previousOrders);
-    maybeShowCancelledOrder(state.previousOrders);
-    const acceptedOrder = getTrackableOrder(state.previousOrders);
-    maybeShowAcceptedOrder(acceptedOrder);
-    renderTrackingPanel(acceptedOrder);
+    const latestOrder = getLatestOrder(state.previousOrders);
+    maybeShowCancelledOrder(latestOrder);
+    maybeShowAcceptedOrder(latestOrder);
+    maybeShowCompletedOrder(latestOrder);
+    if (latestOrder?.status === "completed") {
+      const completedMarker = `${latestOrder.id}:${latestOrder.completedAt || latestOrder.updatedAt || latestOrder.createdAt}`;
+      const completedAt = new Date(latestOrder.completedAt || latestOrder.updatedAt || latestOrder.createdAt).getTime();
+      const deliveryShown = localStorage.getItem(STORAGE_KEYS.lastDeliveryRatingShown) === completedMarker;
+      const productShown = localStorage.getItem(STORAGE_KEYS.lastProductRatingShown) === completedMarker;
+
+      if (!latestOrder.review?.deliveryRating && !deliveryShown && (!Number.isFinite(completedAt) || Date.now() < completedAt + 5 * 60 * 1000)) {
+        promptDeliveryRating(latestOrder);
+      } else if (!latestOrder.review?.productRatings?.length && !productShown && Number.isFinite(completedAt) && Date.now() >= completedAt + 5 * 60 * 1000) {
+        promptProductRating(latestOrder);
+      }
+    }
+    renderTrackingPanel(latestOrder);
   } catch {
     state.previousOrders = [];
     renderTrackingPanel(null);
@@ -1522,6 +1636,57 @@ trackingToggle?.addEventListener("click", () => {
   }
 });
 closeCustomerMessageDialog?.addEventListener("click", () => customerMessageDialog?.close());
+
+deliveryRatingForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const order = getLatestOrder(state.previousOrders);
+  if (!order) return;
+
+  const payload = {
+    type: "delivery",
+    deliveryRating: Number(deliveryRatingInput?.value),
+    deliveryComment: deliveryRatingComment?.value || "",
+  };
+
+  try {
+    await apiRequest(`/api/orders/${order.id}/reviews`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+    localStorage.removeItem(STORAGE_KEYS.lastDeliveryRatingShown);
+    deliveryRatingDialog?.close();
+    await loadOrdersForAccount();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+productRatingForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const order = getLatestOrder(state.previousOrders);
+  if (!order) return;
+
+  const productRatings = Array.from(productRatingItems?.querySelectorAll("[data-product-rating]") || []).map((select) => ({
+    id: select.dataset.productRating,
+    rating: Number(select.value),
+  }));
+
+  try {
+    await apiRequest(`/api/orders/${order.id}/reviews`, {
+      method: "POST",
+      body: JSON.stringify({
+        type: "products",
+        productRatings,
+        productComment: productRatingComment?.value || "",
+      }),
+    });
+    localStorage.removeItem(STORAGE_KEYS.lastProductRatingShown);
+    productRatingDialog?.close();
+    await loadOrdersForAccount();
+  } catch (error) {
+    alert(error.message);
+  }
+});
 
 async function boot() {
   loadLocalState();
