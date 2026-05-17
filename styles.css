@@ -1040,6 +1040,10 @@ textarea {
   line-height: 1;
 }
 
+.order-received-icon.cancelled {
+  background: #c62828;
+}
+
 .order-received-card h2 {
   font-size: clamp(2rem, 7vw, 2.8rem);
 }
@@ -1071,7 +1075,22 @@ footer {
 
 @media (max-width: 880px) {
   .nav {
+    display: flex;
+    margin-left: auto;
+  }
+
+  .nav a {
     display: none;
+  }
+
+  .nav-button {
+    min-height: 38px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 0 14px;
+    color: var(--mint);
+    background: #fff;
+    font-weight: 800;
   }
 
   .hero::after {
