@@ -950,13 +950,27 @@ async function handleApi(req, res, url) {
   if (req.method === "DELETE" && url.pathname.startsWith("/api/admin/menu/")) {
     if (!requireAdmin(req, res)) return;
     const menuId = url.pathname.split("/").pop();
-    const menu = await getMenu();
+    let menu = await getMenu();
     const index = menu.findIndex((item) => item.id === menuId);
     if (index === -1) {
       sendJson(res, 404, { error: "Menu item not found" });
       return;
     }
     const [deleted] = menu.splice(index, 1);
+
+    if (USE_SUPABASE) {
+      try {
+        const supabase = await getSupabaseClient();
+        const { error } = await supabase.from("menu_items").delete().eq("id", menuId);
+        if (error) throw error;
+        await writeJson(FILES.menu, menu.map(normalizeMenuItem));
+        sendJson(res, 200, { item: deleted });
+        return;
+      } catch (error) {
+        console.warn(`Supabase menu delete failed, falling back to local files: ${error.message}`);
+      }
+    }
+
     await saveMenu(menu);
     sendJson(res, 200, { item: deleted });
     return;

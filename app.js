@@ -1278,10 +1278,20 @@ function initLocationMap() {
         useLocationButton.textContent = "Use current location";
         setMapPin(position.coords.latitude, position.coords.longitude, true);
       },
-      () => {
+      (error) => {
         useLocationButton.disabled = false;
-        useLocationButton.textContent = "Ask location permission again";
-        setLocationMessage("Location permission was not allowed. Please allow location access, then press Ask location permission again, or tap the map to place the pin.");
+        useLocationButton.textContent = "Try current location";
+        if (state.selectedLocation) {
+          setLocationMessage(`Pin already saved at ${state.selectedLocation.lat.toFixed(5)}, ${state.selectedLocation.lng.toFixed(5)}. Tap map to update if needed.`);
+          return;
+        }
+        if (error?.code === 1) {
+          setLocationMessage("Current location is blocked in browser settings. You can still tap the map to place your delivery pin.");
+        } else if (error?.code === 2 || error?.code === 3) {
+          setLocationMessage("Could not fetch current location right now. Please try again or tap the map to place your delivery pin.");
+        } else {
+          setLocationMessage("Current location is unavailable. Tap the map to place your delivery pin.");
+        }
       },
       { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
     );
