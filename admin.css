@@ -20,6 +20,10 @@
   gap: 18px;
 }
 
+.admin-grid > section {
+  min-width: 0;
+}
+
 .admin-subhead {
   display: grid;
   gap: 6px;
@@ -200,6 +204,13 @@
   background: #fff;
   max-height: 82vh;
   overflow: auto;
+}
+
+.admin-panel {
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: #fff;
 }
 
 .admin-location-panel {
