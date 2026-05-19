@@ -141,6 +141,7 @@ const deliveryRatingComment = document.querySelector("#deliveryRatingComment");
 const productRatingDialog = document.querySelector("#productRatingDialog");
 const productRatingForm = document.querySelector("#productRatingForm");
 const productRatingItems = document.querySelector("#productRatingItems");
+const productRatingSummary = document.querySelector("#productRatingSummary");
 const productRatingComment = document.querySelector("#productRatingComment");
 const orderReceivedOverlay = document.querySelector("#orderReceivedOverlay");
 const orderReceivedTitle = document.querySelector("#orderReceivedTitle");
@@ -308,12 +309,17 @@ function getTrackableOrder(orders) {
 
 function renderDeliveryRatingItems(order) {
   const items = Array.isArray(order?.items) ? order.items : [];
+  if (productRatingSummary) {
+    productRatingSummary.textContent = items.length
+      ? `Ordered items: ${items.map((item) => `${item.name} x ${item.quantity}`).join(", ")}`
+      : "Ordered items will appear here.";
+  }
   if (!productRatingItems) return;
   productRatingItems.innerHTML = items
     .map(
       (item) => `
         <label class="rating-item">
-          <span>${item.name} x ${item.quantity}</span>
+          <span>How was the taste of cookies? (${item.name} x ${item.quantity})</span>
           <input type="hidden" data-product-rating-input="${item.id}" value="0" />
           <div class="star-rating" data-product-rating="${item.id}" data-rating-target="product-${item.id}" role="radiogroup" aria-label="Rating for ${item.name}">
             <button type="button" class="star-button" data-star-value="1" aria-label="1 star">★</button>
