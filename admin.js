@@ -13,6 +13,9 @@ const liveOrdersList = document.querySelector("#liveOrdersList");
 const reviewsList = document.querySelector("#reviewsList");
 const menuManager = document.querySelector("#menuManager");
 const menuAddForm = document.querySelector("#menuAddForm");
+const categoryManager = document.querySelector("#categoryManager");
+const newCategoryName = document.querySelector("#newCategoryName");
+const addCategoryButton = document.querySelector("#addCategoryButton");
 const menuStockCount = document.querySelector("#menuStockCount");
 const menuImageFile = document.querySelector("#menuImageFile");
 const historyFilters = document.querySelector("#historyFilters");
@@ -33,6 +36,7 @@ let alertTimer = null;
 let lastOrderSnapshot = "";
 let lastDashboardFocusedAt = 0;
 let alertAudio = null;
+let configuredCategories = [];
 
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -69,6 +73,22 @@ function formatCategoryLabel(value) {
     .filter(Boolean)
     .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
     .join(" ");
+}
+
+function normalizeCategoryName(value) {
+  return String(value || "").trim();
+}
+
+function normalizeCategoryList(values) {
+  if (!Array.isArray(values)) return [];
+  const unique = new Map();
+  for (const value of values) {
+    const label = normalizeCategoryName(value);
+    if (!label) continue;
+    const key = label.toLowerCase();
+    if (!unique.has(key)) unique.set(key, label);
+  }
+  return [...unique.values()];
 }
 
 function readFileAsDataUrl(file) {
@@ -416,6 +436,38 @@ function renderMenuManager(menu) {
     .join("");
 }
 
+function renderCategoryManager() {
+  if (!categoryManager) return;
+  if (!configuredCategories.length) {
+    categoryManager.innerHTML = '<p class="empty">No categories configured yet.</p>';
+    return;
+  }
+
+  categoryManager.innerHTML = `
+    <div class="filters">
+      ${configuredCategories
+        .map(
+          (category) => `
+            <button class="filter" type="button" data-remove-category="${category}" title="Remove ${category}">
+              ${formatCategoryLabel(category)} ×
+            </button>
+          `,
+        )
+        .join("")}
+    </div>
+  `;
+}
+
+async function saveCategories(nextCategories) {
+  const categories = normalizeCategoryList(nextCategories);
+  const payload = await adminRequest("/api/admin/categories", {
+    method: "PUT",
+    body: JSON.stringify({ categories }),
+  });
+  configuredCategories = normalizeCategoryList(payload.categories || []);
+  renderCategoryManager();
+}
+
 function renderHistory(payload) {
   const summary = payload?.summary || {};
   const days = payload?.days || [];
@@ -507,15 +559,18 @@ function initAdminLocationMap(savedLocation) {
 
 async function loadDashboard() {
   try {
-    const [ordersPayload, menuPayload, locationPayload] = await Promise.all([
+    const [ordersPayload, menuPayload, locationPayload, categoriesPayload] = await Promise.all([
       adminRequest("/api/admin/orders"),
       adminRequest("/api/admin/menu"),
       adminRequest("/api/admin/location"),
+      adminRequest("/api/admin/categories"),
     ]);
     showDashboard(true);
     renderStats(ordersPayload.orders || []);
     renderOrders(ordersPayload.orders || []);
     renderMenuManager(menuPayload.menu || []);
+    configuredCategories = normalizeCategoryList(categoriesPayload.categories || []);
+    renderCategoryManager();
     initAdminLocationMap(locationPayload.adminLocation || null);
     await loadHistory();
     const nextSnapshot = getSnapshot(ordersPayload.orders || []);
@@ -687,6 +742,30 @@ menuAddForm?.addEventListener("submit", async (event) => {
     if (menuStockCount) menuStockCount.value = "20";
     markAdminSeen();
     await loadDashboard();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+addCategoryButton?.addEventListener("click", async () => {
+  const value = normalizeCategoryName(newCategoryName?.value);
+  if (!value) return;
+  try {
+    await saveCategories([...configuredCategories, value]);
+    if (newCategoryName) newCategoryName.value = "";
+    markAdminSeen();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+categoryManager?.addEventListener("click", async (event) => {
+  const remove = event.target.closest("[data-remove-category]");
+  if (!remove) return;
+  const category = remove.dataset.removeCategory;
+  try {
+    await saveCategories(configuredCategories.filter((entry) => entry.toLowerCase() !== String(category || "").toLowerCase()));
+    markAdminSeen();
   } catch (error) {
     alert(error.message);
   }

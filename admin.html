@@ -94,6 +94,19 @@
             <h2>Menu catalog</h2>
             <p>Add, remove, and toggle cookie items live for customers.</p>
           </div>
+          <div class="admin-subhead">
+            <h2>Menu categories</h2>
+            <p>Control category chips shown to customers in the menu filters.</p>
+          </div>
+          <form class="menu-add-form" id="categoryForm">
+            <label>
+              Category name
+              <input id="newCategoryName" type="text" placeholder="Classic" />
+            </label>
+            <button class="secondary-button" id="addCategoryButton" type="button">Add category</button>
+          </form>
+          <div id="categoryManager"></div>
+
           <form class="menu-add-form" id="menuAddForm">
             <label>
               Item name

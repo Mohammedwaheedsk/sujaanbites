@@ -34,68 +34,7 @@ const BUSINESS = {
 
 const DEFAULT_STOCK_COUNT = 20;
 
-const DEFAULT_MENU = [
-  {
-    id: "butter",
-    name: "Butter Cookies",
-    description: "Crisp, golden butter cookies with a light vanilla finish.",
-    price: 120,
-    category: "classic",
-    image: "assets/cookie-butter.png",
-    available: true,
-    stockCount: DEFAULT_STOCK_COUNT,
-  },
-  {
-    id: "choco-chip",
-    name: "Chocolate Chip Cookies",
-    description: "Soft-centred cookies loaded with rich chocolate chips.",
-    price: 150,
-    category: "chocolate",
-    image: "assets/cookie-chocolate.png",
-    available: true,
-    stockCount: DEFAULT_STOCK_COUNT,
-  },
-  {
-    id: "oatmeal",
-    name: "Oatmeal Raisin Cookies",
-    description: "Chewy oats with raisins and a warm cinnamon note.",
-    price: 130,
-    category: "classic",
-    image: "assets/cookie-butter.png",
-    available: true,
-    stockCount: DEFAULT_STOCK_COUNT,
-  },
-  {
-    id: "filled-biscuit",
-    name: "Stuffed Jam Cookies",
-    description: "Tender cookies with a sweet strawberry jam centre.",
-    price: 160,
-    category: "stuffed",
-    image: "assets/cookie-jam.png",
-    available: true,
-    stockCount: DEFAULT_STOCK_COUNT,
-  },
-  {
-    id: "brownie-bite",
-    name: "Chocolate Fudge Cookies",
-    description: "Dense cocoa cookies with a fudgy brownie-like bite.",
-    price: 170,
-    category: "chocolate",
-    image: "assets/cookie-chocolate.png",
-    available: true,
-    stockCount: DEFAULT_STOCK_COUNT,
-  },
-  {
-    id: "gift-pack",
-    name: "Assorted Cookie Box",
-    description: "A mixed box of 12 cookies, perfect for gifting.",
-    price: 420,
-    category: "packs",
-    image: "assets/hero-food.png",
-    available: true,
-    stockCount: DEFAULT_STOCK_COUNT,
-  },
-];
+const DEFAULT_MENU = [];
 
 const MIME_TYPES = {
   ".css": "text/css; charset=utf-8",
@@ -119,7 +58,7 @@ async function ensureStore() {
   await ensureJsonFile(FILES.orders, []);
   await ensureJsonFile(FILES.payments, []);
   await ensureJsonFile(FILES.customers, []);
-  await ensureJsonFile(FILES.settings, { adminLocation: null });
+  await ensureJsonFile(FILES.settings, { adminLocation: null, menuCategories: [] });
 }
 
 async function getSupabaseClient() {
@@ -268,6 +207,7 @@ function fromSettingsRow(row) {
   const payload = row?.payload && typeof row.payload === "object" ? row.payload : {};
   return {
     adminLocation: payload.adminLocation || null,
+    menuCategories: normalizeMenuCategories(payload.menuCategories),
   };
 }
 
@@ -277,8 +217,21 @@ function toSettingsRow(settings) {
     updated_at: new Date().toISOString(),
     payload: {
       adminLocation: settings?.adminLocation || null,
+      menuCategories: normalizeMenuCategories(settings?.menuCategories),
     },
   };
+}
+
+function normalizeMenuCategories(values) {
+  if (!Array.isArray(values)) return [];
+  const unique = new Map();
+  for (const value of values) {
+    const label = String(value || "").trim();
+    if (!label) continue;
+    const key = label.toLowerCase();
+    if (!unique.has(key)) unique.set(key, label);
+  }
+  return [...unique.values()];
 }
 
 function normalizePhone(phone) {
@@ -402,8 +355,8 @@ async function getMenu() {
         }
         return data.map(fromMenuRow);
       }
-      await saveMenu(DEFAULT_MENU);
-      return DEFAULT_MENU;
+      const localMenu = await readJson(FILES.menu, DEFAULT_MENU);
+      return Array.isArray(localMenu) ? localMenu.map(normalizeMenuItem) : DEFAULT_MENU;
     } catch (error) {
       console.warn(`Supabase menu read failed, falling back to local files: ${error.message}`);
     }
@@ -421,6 +374,15 @@ async function saveMenu(menu) {
       const rows = normalized.map(toMenuRow);
       const { error } = await supabase.from("menu_items").upsert(rows, { onConflict: "id" });
       if (error) throw error;
+      const ids = normalized.map((item) => item.id).filter(Boolean);
+      if (ids.length > 0) {
+        const inFilter = `(${ids.map((id) => `"${String(id).replaceAll('"', '\\"')}"`).join(",")})`;
+        const { error: deleteError } = await supabase.from("menu_items").delete().not("id", "in", inFilter);
+        if (deleteError) throw deleteError;
+      } else {
+        const { error: clearError } = await supabase.from("menu_items").delete().not("id", "is", null);
+        if (clearError) throw clearError;
+      }
       await writeJson(FILES.menu, normalized);
       return;
     } catch (error) {
@@ -428,7 +390,7 @@ async function saveMenu(menu) {
       if (message.includes("stock_count")) {
         throw new Error("Supabase schema is missing stock_count. Run the latest supabase.sql and redeploy.");
       }
-      console.warn(`Supabase menu write failed, falling back to local files: ${message}`);
+      throw new Error(`Supabase menu write failed: ${message || "unknown error"}`);
     }
   }
 
@@ -510,7 +472,7 @@ async function getSettings() {
         await writeJson(FILES.settings, settings);
         return settings;
       }
-      const localSettings = await readJson(FILES.settings, { adminLocation: null });
+      const localSettings = await readJson(FILES.settings, { adminLocation: null, menuCategories: [] });
       const row = toSettingsRow(localSettings);
       const { error: upsertError } = await supabase.from("settings").upsert(row, { onConflict: "id" });
       if (upsertError) throw upsertError;
@@ -519,11 +481,18 @@ async function getSettings() {
       console.warn(`Supabase settings read failed, falling back to local files: ${error.message}`);
     }
   }
-  return readJson(FILES.settings, { adminLocation: null });
+  const settings = await readJson(FILES.settings, { adminLocation: null, menuCategories: [] });
+  return {
+    adminLocation: settings?.adminLocation || null,
+    menuCategories: normalizeMenuCategories(settings?.menuCategories),
+  };
 }
 
 async function saveSettings(settings) {
-  const normalized = settings || { adminLocation: null };
+  const normalized = {
+    adminLocation: settings?.adminLocation || null,
+    menuCategories: normalizeMenuCategories(settings?.menuCategories),
+  };
   if (USE_SUPABASE) {
     try {
       const supabase = await getSupabaseClient();
@@ -591,6 +560,7 @@ async function saveCustomerRecord(phone, state) {
 
 async function seedMenuIfNeeded() {
   if (!USE_SUPABASE) return;
+  if (!Array.isArray(DEFAULT_MENU) || DEFAULT_MENU.length === 0) return;
 
   try {
     const supabase = await getSupabaseClient();
@@ -790,7 +760,8 @@ async function finalizeRazorpayOrder(body) {
 async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/menu") {
     const menu = await getMenu();
-    sendJson(res, 200, { menu });
+    const settings = await getSettings();
+    sendJson(res, 200, { menu, categories: settings.menuCategories || [] });
     return;
   }
 
@@ -851,6 +822,24 @@ async function handleApi(req, res, url) {
     if (!requireAdmin(req, res)) return;
     const settings = await getSettings();
     sendJson(res, 200, { adminLocation: settings.adminLocation || null });
+    return;
+  }
+
+  if (req.method === "GET" && url.pathname === "/api/admin/categories") {
+    if (!requireAdmin(req, res)) return;
+    const settings = await getSettings();
+    sendJson(res, 200, { categories: settings.menuCategories || [] });
+    return;
+  }
+
+  if (req.method === "PUT" && url.pathname === "/api/admin/categories") {
+    if (!requireAdmin(req, res)) return;
+    const body = await readBody(req);
+    const categories = normalizeMenuCategories(body?.categories);
+    const settings = await getSettings();
+    settings.menuCategories = categories;
+    await saveSettings(settings);
+    sendJson(res, 200, { categories });
     return;
   }
 
@@ -950,27 +939,13 @@ async function handleApi(req, res, url) {
   if (req.method === "DELETE" && url.pathname.startsWith("/api/admin/menu/")) {
     if (!requireAdmin(req, res)) return;
     const menuId = url.pathname.split("/").pop();
-    let menu = await getMenu();
+    const menu = await getMenu();
     const index = menu.findIndex((item) => item.id === menuId);
     if (index === -1) {
       sendJson(res, 404, { error: "Menu item not found" });
       return;
     }
     const [deleted] = menu.splice(index, 1);
-
-    if (USE_SUPABASE) {
-      try {
-        const supabase = await getSupabaseClient();
-        const { error } = await supabase.from("menu_items").delete().eq("id", menuId);
-        if (error) throw error;
-        await writeJson(FILES.menu, menu.map(normalizeMenuItem));
-        sendJson(res, 200, { item: deleted });
-        return;
-      } catch (error) {
-        console.warn(`Supabase menu delete failed, falling back to local files: ${error.message}`);
-      }
-    }
-
     await saveMenu(menu);
     sendJson(res, 200, { item: deleted });
     return;
@@ -1012,46 +987,12 @@ async function handleApi(req, res, url) {
       return;
     }
 
-    if (paymentMethod !== "cod") {
-      sendJson(res, 400, { error: "Prepaid orders must be verified through Razorpay" });
+    if (paymentMethod === "cod") {
+      sendJson(res, 400, { error: "Cash on delivery is not available. Please pay by UPI." });
       return;
     }
 
-    if (orderType === "delivery") {
-      validateAddress(body.address);
-    }
-
-    const order = {
-      id: `ST${Date.now().toString().slice(-7)}`,
-      createdAt: new Date().toISOString(),
-      status: "received",
-      adminStatus: "pending",
-      paymentMethod,
-      paymentStatus: "cod_pending",
-      customerPhone,
-      customerName,
-      orderType,
-      address: body.address || null,
-      items: calculated.rows,
-      totals: calculated.totals,
-      notes: body.notes || "",
-    };
-
-    const reservedMenu = applyMenuStockChange(menu, calculated.rows, -1);
-    const orders = await getOrders();
-    orders.push(order);
-    try {
-      await saveMenu(reservedMenu);
-      await saveOrders(orders);
-    } catch (error) {
-      try {
-        await saveMenu(menu);
-      } catch {
-        // ignore rollback failures
-      }
-      throw error;
-    }
-    sendJson(res, 201, { order });
+    sendJson(res, 400, { error: "Direct order placement is disabled. Complete prepaid UPI payment first." });
     return;
   }
 

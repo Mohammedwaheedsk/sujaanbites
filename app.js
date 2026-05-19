@@ -28,6 +28,7 @@ const STORAGE_KEYS = {
 
 const state = {
   menu: [],
+  menuCategories: [],
   activeCategory: "all",
   cart: new Map(),
   profile: null,
@@ -42,6 +43,7 @@ const state = {
   map: null,
   marker: null,
   loadingMenu: false,
+  checkoutNeedsAccountConfirm: true,
 };
 
 const DEFAULT_MENU = [
@@ -714,6 +716,16 @@ function startAddressEdit(id) {
 }
 
 function getMenuCategories() {
+  if (Array.isArray(state.menuCategories) && state.menuCategories.length) {
+    return [
+      { id: "all", label: "All" },
+      ...state.menuCategories.map((category) => ({
+        id: normalizeCategory(category),
+        label: formatCategoryLabel(category),
+      })),
+    ];
+  }
+
   const categories = new Map();
   for (const item of state.menu) {
     const normalized = normalizeCategory(item.category);
@@ -884,6 +896,7 @@ function updateQuantity(id, change) {
   } else {
     state.cart.set(id, next);
   }
+  state.checkoutNeedsAccountConfirm = true;
   renderCart();
   renderMenu();
 }
@@ -1097,14 +1110,10 @@ function calculateSpends(orders) {
       if (order?.status === "cancelled") return acc;
       const amount = Number(order?.totals?.total || 0);
       acc.total += amount;
-      if (order?.paymentMethod === "cod") {
-        acc.cod += amount;
-      } else {
-        acc.upi += amount;
-      }
+      acc.upi += amount;
       return acc;
     },
-    { total: 0, cod: 0, upi: 0 },
+    { total: 0, upi: 0 },
   );
 }
 
@@ -1121,11 +1130,7 @@ function renderSpendsTab() {
       </article>
       <article class="spend-card">
         <strong>${formatPrice(spends.upi)}</strong>
-        <small>UPI spend</small>
-      </article>
-      <article class="spend-card">
-        <strong>${formatPrice(spends.cod)}</strong>
-        <small>COD spend</small>
+        <small>Prepaid UPI spend</small>
       </article>
       <article class="spend-card total">
         <strong>${totalOrders}</strong>
@@ -1195,6 +1200,7 @@ async function loadMenu() {
   try {
     const result = await apiRequest("/api/menu");
     state.menu = result.menu || [];
+    state.menuCategories = Array.isArray(result.categories) ? result.categories : [];
     const availableCategories = new Set(state.menu.map((item) => normalizeCategory(item.category)).filter(Boolean));
     if (state.activeCategory !== "all" && !availableCategories.has(normalizeCategory(state.activeCategory))) {
       state.activeCategory = "all";
@@ -1478,36 +1484,6 @@ function renderAccountContent() {
   }
 }
 
-async function createCodOrder() {
-  const totals = getTotals();
-  const activeAddress = getActiveAddress();
-  if (!state.profile || !activeAddress) {
-    openDrawer();
-    state.activeTab = "profile";
-    renderAccount();
-    throw new Error("Please save your details before ordering.");
-  }
-
-  const payload = {
-    customerName: state.profile.name,
-    customerPhone: state.profile.phone,
-    orderType: "delivery",
-    paymentMethod: "cod",
-    address: activeAddress,
-    items: getCartRows().map((item) => ({ id: item.id, quantity: item.quantity })),
-  };
-
-  const result = await apiRequest("/api/orders", {
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-
-  state.cart.clear();
-  await loadPreviousOrders();
-  renderCart();
-  return result.order;
-}
-
 async function createPrepaidIntent() {
   const activeAddress = getActiveAddress();
   if (!state.profile || !activeAddress) {
@@ -1602,15 +1578,16 @@ async function handleCheckout(event) {
     return;
   }
 
-  try {
-    const method = paymentMethod.value;
-    if (method === "cod") {
-      const order = await createCodOrder();
-      alert(`${order.id} placed successfully. We will update once the restaurant confirms it.`);
-      await loadOrdersForAccount();
-      return;
-    }
+  if (state.checkoutNeedsAccountConfirm) {
+    state.activeTab = "profile";
+    state.drawerOpen = true;
+    renderAccount();
+    state.checkoutNeedsAccountConfirm = false;
+    alert("Please confirm your account details, then click Place order again to continue payment.");
+    return;
+  }
 
+  try {
     const intent = await createPrepaidIntent();
     paymentSummary.textContent = `Pay ${formatPrice(totals.total)} using Razorpay UPI.`;
     adminNotice.textContent = "Complete the payment. If the payment is not completed, no order will be saved.";
@@ -1746,6 +1723,7 @@ menuGrid.addEventListener("click", (event) => {
   if (button) updateQuantity(button.dataset.add, 1);
   if (increase) updateQuantity(increase.dataset.menuIncrease, 1);
   if (decrease) updateQuantity(decrease.dataset.menuDecrease, -1);
+  state.checkoutNeedsAccountConfirm = true;
 });
 
 cartItems.addEventListener("click", (event) => {
@@ -1753,6 +1731,7 @@ cartItems.addEventListener("click", (event) => {
   const decrease = event.target.closest("[data-decrease]");
   if (increase) updateQuantity(increase.dataset.increase, 1);
   if (decrease) updateQuantity(decrease.dataset.decrease, -1);
+  state.checkoutNeedsAccountConfirm = true;
 });
 
 checkout.addEventListener("submit", handleCheckout);
@@ -1847,8 +1826,8 @@ productRatingForm?.addEventListener("submit", async (event) => {
 async function boot() {
   loadLocalState();
   await loadCustomerState();
-  state.drawerOpen = !state.profile || !state.addresses.length;
-  state.activeTab = state.drawerOpen ? "profile" : "profile";
+  state.drawerOpen = false;
+  state.activeTab = "profile";
   renderAccount();
   renderCart();
   await loadMenu();
