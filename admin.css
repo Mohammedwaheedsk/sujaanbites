@@ -1,15 +1,15 @@
 .admin-shell {
   width: min(1180px, calc(100% - 32px));
-  margin: 34px auto 56px;
+  margin: 26px auto 56px;
 }
 
 .admin-login,
 .admin-dashboard {
   display: grid;
-  gap: 18px;
-  padding: clamp(18px, 3vw, 30px);
+  gap: 20px;
+  padding: clamp(20px, 3vw, 32px);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 14px;
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--shadow);
 }
@@ -23,7 +23,7 @@
 .admin-subhead {
   display: grid;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 12px;
 }
 
 .admin-subhead h2 {
@@ -70,19 +70,43 @@
 
 .admin-stats {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 12px;
 }
 
 .stat-card,
 .order-card {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fff;
 }
 
+.stats-group {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: linear-gradient(180deg, #fff, #fffaf6);
+  padding: 12px;
+  display: grid;
+  gap: 10px;
+}
+
+.stats-group-title {
+  margin: 0;
+  color: var(--accent-dark);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+}
+
 .stat-card {
-  padding: 16px;
+  padding: 14px;
 }
 
 .stat-card strong,
@@ -91,7 +115,7 @@
 }
 
 .stat-card strong {
-  font-size: 1.8rem;
+  font-size: 1.6rem;
 }
 
 .stat-card span {
@@ -101,11 +125,14 @@
 .orders-list {
   display: grid;
   gap: 14px;
+  max-height: 72vh;
+  overflow: auto;
+  padding-right: 4px;
 }
 
 .order-card {
   display: grid;
-  gap: 16px;
+  gap: 14px;
   padding: 16px;
 }
 
@@ -169,8 +196,10 @@
 .menu-manager {
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fff;
+  max-height: 82vh;
+  overflow: auto;
 }
 
 .admin-location-panel {
@@ -196,7 +225,8 @@
   margin-bottom: 14px;
   padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
+  background: #fffaf5;
 }
 
 .menu-add-form textarea {
@@ -209,7 +239,7 @@
   gap: 12px;
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 12px;
   background: #fff;
 }
 
@@ -231,7 +261,7 @@
 
 .history-day {
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
   padding: 12px;
   display: grid;
   gap: 8px;
@@ -256,7 +286,7 @@
   gap: 12px;
   padding: 14px;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 10px;
   background: #fff;
 }
 
@@ -351,5 +381,35 @@
 
   .order-grid {
     grid-template-columns: 1fr;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-shell {
+    width: calc(100% - 18px);
+    margin: 14px auto 24px;
+  }
+
+  .admin-login,
+  .admin-dashboard {
+    border-radius: 12px;
+    padding: 14px;
+    gap: 14px;
+  }
+
+  .order-card {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .menu-item-preview {
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+
+  .menu-item-preview img {
+    width: 68px;
+    height: 68px;
   }
 }

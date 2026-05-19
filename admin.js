@@ -49,6 +49,16 @@ function formatDate(value) {
   }).format(new Date(value));
 }
 
+function isSameLocalDay(value, now = new Date()) {
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return false;
+  return (
+    date.getFullYear() === now.getFullYear()
+    && date.getMonth() === now.getMonth()
+    && date.getDate() === now.getDate()
+  );
+}
+
 function formatCategoryLabel(value) {
   const cleaned = String(value || "").trim();
   if (!cleaned) return "Other";
@@ -160,15 +170,35 @@ function showDashboard(show) {
 }
 
 function renderStats(orders) {
+  const now = new Date();
+  const todayOrders = orders.filter((order) => isSameLocalDay(order.createdAt, now));
   const actionable = orders.filter((order) => ["pending_admin_acceptance", "received"].includes(order.status));
-  const revenue = orders
+  const todayActionable = todayOrders.filter((order) => ["pending_admin_acceptance", "received"].includes(order.status));
+
+  const overallRevenue = orders
+    .filter((order) => order.paymentStatus === "captured" || order.paymentMethod === "cod")
+    .reduce((sum, order) => sum + order.totals.total, 0);
+  const todayRevenue = todayOrders
     .filter((order) => order.paymentStatus === "captured" || order.paymentMethod === "cod")
     .reduce((sum, order) => sum + order.totals.total, 0);
 
   adminStats.innerHTML = `
-    <div class="stat-card"><strong>${orders.length}</strong><span>Total orders</span></div>
-    <div class="stat-card"><strong>${actionable.length}</strong><span>Need acceptance</span></div>
-    <div class="stat-card"><strong>${formatPrice(revenue)}</strong><span>Paid or COD value</span></div>
+    <article class="stats-group">
+      <p class="stats-group-title">Today</p>
+      <div class="stats-grid">
+        <div class="stat-card"><strong>${todayOrders.length}</strong><span>Total orders</span></div>
+        <div class="stat-card"><strong>${todayActionable.length}</strong><span>Need acceptance</span></div>
+        <div class="stat-card"><strong>${formatPrice(todayRevenue)}</strong><span>Paid or COD value</span></div>
+      </div>
+    </article>
+    <article class="stats-group">
+      <p class="stats-group-title">Overall</p>
+      <div class="stats-grid">
+        <div class="stat-card"><strong>${orders.length}</strong><span>Total orders</span></div>
+        <div class="stat-card"><strong>${actionable.length}</strong><span>Need acceptance</span></div>
+        <div class="stat-card"><strong>${formatPrice(overallRevenue)}</strong><span>Paid or COD value</span></div>
+      </div>
+    </article>
   `;
 }
 
