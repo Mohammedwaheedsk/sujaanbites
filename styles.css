@@ -1072,6 +1072,31 @@ textarea {
   font-weight: 800;
 }
 
+.star-rating {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.star-button {
+  width: 34px;
+  height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: #fff;
+  color: #d3b393;
+  font-size: 1.05rem;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+}
+
+.star-button.active {
+  color: #f4a30b;
+  border-color: #f4a30b;
+  background: #fff8ea;
+}
+
 .secondary-link {
   border: 1px solid var(--line);
   color: var(--mint);

@@ -8,7 +8,9 @@ const adminLoginMessage = document.querySelector("#adminLoginMessage");
 const refreshOrders = document.querySelector("#refreshOrders");
 const adminLogout = document.querySelector("#adminLogout");
 const adminStats = document.querySelector("#adminStats");
-const ordersList = document.querySelector("#ordersList");
+const incomingOrdersList = document.querySelector("#incomingOrdersList");
+const liveOrdersList = document.querySelector("#liveOrdersList");
+const reviewsList = document.querySelector("#reviewsList");
 const menuManager = document.querySelector("#menuManager");
 const menuAddForm = document.querySelector("#menuAddForm");
 const menuStockCount = document.querySelector("#menuStockCount");
@@ -203,12 +205,59 @@ function renderStats(orders) {
 }
 
 function renderOrders(orders) {
-  if (!orders.length) {
-    ordersList.innerHTML = '<p class="empty">No orders yet.</p>';
-    return;
-  }
+  const incoming = (orders || []).filter((order) => ["pending_admin_acceptance", "received"].includes(order.status));
+  const live = (orders || []).filter((order) => ["accepted", "preparing", "out_for_delivery"].includes(order.status));
+  const reviewed = (orders || []).filter(
+    (order) => Number(order.review?.deliveryRating) > 0
+      || (Array.isArray(order.review?.productRatings) && order.review.productRatings.length > 0),
+  );
 
-  ordersList.innerHTML = orders.map(renderOrder).join("");
+  incomingOrdersList.innerHTML = incoming.length ? incoming.map(renderOrder).join("") : '<p class="empty">No incoming orders.</p>';
+  liveOrdersList.innerHTML = live.length ? live.map(renderOrder).join("") : '<p class="empty">No live orders.</p>';
+  reviewsList.innerHTML = reviewed.length ? reviewed.map(renderReviewCard).join("") : '<p class="empty">No customer reviews yet.</p>';
+}
+
+function renderStars(rating) {
+  const safe = Math.max(0, Math.min(5, Number(rating) || 0));
+  return `
+    <span class="review-stars" aria-label="${safe} out of 5 stars">
+      ${[1, 2, 3, 4, 5]
+        .map((value) => `<span class="review-star ${value <= safe ? "filled" : ""}">★</span>`)
+        .join("")}
+    </span>
+  `;
+}
+
+function renderReviewCard(order) {
+  const deliveryRating = Number(order.review?.deliveryRating) || 0;
+  const productRatings = Array.isArray(order.review?.productRatings) ? order.review.productRatings : [];
+  const itemNames = new Map((order.items || []).map((item) => [item.id, item.name]));
+  return `
+    <article class="review-card">
+      <div class="review-head">
+        <strong>${order.id} - ${order.customerName || "Customer"}</strong>
+        <small>${formatDate(order.updatedAt || order.createdAt)}</small>
+      </div>
+      <div class="review-row">
+        <span>Delivery</span>
+        ${deliveryRating ? renderStars(deliveryRating) : '<span class="form-note">No delivery rating</span>'}
+      </div>
+      ${order.review?.deliveryComment ? `<p class="form-note">${order.review.deliveryComment}</p>` : ""}
+      <div class="review-products">
+        ${productRatings.length
+          ? productRatings
+            .map((entry) => `
+              <div class="review-row">
+                <span>${itemNames.get(entry.id) || entry.id}</span>
+                ${renderStars(entry.rating)}
+              </div>
+            `)
+            .join("")
+          : '<p class="form-note">No product ratings</p>'}
+      </div>
+      ${order.review?.productComment ? `<p class="form-note">${order.review.productComment}</p>` : ""}
+    </article>
+  `;
 }
 
 function renderOrder(order) {
@@ -502,7 +551,7 @@ adminLogout.addEventListener("click", () => {
   stopAlerting();
 });
 
-ordersList.addEventListener("click", async (event) => {
+dashboardPanel.addEventListener("click", async (event) => {
   const acceptButton = event.target.closest("[data-order-action='accept']");
   const rejectButton = event.target.closest("[data-order-action='reject']");
   const saveButton = event.target.closest("[data-save-status]");

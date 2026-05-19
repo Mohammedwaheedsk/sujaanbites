@@ -136,6 +136,7 @@ const adminNotice = document.querySelector("#adminNotice");
 const deliveryRatingDialog = document.querySelector("#deliveryRatingDialog");
 const deliveryRatingForm = document.querySelector("#deliveryRatingForm");
 const deliveryRatingInput = document.querySelector("#deliveryRatingInput");
+const deliveryRatingStars = document.querySelector("#deliveryRatingStars");
 const deliveryRatingComment = document.querySelector("#deliveryRatingComment");
 const productRatingDialog = document.querySelector("#productRatingDialog");
 const productRatingForm = document.querySelector("#productRatingForm");
@@ -313,17 +314,44 @@ function renderDeliveryRatingItems(order) {
       (item) => `
         <label class="rating-item">
           <span>${item.name} x ${item.quantity}</span>
-          <select data-product-rating="${item.id}" required>
-            <option value="5">5 - Excellent</option>
-            <option value="4">4 - Good</option>
-            <option value="3">3 - Okay</option>
-            <option value="2">2 - Poor</option>
-            <option value="1">1 - Bad</option>
-          </select>
+          <input type="hidden" data-product-rating-input="${item.id}" value="0" />
+          <div class="star-rating" data-product-rating="${item.id}" data-rating-target="product-${item.id}" role="radiogroup" aria-label="Rating for ${item.name}">
+            <button type="button" class="star-button" data-star-value="1" aria-label="1 star">★</button>
+            <button type="button" class="star-button" data-star-value="2" aria-label="2 stars">★</button>
+            <button type="button" class="star-button" data-star-value="3" aria-label="3 stars">★</button>
+            <button type="button" class="star-button" data-star-value="4" aria-label="4 stars">★</button>
+            <button type="button" class="star-button" data-star-value="5" aria-label="5 stars">★</button>
+          </div>
         </label>
       `,
     )
     .join("");
+}
+
+function paintStarRating(container, rating) {
+  const safe = Math.max(0, Math.min(5, Number(rating) || 0));
+  container.querySelectorAll(".star-button").forEach((starButton) => {
+    const value = Number(starButton.dataset.starValue || 0);
+    const active = value <= safe;
+    starButton.classList.toggle("active", active);
+    starButton.setAttribute("aria-checked", active ? "true" : "false");
+  });
+}
+
+function setRatingFromStarButton(button) {
+  const container = button.closest(".star-rating");
+  if (!container) return;
+  const value = Math.max(1, Math.min(5, Number(button.dataset.starValue || 0)));
+  if (!Number.isFinite(value)) return;
+  const target = container.dataset.ratingTarget || "";
+  if (target === "deliveryRatingInput") {
+    if (deliveryRatingInput) deliveryRatingInput.value = String(value);
+  } else if (target.startsWith("product-")) {
+    const id = target.replace("product-", "");
+    const hiddenInput = productRatingItems?.querySelector(`[data-product-rating-input="${id}"]`);
+    if (hiddenInput) hiddenInput.value = String(value);
+  }
+  paintStarRating(container, value);
 }
 
 function promptDeliveryRating(order) {
@@ -334,7 +362,8 @@ function promptDeliveryRating(order) {
   if (shown === marker) return;
   localStorage.setItem(STORAGE_KEYS.lastDeliveryRatingShown, marker);
   deliveryRatingDialog?.showModal();
-  if (deliveryRatingInput) deliveryRatingInput.value = "";
+  if (deliveryRatingInput) deliveryRatingInput.value = "0";
+  if (deliveryRatingStars) paintStarRating(deliveryRatingStars, 0);
   if (deliveryRatingComment) deliveryRatingComment.value = "";
 }
 
@@ -349,6 +378,7 @@ function promptProductRating(order) {
   if (shown === marker) return;
   localStorage.setItem(STORAGE_KEYS.lastProductRatingShown, marker);
   renderDeliveryRatingItems(order);
+  productRatingItems?.querySelectorAll(".star-rating").forEach((node) => paintStarRating(node, 0));
   productRatingDialog?.showModal();
   if (productRatingComment) productRatingComment.value = "";
 }
@@ -747,7 +777,7 @@ function renderMenu() {
           </div>
           <div class="dish-actions">
             <span class="availability ${soldOut ? "off" : "on"}">
-              ${soldOut ? "Sold out" : `${stockCount} left`}
+              ${soldOut ? "Sold out" : "In stock"}
             </span>
             ${
               soldOut
@@ -763,7 +793,7 @@ function renderMenu() {
                   : `<button class="add-button" type="button" data-add="${item.id}">Add</button>`
             }
           </div>
-          ${!soldOut && quantity >= stockCount ? `<p class="form-note">Only ${stockCount} ${stockCount === 1 ? "item is" : "items are"} available at the moment.</p>` : ""}
+          ${!soldOut && quantity >= stockCount ? `<p class="form-note">You have reached the available stock for this item.</p>` : ""}
         </article>
       `;
       },
@@ -840,7 +870,7 @@ function updateQuantity(id, change) {
   const current = state.cart.get(id) || 0;
   const next = Math.max(0, current + change);
   if (change > 0 && next > stockCount) {
-    alert(`Only ${stockCount} ${stockCount === 1 ? "item is" : "items are"} available at the moment.`);
+    alert(`You have reached the available stock for ${item.name}.`);
     return;
   }
   if (next === 0) {
@@ -1728,15 +1758,28 @@ trackingToggle?.addEventListener("click", () => {
   }
 });
 closeCustomerMessageDialog?.addEventListener("click", () => customerMessageDialog?.close());
+deliveryRatingDialog?.addEventListener("click", (event) => {
+  const starButton = event.target.closest(".star-button");
+  if (starButton) setRatingFromStarButton(starButton);
+});
+productRatingDialog?.addEventListener("click", (event) => {
+  const starButton = event.target.closest(".star-button");
+  if (starButton) setRatingFromStarButton(starButton);
+});
 
 deliveryRatingForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
   const order = getLatestOrder(state.previousOrders);
   if (!order) return;
+  const selected = Number(deliveryRatingInput?.value || 0);
+  if (!Number.isFinite(selected) || selected < 1 || selected > 5) {
+    alert("Please choose a star rating.");
+    return;
+  }
 
   const payload = {
     type: "delivery",
-    deliveryRating: Number(deliveryRatingInput?.value),
+    deliveryRating: selected,
     deliveryComment: deliveryRatingComment?.value || "",
   };
 
@@ -1758,10 +1801,15 @@ productRatingForm?.addEventListener("submit", async (event) => {
   const order = getLatestOrder(state.previousOrders);
   if (!order) return;
 
-  const productRatings = Array.from(productRatingItems?.querySelectorAll("[data-product-rating]") || []).map((select) => ({
-    id: select.dataset.productRating,
-    rating: Number(select.value),
+  const productRatings = Array.from(productRatingItems?.querySelectorAll("[data-product-rating-input]") || []).map((input) => ({
+    id: input.dataset.productRatingInput,
+    rating: Number(input.value || 0),
   }));
+  const invalid = productRatings.find((entry) => !Number.isFinite(entry.rating) || entry.rating < 1 || entry.rating > 5);
+  if (invalid) {
+    alert("Please rate every ordered item with stars.");
+    return;
+  }
 
   try {
     await apiRequest(`/api/orders/${order.id}/reviews`, {
