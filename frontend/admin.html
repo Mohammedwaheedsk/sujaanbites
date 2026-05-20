@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sujaan Bites Admin</title>
+  <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="admin.css" />
+</head>
+
+<body>
+  <header class="topbar">
+    <a class="brand" href="/admin" aria-label="Sujaan Bites admin home">
+      <span class="brand-mark">
+        <img src="assets/sujaan-logo.png" alt="Sujaan Bites logo" />
+      </span>
+      <span>
+        <strong>Sujaan Bites Admin</strong>
+        <small>Cookie orders and menu control</small>
+      </span>
+    </a>
+    <nav class="nav">
+      <a href="/">Customer site</a>
+    </nav>
+  </header>
+
+  <main class="admin-shell">
+    <section class="admin-login" id="loginPanel">
+      <p class="eyebrow">Admin</p>
+          <h1>Manage cookie orders</h1>
+      <form class="admin-form" id="adminLoginForm">
+        <label>
+          Admin PIN
+          <input id="adminPin" type="password" inputmode="numeric" placeholder="Enter admin PIN" required />
+        </label>
+        <button class="pay-button" type="submit">Open admin panel</button>
+        <p class="form-note" id="adminLoginMessage">Default local PIN is 123456. Change it with ADMIN_PIN before going live.</p>
+      </form>
+    </section>
+
+    <section class="admin-dashboard hidden" id="dashboardPanel">
+      <div class="admin-heading">
+        <div>
+          <p class="eyebrow">Live orders</p>
+          <h1>Order dashboard</h1>
+        </div>
+        <div class="admin-actions">
+          <button class="secondary-button" id="refreshOrders" type="button">Refresh</button>
+          <button class="text-button" id="adminLogout" type="button">Logout</button>
+        </div>
+      </div>
+
+      <div class="admin-stats" id="adminStats"></div>
+
+      <div class="admin-grid">
+        <section>
+          <div class="admin-subhead">
+            <h2>Incoming orders</h2>
+            <p>Accept each order before the bakery starts work.</p>
+          </div>
+          <div class="orders-list" id="incomingOrdersList"></div>
+
+          <div class="admin-subhead" style="margin-top:18px;">
+            <h2>Live orders</h2>
+            <p>Orders being prepared or on the way.</p>
+          </div>
+          <div class="orders-list" id="liveOrdersList"></div>
+
+          <div class="admin-subhead" style="margin-top:18px;">
+            <h2>Reviews</h2>
+            <p>Customer delivery and product ratings.</p>
+          </div>
+          <div class="orders-list" id="reviewsList"></div>
+        </section>
+
+        <section class="admin-panel">
+          <div class="admin-subhead">
+            <h2>Restaurant location</h2>
+            <p>Set your current store location for customer route maps.</p>
+          </div>
+          <div class="admin-location-panel">
+            <div class="map-canvas" id="adminLocationMap" aria-label="Admin location map"></div>
+            <div class="admin-location-actions">
+              <button class="secondary-button" id="adminUseCurrentLocation" type="button">Use current location</button>
+              <button class="secondary-button" id="adminSaveLocation" type="button">Save location</button>
+            </div>
+            <p class="form-note" id="adminLocationStatus">Tap on the map to set store location.</p>
+          </div>
+        </section>
+
+        <section class="menu-manager">
+          <div class="admin-subhead">
+            <h2>Menu catalog</h2>
+            <p>Add, remove, and toggle cookie items live for customers.</p>
+          </div>
+          <div class="admin-subhead">
+            <h2>Menu categories</h2>
+            <p>Control category chips shown to customers in the menu filters.</p>
+          </div>
+          <form class="menu-add-form" id="categoryForm">
+            <label>
+              Category name
+              <input id="newCategoryName" type="text" placeholder="Classic" />
+            </label>
+            <button class="secondary-button" id="addCategoryButton" type="button">Add category</button>
+          </form>
+          <div id="categoryManager"></div>
+
+          <form class="menu-add-form" id="menuAddForm">
+            <label>
+              Item name
+              <input id="menuName" type="text" placeholder="Triple Choco Cookie" required />
+            </label>
+            <label>
+              Price (INR)
+              <input id="menuPrice" type="number" min="0" step="1" placeholder="149" required />
+            </label>
+            <label>
+              Category
+              <input id="menuCategory" type="text" placeholder="Classic" />
+            </label>
+            <label>
+              Stock count
+              <input id="menuStockCount" type="number" min="0" step="1" value="20" placeholder="20" />
+            </label>
+            <label>
+              Image upload
+              <input id="menuImageFile" type="file" accept="image/*" />
+            </label>
+            <label>
+              Image URL
+              <input id="menuImage" type="url" placeholder="https://..." />
+            </label>
+            <label>
+              Description
+              <textarea id="menuDescription" rows="2" placeholder="Buttery cookie with dark chocolate chips"></textarea>
+            </label>
+            <button class="secondary-button" type="submit">Add menu item</button>
+          </form>
+          <div id="menuManager"></div>
+        </section>
+      </div>
+
+      <section class="admin-history">
+        <div class="admin-subhead">
+          <h2>Order history analytics</h2>
+          <p>Check daily order count, income, and old records any time.</p>
+        </div>
+        <form class="history-filters" id="historyFilters">
+          <label>
+            From
+            <input type="date" id="historyFrom" />
+          </label>
+          <label>
+            To
+            <input type="date" id="historyTo" />
+          </label>
+          <button class="secondary-button" type="submit">Load history</button>
+        </form>
+        <div class="admin-stats" id="historyStats"></div>
+        <div class="history-list" id="historyList"></div>
+      </section>
+    </section>
+  </main>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    window.__API_BASE = window.__API_BASE || "";
+  </script>
+  <script src="admin.js"></script>
+</body>
+
+</html>
