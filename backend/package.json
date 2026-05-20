@@ -1,0 +1,16 @@
+{
+  "name": "food-ordering-fullstack",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.4",
+    "jsdom": "^29.1.1",
+    "mongodb": "^6.5.0"
+  }
+}
