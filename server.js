@@ -3,6 +3,7 @@ const fs = require("node:fs/promises");
 const http = require("node:http");
 const https = require("node:https");
 const path = require("node:path");
+const zlib = require("node:zlib");
 const { URL } = require("node:url");
 
 const PORT = Number(process.env.PORT || 3000);
@@ -45,11 +46,28 @@ const MIME_TYPES = {
   ".svg": "image/svg+xml",
 };
 
+const LONG_CACHE_TYPES = new Set([".css", ".js", ".png", ".svg"]);
+
 let supabaseClient = null;
 
-function sendJson(res, status, payload) {
-  res.writeHead(status, { "content-type": "application/json; charset=utf-8" });
-  res.end(JSON.stringify(payload));
+function sendJson(res, status, payload, req = null) {
+  sendResponse(req || res.request || null, res, status, JSON.stringify(payload), "application/json; charset=utf-8", {
+    "cache-control": "no-store",
+  });
+}
+
+function sendResponse(req, res, status, body, contentType, extraHeaders = {}) {
+  const acceptsGzip = req?.headers?.["accept-encoding"]?.includes("gzip");
+  const buffer = Buffer.isBuffer(body) ? body : Buffer.from(String(body));
+  const shouldGzip = acceptsGzip && buffer.length > 1024 && /^text\/|json|javascript|svg/.test(contentType);
+  const payload = shouldGzip ? zlib.gzipSync(buffer) : buffer;
+  res.writeHead(status, {
+    "content-type": contentType,
+    "content-length": payload.length,
+    ...(shouldGzip ? { "content-encoding": "gzip", vary: "Accept-Encoding" } : {}),
+    ...extraHeaders,
+  });
+  res.end(payload);
 }
 
 async function ensureStore() {
@@ -1309,23 +1327,31 @@ async function serveStatic(res, url) {
   const filePath = path.normalize(path.join(ROOT, requestedPath));
 
   if (!filePath.startsWith(ROOT)) {
-    res.writeHead(403);
-    res.end("Forbidden");
+    sendResponse(null, res, 403, "Forbidden", "text/plain; charset=utf-8", { "cache-control": "no-store" });
     return;
   }
 
   try {
     const data = await fs.readFile(filePath);
     const ext = path.extname(filePath);
-    res.writeHead(200, { "content-type": MIME_TYPES[ext] || "application/octet-stream" });
-    res.end(data);
+    const cacheControl = LONG_CACHE_TYPES.has(ext)
+      ? "public, max-age=604800"
+      : "no-cache";
+    sendResponse(
+      res.request || null,
+      res,
+      200,
+      data,
+      MIME_TYPES[ext] || "application/octet-stream",
+      { "cache-control": cacheControl },
+    );
   } catch {
-    res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
-    res.end("Not found");
+    sendResponse(res.request || null, res, 404, "Not found", "text/plain; charset=utf-8", { "cache-control": "no-store" });
   }
 }
 
 async function route(req, res) {
+  res.request = req;
   const url = new URL(req.url, `http://${req.headers.host}`);
 
   try {

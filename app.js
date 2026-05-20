@@ -553,7 +553,9 @@ function renderTrackingPanel(order) {
   trackingAddress.textContent = formatAddressLine(order.address);
   trackingSheet?.classList.toggle("hidden", !trackingOpen);
   trackingToggle?.setAttribute("aria-expanded", trackingOpen ? "true" : "false");
-  renderTrackingMap(order);
+  if (trackingOpen) {
+    renderTrackingMap(order);
+  }
 }
 
 function loadLocalState() {
@@ -1835,12 +1837,12 @@ async function boot() {
     await loadOrdersForAccount();
   }
   renderAccount();
-  setInterval(loadMenu, 15000);
+  setInterval(loadMenu, 300000);
   setInterval(async () => {
     if (!state.profile?.phone) return;
     await loadOrdersForAccount();
     if (state.activeTab === "orders" || state.activeTab === "spends") renderAccount();
-  }, 12000);
+  }, 45000);
 }
 
 boot();
