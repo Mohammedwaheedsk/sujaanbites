@@ -185,6 +185,8 @@ const itemPreviewImage = document.querySelector("#itemPreviewImage");
 const itemPreviewName = document.querySelector("#itemPreviewName");
 const itemPreviewPrice = document.querySelector("#itemPreviewPrice");
 const itemPreviewAdd = document.querySelector("#itemPreviewAdd");
+const cartToast = document.querySelector("#cartToast");
+const cartToastText = document.querySelector("#cartToastText");
 
 let trackingMap = null;
 let trackingLayerGroup = null;
@@ -933,6 +935,17 @@ function renderCart() {
 
   if (selectedAddressText) {
     selectedAddressText.textContent = formatAddressLine(getActiveAddress());
+  }
+
+  if (cartToast && cartToastText) {
+    if (totals.quantity > 0) {
+      cartToastText.textContent = `${totals.quantity} ${totals.quantity === 1 ? "Item" : "Items"} added`;
+      cartToast.classList.remove("hidden");
+      cartToast.classList.add("show");
+    } else {
+      cartToast.classList.remove("show");
+      cartToast.classList.add("hidden");
+    }
   }
 }
 
@@ -1812,13 +1825,17 @@ function openItemPreview(item) {
   itemPreviewName.textContent = item.name;
   itemPreviewPrice.textContent = formatPrice(item.price);
   itemPreviewOverlay.classList.remove("hidden");
+  itemPreviewOverlay.classList.add("show");
   itemPreviewOverlay.setAttribute("aria-hidden", "false");
 }
 
 function closeItemPreview() {
   if (!itemPreviewOverlay) return;
-  itemPreviewOverlay.classList.add("hidden");
-  itemPreviewOverlay.setAttribute("aria-hidden", "true");
+  itemPreviewOverlay.classList.remove("show");
+  window.setTimeout(() => {
+    itemPreviewOverlay.classList.add("hidden");
+    itemPreviewOverlay.setAttribute("aria-hidden", "true");
+  }, 180);
   previewItemId = null;
 }
 

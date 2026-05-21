@@ -56,21 +56,6 @@
       </div>
     </section>
 
-    <section class="quick-strip" aria-label="Ordering highlights">
-      <article class="quick-card">
-        <strong>Fast picks</strong>
-        <span>Top cookie boxes ready to order in a few taps.</span>
-      </article>
-      <article class="quick-card">
-        <strong>Live status</strong>
-        <span>Track acceptance, preparation, and delivery updates.</span>
-      </article>
-      <article class="quick-card">
-        <strong>Smooth pay</strong>
-        <span>Prepaid flow tuned for mobile checkout.</span>
-      </article>
-    </section>
-
     <div class="account-shell-overlay" id="accountOverlay"></div>
     <aside class="account-shell" id="accountShell" aria-label="Customer account">
       <div class="account-shell-head">
@@ -158,6 +143,11 @@
           <button class="add-button" id="itemPreviewAdd" type="button">ADD</button>
         </div>
       </article>
+    </div>
+
+    <div class="cart-toast hidden" id="cartToast">
+      <span id="cartToastText">1 Item added</span>
+      <a href="#cart" id="cartToastAction">View Cart ›</a>
     </div>
 
   </main>
@@ -283,8 +273,8 @@
       if (!splash) return;
       setTimeout(() => {
         splash.classList.add("hide");
-        setTimeout(() => splash.remove(), 350);
-      }, 1000);
+        setTimeout(() => splash.remove(), 180);
+      }, 680);
     });
   </script>
   <script src="app.js"></script>
