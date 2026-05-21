@@ -370,14 +370,16 @@ h2 {
 }
 
 .dish-top {
-  display: flex;
-  justify-content: space-between;
-  gap: 10px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px 12px;
 }
 
 .dish-card h3 {
   margin: 0 0 4px;
   font-size: 1rem;
+  line-height: 1.15;
 }
 
 .dish-card p {
@@ -390,6 +392,8 @@ h2 {
 .price {
   font-weight: 800;
   white-space: nowrap;
+  align-self: start;
+  text-align: right;
 }
 
 .dish-actions {

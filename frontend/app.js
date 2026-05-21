@@ -923,7 +923,7 @@ function renderMenu() {
         const totalQuantity = group.variants.reduce((sum, item) => sum + (state.cart.get(item.id) || 0), 0);
         const soldOut = group.variants.every((item) => item.available === false || getMenuStock(item) <= 0);
         const startingPrice = Math.min(...group.variants.map((item) => Number(item.price) || 0));
-        const variantsText = group.variants.map((item) => item.variantLabel).join(" • ");
+        const descriptionText = group.description || "Freshly baked signature cookies.";
         return `
         <article class="dish-card flavor-card ${soldOut ? "unavailable" : ""}" data-flavor-key="${group.key}">
           <img class="dish-image" src="${group.image || "assets/hero-food.png"}" alt="${group.flavor}" />
@@ -931,7 +931,7 @@ function renderMenu() {
           <div class="dish-top">
             <div>
               <h3>${group.flavor}</h3>
-              <p>${variantsText}</p>
+              <p>${descriptionText}</p>
             </div>
             <span class="price">From ${formatPrice(startingPrice)}</span>
           </div>
@@ -1028,13 +1028,16 @@ function getCartRows() {
 function getTotals() {
   const rows = getCartRows();
   const subtotal = rows.reduce((sum, item) => sum + item.lineTotal, 0);
-  const delivery = subtotal > 0 ? BUSINESS.deliveryFee : 0;
+  const quantity = rows.reduce((sum, item) => sum + item.quantity, 0);
+  const delivery = subtotal > 0
+    ? BUSINESS.deliveryFee + Math.max(0, quantity - 3) * 5
+    : 0;
   return {
     rows,
     subtotal,
     delivery,
     total: subtotal + delivery,
-    quantity: rows.reduce((sum, item) => sum + item.quantity, 0),
+    quantity,
   };
 }
 
