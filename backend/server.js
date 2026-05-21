@@ -1326,7 +1326,14 @@ async function handleApi(req, res, url) {
 }
 
 async function serveStatic(res, url) {
-  const requestedPath = url.pathname === "/" ? "/index.html" : url.pathname === "/admin" ? "/admin.html" : url.pathname;
+  const requestedPath =
+    url.pathname === "/"
+      ? "/index.html"
+      : url.pathname === "/admin"
+        ? "/admin.html"
+        : url.pathname === "/cart"
+          ? "/cart.html"
+          : url.pathname;
   const filePath = path.normalize(path.join(FRONTEND_DIR, requestedPath));
 
   if (!filePath.startsWith(FRONTEND_DIR)) {
