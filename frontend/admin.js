@@ -1,5 +1,5 @@
 const ADMIN_STORAGE_KEY = "spiceTableAdminPin";
-const API_BASE = String(window.__API_BASE__ || "").trim().replace(/\/+$/, "");
+const API_BASE = String(window.__API_BASE || window.__API_BASE__ || "").trim().replace(/\/+$/, "");
 
 const loginPanel = document.querySelector("#loginPanel");
 const dashboardPanel = document.querySelector("#dashboardPanel");

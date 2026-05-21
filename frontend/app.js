@@ -6,7 +6,7 @@ const BUSINESS = {
   deliveryFee: 30,
 };
 
-const API_BASE = String(window.__API_BASE__ || "").trim().replace(/\/+$/, "");
+const API_BASE = String(window.__API_BASE || window.__API_BASE__ || "").trim().replace(/\/+$/, "");
 
 const MAX_ADDRESSES = 10;
 
