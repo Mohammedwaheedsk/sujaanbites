@@ -48,7 +48,7 @@ const MIME_TYPES = {
   ".svg": "image/svg+xml",
 };
 
-const LONG_CACHE_TYPES = new Set([".css", ".js", ".png", ".svg"]);
+const LONG_CACHE_TYPES = new Set([".png", ".svg"]);
 
 let supabaseClient = null;
 
