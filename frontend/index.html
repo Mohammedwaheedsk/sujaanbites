@@ -141,6 +141,25 @@
       </aside>
     </section>
 
+    <button class="menu-fab" id="menuFab" type="button" aria-expanded="false" aria-controls="menuFabSheet">
+      <span class="menu-fab-icon">◫</span>
+      <span>MENU</span>
+    </button>
+    <div class="menu-fab-backdrop hidden" id="menuFabBackdrop"></div>
+    <section class="menu-fab-sheet hidden" id="menuFabSheet" aria-label="Menu categories"></section>
+
+    <div class="item-preview hidden" id="itemPreviewOverlay" aria-hidden="true">
+      <article class="item-preview-card">
+        <button class="item-preview-close" id="itemPreviewClose" type="button" aria-label="Close preview">×</button>
+        <img id="itemPreviewImage" alt="" />
+        <div class="item-preview-meta">
+          <h3 id="itemPreviewName"></h3>
+          <p id="itemPreviewPrice"></p>
+          <button class="add-button" id="itemPreviewAdd" type="button">ADD</button>
+        </div>
+      </article>
+    </div>
+
   </main>
 
   <section class="tracking-dock hidden" id="trackingDock" aria-label="Order tracking panel">

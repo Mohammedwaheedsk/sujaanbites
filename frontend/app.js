@@ -6,7 +6,14 @@ const BUSINESS = {
   deliveryFee: 30,
 };
 
-const API_BASE = String(window.__API_BASE || window.__API_BASE__ || "").trim().replace(/\/+$/, "");
+const API_BASE = (() => {
+  const configured = String(window.__API_BASE || window.__API_BASE__ || "").trim().replace(/\/+$/, "");
+  if (configured) return configured;
+  if (window.location.protocol === "http:" || window.location.protocol === "https:") {
+    return window.location.origin.replace(/\/+$/, "");
+  }
+  return "";
+})();
 
 const MAX_ADDRESSES = 10;
 
@@ -169,11 +176,35 @@ const trackingAddress = document.querySelector("#trackingAddress");
 const customerMessageDialog = document.querySelector("#customerMessageDialog");
 const customerMessageText = document.querySelector("#customerMessageText");
 const closeCustomerMessageDialog = document.querySelector("#closeCustomerMessageDialog");
+const menuFab = document.querySelector("#menuFab");
+const menuFabSheet = document.querySelector("#menuFabSheet");
+const menuFabBackdrop = document.querySelector("#menuFabBackdrop");
+const itemPreviewOverlay = document.querySelector("#itemPreviewOverlay");
+const itemPreviewClose = document.querySelector("#itemPreviewClose");
+const itemPreviewImage = document.querySelector("#itemPreviewImage");
+const itemPreviewName = document.querySelector("#itemPreviewName");
+const itemPreviewPrice = document.querySelector("#itemPreviewPrice");
+const itemPreviewAdd = document.querySelector("#itemPreviewAdd");
 
 let trackingMap = null;
 let trackingLayerGroup = null;
 let trackingOpen = false;
 let trackingCurrentOrder = null;
+let previewItemId = null;
+
+function vibrate(pattern = 12) {
+  if (!navigator.vibrate) return;
+  navigator.vibrate(pattern);
+}
+
+function pulseElement(element) {
+  if (!element) return;
+  element.classList.remove("tap-pop");
+  // Force reflow so repeated taps replay the animation.
+  void element.offsetWidth;
+  element.classList.add("tap-pop");
+  window.setTimeout(() => element.classList.remove("tap-pop"), 220);
+}
 
 function formatPrice(value) {
   return currency.format(value || 0);
@@ -779,17 +810,25 @@ function renderMenu() {
     const category = normalizeCategory(item.category);
     return activeCategory === "all" || category === activeCategory;
   });
+  const grouped = new Map();
+  for (const item of dishes) {
+    const key = formatCategoryLabel(item.category || "Menu");
+    if (!grouped.has(key)) grouped.set(key, []);
+    grouped.get(key).push(item);
+  }
 
-  menuGrid.innerHTML = dishes
-    .map(
-      (item) => {
+  menuGrid.innerHTML = [...grouped.entries()]
+    .map(([section, sectionItems]) => {
+      const cards = sectionItems
+        .map((item) => {
         const stockCount = getMenuStock(item);
         const soldOut = item.available === false || stockCount <= 0;
         const quantity = state.cart.get(item.id) || 0;
         const canAddMore = !soldOut && quantity < stockCount;
         return `
-        <article class="dish-card ${soldOut ? "unavailable" : ""}">
+        <article class="dish-card ${soldOut ? "unavailable" : ""}" data-item-id="${item.id}">
           <img class="dish-image" src="${item.image || "assets/hero-food.png"}" alt="${item.name}" />
+          ${soldOut ? '<span class="next-available-chip">Next available at 9:30 am</span>' : ""}
           <div class="dish-top">
             <div>
               <h3>${item.name}</h3>
@@ -818,8 +857,24 @@ function renderMenu() {
           ${!soldOut && quantity >= stockCount ? `<p class="form-note">You have reached the available stock for this item.</p>` : ""}
         </article>
       `;
-      },
-    )
+        })
+        .join("");
+      return `
+        <section class="menu-section" data-menu-section="${section}">
+          <h3>${section}</h3>
+          <div class="menu-section-grid">${cards}</div>
+        </section>
+      `;
+    })
+    .join("");
+  renderMenuFabSheet();
+}
+
+function renderMenuFabSheet() {
+  if (!menuFabSheet) return;
+  const sections = [...new Set(state.menu.map((item) => formatCategoryLabel(item.category || "Menu")))];
+  menuFabSheet.innerHTML = sections
+    .map((section) => `<button type="button" data-menu-section-target="${section}">${section}</button>`)
     .join("");
 }
 
@@ -1201,6 +1256,9 @@ function syncCheckoutFields() {
 async function loadMenu() {
   if (state.loadingMenu) return;
   state.loadingMenu = true;
+  if (menuGrid) {
+    menuGrid.innerHTML = '<div class="menu-loading">Loading fresh bakes...</div>';
+  }
   try {
     const result = await apiRequest("/api/menu");
     state.menu = result.menu || [];
@@ -1215,6 +1273,9 @@ async function loadMenu() {
     renderCart();
   } catch (error) {
     console.error(error);
+    if (menuGrid) {
+      menuGrid.innerHTML = '<div class="menu-loading">We could not load the menu right now.</div>';
+    }
   } finally {
     state.loadingMenu = false;
   }
@@ -1715,6 +1776,8 @@ accountShell.addEventListener("click", async (event) => {
 menuFilters?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-category]");
   if (!button) return;
+  pulseElement(button);
+  vibrate(10);
   state.activeCategory = normalizeCategory(button.dataset.category) || "all";
   renderFilters();
   renderMenu();
@@ -1724,18 +1787,94 @@ menuGrid.addEventListener("click", (event) => {
   const button = event.target.closest("[data-add]");
   const increase = event.target.closest("[data-menu-increase]");
   const decrease = event.target.closest("[data-menu-decrease]");
+  const card = event.target.closest(".dish-card");
+  const actionTap = button || increase || decrease;
+  if (!actionTap && card?.dataset.itemId) {
+    const item = state.menu.find((entry) => entry.id === card.dataset.itemId);
+    if (item) openItemPreview(item);
+  }
+  const trigger = button || increase || decrease;
+  if (trigger) {
+    pulseElement(trigger);
+    vibrate(12);
+  }
   if (button) updateQuantity(button.dataset.add, 1);
   if (increase) updateQuantity(increase.dataset.menuIncrease, 1);
   if (decrease) updateQuantity(decrease.dataset.menuDecrease, -1);
   state.checkoutNeedsAccountConfirm = true;
 });
 
+function openItemPreview(item) {
+  if (!itemPreviewOverlay || !itemPreviewImage || !itemPreviewName || !itemPreviewPrice || !itemPreviewAdd) return;
+  previewItemId = item.id;
+  itemPreviewImage.src = item.image || "assets/hero-food.png";
+  itemPreviewImage.alt = item.name;
+  itemPreviewName.textContent = item.name;
+  itemPreviewPrice.textContent = formatPrice(item.price);
+  itemPreviewOverlay.classList.remove("hidden");
+  itemPreviewOverlay.setAttribute("aria-hidden", "false");
+}
+
+function closeItemPreview() {
+  if (!itemPreviewOverlay) return;
+  itemPreviewOverlay.classList.add("hidden");
+  itemPreviewOverlay.setAttribute("aria-hidden", "true");
+  previewItemId = null;
+}
+
+function toggleMenuFab(open) {
+  if (!menuFab || !menuFabSheet || !menuFabBackdrop) return;
+  const shouldOpen = open ?? menuFabSheet.classList.contains("hidden");
+  menuFabSheet.classList.toggle("hidden", !shouldOpen);
+  menuFabBackdrop.classList.toggle("hidden", !shouldOpen);
+  menuFab.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
+}
+
+menuFab?.addEventListener("click", () => {
+  vibrate(12);
+  toggleMenuFab();
+});
+
+menuFabBackdrop?.addEventListener("click", () => toggleMenuFab(false));
+
+menuFabSheet?.addEventListener("click", (event) => {
+  const target = event.target.closest("[data-menu-section-target]");
+  if (!target) return;
+  const section = target.dataset.menuSectionTarget;
+  const el = document.querySelector(`[data-menu-section="${section}"]`);
+  if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  vibrate(10);
+  toggleMenuFab(false);
+});
+
+itemPreviewClose?.addEventListener("click", closeItemPreview);
+itemPreviewOverlay?.addEventListener("click", (event) => {
+  if (event.target === itemPreviewOverlay) closeItemPreview();
+});
+itemPreviewAdd?.addEventListener("click", () => {
+  if (!previewItemId) return;
+  updateQuantity(previewItemId, 1);
+  closeItemPreview();
+});
+
 cartItems.addEventListener("click", (event) => {
   const increase = event.target.closest("[data-increase]");
   const decrease = event.target.closest("[data-decrease]");
+  const trigger = increase || decrease;
+  if (trigger) {
+    pulseElement(trigger);
+    vibrate(10);
+  }
   if (increase) updateQuantity(increase.dataset.increase, 1);
   if (decrease) updateQuantity(decrease.dataset.decrease, -1);
   state.checkoutNeedsAccountConfirm = true;
+});
+
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest("button, .primary-link, .secondary-link, .filter, .account-tab");
+  if (!trigger) return;
+  pulseElement(trigger);
+  vibrate(8);
 });
 
 checkout.addEventListener("submit", handleCheckout);
