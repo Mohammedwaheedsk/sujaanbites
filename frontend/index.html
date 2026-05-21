@@ -4,6 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#fc8019" />
   <title>Sujaan Bites | Order Food Online</title>
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="preconnect" href="https://api.qrserver.com" />
@@ -12,6 +13,12 @@
 </head>
 
 <body>
+  <div class="splash" id="splash" aria-hidden="true">
+    <div class="splash-card">
+      <img class="splash-logo" src="assets/sujaan-logo.png" alt="" />
+      <div class="splash-text">Sujaan Bites</div>
+    </div>
+  </div>
   <header class="topbar">
     <a class="brand" href="#menu" aria-label="Sujaan Bites home">
       <span class="brand-mark">
@@ -36,9 +43,32 @@
       <div class="hero-copy">
         <p class="eyebrow">Order today</p>
         <h1 id="hero-title">Sujaan Bites</h1>
-        <p>Fresh cookies, warm boxes, and simple prepaid checkout.</p>
-        <a class="primary-link" href="#menu">Start order</a>
+        <p>Hot-selling cookie boxes, one-tap ordering, and a smoother checkout built for mobile.</p>
+        <div class="hero-cta-row">
+          <a class="primary-link" href="#menu">Start order</a>
+          <a class="secondary-link" href="#cart">View cart</a>
+        </div>
+        <div class="hero-pills" aria-label="Service highlights">
+          <span class="hero-pill">Freshly baked</span>
+          <span class="hero-pill">Fast delivery</span>
+          <span class="hero-pill">UPI prepaid</span>
+        </div>
       </div>
+    </section>
+
+    <section class="quick-strip" aria-label="Ordering highlights">
+      <article class="quick-card">
+        <strong>Fast picks</strong>
+        <span>Top cookie boxes ready to order in a few taps.</span>
+      </article>
+      <article class="quick-card">
+        <strong>Live status</strong>
+        <span>Track acceptance, preparation, and delivery updates.</span>
+      </article>
+      <article class="quick-card">
+        <strong>Smooth pay</strong>
+        <span>Prepaid flow tuned for mobile checkout.</span>
+      </article>
     </section>
 
     <div class="account-shell-overlay" id="accountOverlay"></div>
@@ -72,7 +102,9 @@
           </div>
           <div class="filters" id="menuFilters" role="tablist" aria-label="Menu categories"></div>
         </div>
-        <div class="menu-grid" id="menuGrid"></div>
+        <div class="menu-grid" id="menuGrid">
+          <div class="menu-loading">Loading fresh bakes...</div>
+        </div>
       </div>
 
       <aside class="checkout-panel" id="cart" aria-label="Cart and checkout">
@@ -226,8 +258,16 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
-  window.__API_BASE = "https://sujaanbites-55jn.onrender.com";
-</script>
+    window.__API_BASE = "";
+    window.addEventListener("load", () => {
+      const splash = document.getElementById("splash");
+      if (!splash) return;
+      setTimeout(() => {
+        splash.classList.add("hide");
+        setTimeout(() => splash.remove(), 350);
+      }, 1000);
+    });
+  </script>
   <script src="app.js"></script>
 </body>
 
