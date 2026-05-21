@@ -18,7 +18,6 @@ const categoryManager = document.querySelector("#categoryManager");
 const newCategoryName = document.querySelector("#newCategoryName");
 const addCategoryButton = document.querySelector("#addCategoryButton");
 const menuStockCount = document.querySelector("#menuStockCount");
-const menuImageFile = document.querySelector("#menuImageFile");
 const historyFilters = document.querySelector("#historyFilters");
 const historyFrom = document.querySelector("#historyFrom");
 const historyTo = document.querySelector("#historyTo");
@@ -90,15 +89,6 @@ function normalizeCategoryList(values) {
     if (!unique.has(key)) unique.set(key, label);
   }
   return [...unique.values()];
-}
-
-function readFileAsDataUrl(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(String(reader.result || ""));
-    reader.onerror = () => reject(new Error("Could not read image file"));
-    reader.readAsDataURL(file);
-  });
 }
 
 function getSnapshot(orders) {
@@ -410,14 +400,6 @@ function renderMenuManager(menu) {
               Stock count
               <input type="number" min="0" step="1" data-menu-stock="${item.id}" value="${stockCount}" />
             </label>
-            <label>
-              Image URL
-              <input type="url" data-menu-image="${item.id}" value="${item.image || ""}" />
-            </label>
-            <label>
-              Replace image
-              <input type="file" accept="image/*" data-menu-file="${item.id}" />
-            </label>
           </div>
           <div class="menu-item-actions">
             <span class="availability ${item.available === false ? "off" : "on"}">
@@ -666,16 +648,6 @@ menuManager.addEventListener("change", async (event) => {
   }
 });
 
-async function getMenuImageValue(itemId) {
-  const fileInput = document.querySelector(`[data-menu-file="${itemId}"]`);
-  const urlInput = document.querySelector(`[data-menu-image="${itemId}"]`);
-  const file = fileInput?.files?.[0];
-  if (file) {
-    return readFileAsDataUrl(file);
-  }
-  return String(urlInput?.value || "").trim();
-}
-
 menuManager.addEventListener("click", async (event) => {
   const saveButton = event.target.closest("[data-save-menu]");
   const deleteButton = event.target.closest("[data-delete-menu]");
@@ -686,7 +658,6 @@ menuManager.addEventListener("click", async (event) => {
       description: String(document.querySelector(`[data-menu-description="${itemId}"]`)?.value || "").trim(),
       category: String(document.querySelector(`[data-menu-category="${itemId}"]`)?.value || "").trim(),
       stockCount: Number(document.querySelector(`[data-menu-stock="${itemId}"]`)?.value),
-      image: await getMenuImageValue(itemId),
     };
 
     try {
@@ -720,17 +691,11 @@ menuManager.addEventListener("click", async (event) => {
 
 menuAddForm?.addEventListener("submit", async (event) => {
   event.preventDefault();
-  let image = String(document.querySelector("#menuImage").value || "").trim();
-  const imageFile = menuImageFile?.files?.[0];
-  if (imageFile) {
-    image = await readFileAsDataUrl(imageFile);
-  }
   const payload = {
     name: document.querySelector("#menuName").value.trim(),
     price: Number(document.querySelector("#menuPrice").value),
     category: document.querySelector("#menuCategory").value.trim(),
     stockCount: Number(menuStockCount?.value),
-    image,
     description: document.querySelector("#menuDescription").value.trim(),
   };
 

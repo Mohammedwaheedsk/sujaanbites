@@ -127,14 +127,6 @@
               <input id="menuStockCount" type="number" min="0" step="1" value="20" placeholder="20" />
             </label>
             <label>
-              Image upload
-              <input id="menuImageFile" type="file" accept="image/*" />
-            </label>
-            <label>
-              Image URL
-              <input id="menuImage" type="url" placeholder="https://..." />
-            </label>
-            <label>
               Description
               <textarea id="menuDescription" rows="2" placeholder="Buttery cookie with dark chocolate chips"></textarea>
             </label>
@@ -168,8 +160,8 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
-  window.__API_BASE = "https://sujaanbites-55jn.onrender.com";
-</script>
+    window.__API_BASE = window.__API_BASE || "";
+  </script>
   <script src="admin.js"></script>
 </body>
 
