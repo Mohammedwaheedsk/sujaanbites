@@ -898,7 +898,6 @@ async function handleApi(req, res, url) {
     const name = String(body.name || "").trim();
     const description = String(body.description || "").trim();
     const category = String(body.category || "").trim() || "Cookies";
-    const image = String(body.image || "").trim();
     const price = Number(body.price);
     const stockCount = normalizeStockCount(body.stockCount);
 
@@ -918,7 +917,7 @@ async function handleApi(req, res, url) {
       name,
       description,
       category,
-      image,
+      image: "assets/hero-food.png",
       price,
       available: body.available === false ? false : true,
       stockCount,
@@ -947,7 +946,6 @@ async function handleApi(req, res, url) {
       name: typeof body.name === "string" ? body.name.trim() || current.name : current.name,
       description: typeof body.description === "string" ? body.description.trim() || current.description : current.description,
       category: typeof body.category === "string" ? body.category.trim() || current.category : current.category,
-      image: typeof body.image === "string" ? body.image.trim() || current.image : current.image,
       price: Number.isFinite(Number(body.price)) ? Math.max(0, Number(body.price)) : current.price,
       available: typeof body.available === "boolean" ? body.available : current.available,
       stockCount: Number.isFinite(Number(body.stockCount)) ? Math.max(0, Math.floor(Number(body.stockCount))) : current.stockCount,
