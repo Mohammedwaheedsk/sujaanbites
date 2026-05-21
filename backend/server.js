@@ -629,7 +629,10 @@ function calculateOrder(menu, items, orderType) {
   }
 
   const subtotal = rows.reduce((sum, item) => sum + item.lineTotal, 0);
-  const delivery = subtotal > 0 && orderType === "delivery" ? BUSINESS.deliveryFee : 0;
+  const quantity = rows.reduce((sum, item) => sum + item.quantity, 0);
+  const delivery = subtotal > 0 && orderType === "delivery"
+    ? BUSINESS.deliveryFee + Math.max(0, quantity - 3) * 5
+    : 0;
 
   return {
     rows,
