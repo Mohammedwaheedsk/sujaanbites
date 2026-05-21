@@ -7,7 +7,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-chocolate-box4",
@@ -17,7 +18,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-chocolate-box6",
@@ -27,7 +29,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-chocolate-box8",
@@ -37,7 +40,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-doublechocolate-single",
@@ -47,7 +51,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-doublechocolate-box4",
@@ -57,7 +62,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-doublechocolate-box6",
@@ -67,7 +73,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-doublechocolate-box8",
@@ -77,7 +84,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-redvelvet-single",
@@ -87,7 +95,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-redvelvet-box4",
@@ -97,7 +106,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-redvelvet-box6",
@@ -107,7 +117,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-redvelvet-box8",
@@ -117,7 +128,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-oreo-single",
@@ -127,7 +139,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-oreo-box4",
@@ -137,7 +150,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-oreo-box6",
@@ -147,7 +161,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-oreo-box8",
@@ -157,7 +172,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-eggless-single",
@@ -167,7 +183,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-eggless-box4",
@@ -177,7 +194,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-eggless-box6",
@@ -187,7 +205,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "classic-eggless-box8",
@@ -197,7 +216,8 @@
     "category": "Classic Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "premium-biscoff-single",
@@ -207,7 +227,8 @@
     "category": "Premium Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "premium-biscoff-box4",
@@ -217,7 +238,8 @@
     "category": "Premium Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "premium-biscoff-box6",
@@ -227,7 +249,8 @@
     "category": "Premium Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "premium-biscoff-box8",
@@ -237,7 +260,8 @@
     "category": "Premium Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "premium-dryfruit-single",
@@ -247,7 +271,8 @@
     "category": "Premium Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "premium-dryfruit-box4",
@@ -257,7 +282,8 @@
     "category": "Premium Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "premium-dryfruit-box6",
@@ -267,7 +293,8 @@
     "category": "Premium Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "premium-dryfruit-box8",
@@ -277,7 +304,8 @@
     "category": "Premium Collection",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "combo-regular",
@@ -287,7 +315,8 @@
     "category": "Combo Boxes",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "combo-premium",
@@ -297,7 +326,8 @@
     "category": "Combo Boxes",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   },
   {
     "id": "combo-deluxe",
@@ -307,6 +337,7 @@
     "category": "Combo Boxes",
     "image": "",
     "available": true,
-    "stockCount": 20
+    "stockCount": 20,
+    "updatedAt": null
   }
 ]
