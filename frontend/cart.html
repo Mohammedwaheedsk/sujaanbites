@@ -5,55 +5,37 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="theme-color" content="#fc8019" />
-  <title>Sujaan Bites | Order Food Online</title>
+  <title>Sujaan Bites | Cart</title>
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="preconnect" href="https://api.qrserver.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 
-<body data-page="home">
+<body data-page="cart">
   <div class="splash" id="splash" aria-hidden="true">
     <div class="splash-card">
       <img class="splash-logo" src="assets/sujaan-logo.png" alt="" />
       <div class="splash-text">Sujaan Bites</div>
     </div>
   </div>
+
   <header class="topbar">
-    <a class="brand" href="#menu" aria-label="Sujaan Bites home">
+    <a class="brand" href="/" data-route="/" aria-label="Back to Sujaan Bites home">
       <span class="brand-mark">
         <img src="assets/sujaan-logo.png" alt="Sujaan Bites logo" />
       </span>
       <span>
         <strong>Sujaan Bites</strong>
-        <small>Fresh baked cookies</small>
+        <small>Your cart</small>
       </span>
     </a>
     <nav class="nav">
       <button class="nav-button" id="accountButton" type="button">Account</button>
-      <a href="#menu">Menu</a>
     </nav>
   </header>
 
-  <main>
-    <section class="hero" aria-labelledby="hero-title">
-      <img src="assets/hero-food.png" alt="A tray of baked cookies with a warm cookie shop feel" />
-      <div class="hero-copy">
-        <p class="eyebrow">Order today</p>
-        <h1 id="hero-title">Sujaan Bites</h1>
-        <p>Hot-selling cookie boxes, one-tap ordering, and a smoother checkout built for mobile.</p>
-        <div class="hero-cta-row">
-          <a class="primary-link" href="#menu">Start order</a>
-          <button class="secondary-link" id="heroAccountButton" type="button">Account</button>
-        </div>
-        <div class="hero-pills" aria-label="Service highlights">
-          <span class="hero-pill">Freshly baked</span>
-          <span class="hero-pill">Fast delivery</span>
-          <span class="hero-pill">UPI prepaid</span>
-        </div>
-      </div>
-    </section>
-
+  <main class="cart-page">
     <div class="account-shell-overlay" id="accountOverlay"></div>
     <aside class="account-shell" id="accountShell" aria-label="Customer account">
       <div class="account-shell-head">
@@ -76,59 +58,91 @@
       <div class="account-section" id="accountContent"></div>
     </aside>
 
-    <section class="order-shell" id="orderShell" aria-label="Food ordering app">
-      <div class="menu-panel">
-        <div class="section-head">
-          <div>
-            <p class="eyebrow">Menu</p>
-            <h2 id="menu">Choose your cookies</h2>
+    <section class="cart-page-shell">
+      <section class="cart-empty-panel" id="cartPageEmpty">
+        <p class="eyebrow">Cart</p>
+        <h1>Your cart is empty</h1>
+        <p>Add your cookies from the home page and come back here to pay.</p>
+        <a class="primary-link" href="/" data-route="/">Browse menu</a>
+      </section>
+
+      <div id="cartPageContent" class="hidden">
+        <section class="checkout-panel cart-page-panel" aria-label="Cart and checkout">
+          <div class="cart-header">
+            <div>
+              <p class="eyebrow">Cart</p>
+              <h2>Your order</h2>
+            </div>
+            <span id="itemCount">0 items</span>
           </div>
-          <div class="filters" id="menuFilters" role="tablist" aria-label="Menu categories"></div>
-        </div>
-        <div class="menu-grid" id="menuGrid">
-          <div class="menu-loading">Loading fresh bakes...</div>
-        </div>
+
+          <div class="cart-items" id="cartItems">
+            <p class="empty">Add cookies from the menu to begin.</p>
+          </div>
+
+          <div class="cart-payment-options">
+            <p class="eyebrow">Payment options</p>
+            <label class="payment-option active">
+              <input type="radio" name="checkoutPaymentOption" value="prepaid" data-payment-option checked />
+              <span>
+                <strong>UPI / Razorpay</strong>
+                <small>Fast prepaid checkout</small>
+              </span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="checkoutPaymentOption" value="card" data-payment-option />
+              <span>
+                <strong>Debit / Credit card</strong>
+                <small>Pay securely in Razorpay</small>
+              </span>
+            </label>
+          </div>
+
+          <div class="delivery-card">
+            <div>
+              <p class="eyebrow">Delivery type</p>
+              <strong>10-15 mins delivery</strong>
+              <p>Fresh cookies packed for mobile-first checkout.</p>
+            </div>
+          </div>
+
+          <div class="totals">
+            <div><span>Subtotal</span><strong id="subtotal">₹0</strong></div>
+            <div><span>Delivery</span><strong id="deliveryFee">₹0</strong></div>
+            <div class="grand-total"><span>To Pay</span><strong id="grandTotal">₹0</strong></div>
+          </div>
+
+          <div class="selected-address" id="selectedAddressSummary">
+            <strong>Saved address</strong>
+            <p id="selectedAddressText">No address saved yet.</p>
+          </div>
+
+          <div class="cart-total-card">
+            <div>
+              <strong>To Pay</strong>
+              <small>Payment is verified before the order reaches the restaurant.</small>
+            </div>
+            <strong id="cartSummaryPayable">₹0</strong>
+          </div>
+
+          <form class="customer-form" id="checkout" autocomplete="on">
+            <input type="hidden" id="customerName" name="name" />
+            <input type="hidden" id="customerPhone" name="phone" />
+            <input type="hidden" id="orderType" name="orderType" value="delivery" />
+            <input type="hidden" id="paymentMethod" name="paymentMethod" value="prepaid" />
+          </form>
+        </section>
       </div>
     </section>
-
-    <button class="menu-fab" id="menuFab" type="button" aria-expanded="false" aria-controls="menuFabSheet">
-      <span class="menu-fab-icon">◫</span>
-      <span>MENU</span>
-    </button>
-    <div class="menu-fab-backdrop hidden" id="menuFabBackdrop"></div>
-    <section class="menu-fab-sheet hidden" id="menuFabSheet" aria-label="Menu categories"></section>
-
-    <div class="item-preview hidden" id="itemPreviewOverlay" aria-hidden="true">
-      <article class="item-preview-card">
-        <button class="item-preview-close" id="itemPreviewClose" type="button" aria-label="Close preview">×</button>
-        <img id="itemPreviewImage" alt="" />
-        <div class="item-preview-meta">
-          <h3 id="itemPreviewName"></h3>
-          <p id="itemPreviewPrice"></p>
-          <button class="add-button" id="itemPreviewAdd" type="button">ADD</button>
-        </div>
-      </article>
-    </div>
-
-    <div class="flavor-overlay hidden" id="flavorOverlay" aria-hidden="true">
-      <article class="flavor-sheet">
-        <div class="flavor-sheet-head">
-          <div>
-            <p class="eyebrow" id="flavorSubtitle">Collection</p>
-            <h3 id="flavorTitle">Chocolate</h3>
-          </div>
-          <button class="item-preview-close flavor-close" id="flavorClose" type="button" aria-label="Close flavour menu">×</button>
-        </div>
-        <div class="flavor-options" id="flavorOptions"></div>
-      </article>
-    </div>
-
-    <div class="cart-toast hidden" id="cartToast">
-      <span id="cartToastText">1 Item added</span>
-      <a href="/cart" data-route="/cart" id="cartToastAction">View Cart ›</a>
-    </div>
-
   </main>
+
+  <div class="cart-page-footer hidden" id="cartPageFooter">
+    <div class="cart-page-payment-copy">
+      <small>PAY USING</small>
+      <strong id="cartPagePaymentMethodText">UPI / Razorpay</strong>
+    </div>
+    <button class="pay-button cart-page-pay-button" id="cartPagePayLabel" type="submit" form="checkout">Pay ₹0</button>
+  </div>
 
   <section class="tracking-dock hidden" id="trackingDock" aria-label="Order tracking panel">
     <button class="tracking-toggle" id="trackingToggle" type="button" aria-expanded="false">

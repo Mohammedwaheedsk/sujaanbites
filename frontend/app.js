@@ -12,6 +12,9 @@ const API_BASE = (() => {
   if (window.location.protocol === "http:" || window.location.protocol === "https:") {
     return window.location.origin.replace(/\/+$/, "");
   }
+  if (window.location.protocol === "file:") {
+    return "http://localhost:3000";
+  }
   return "";
 })();
 
@@ -27,6 +30,8 @@ const STORAGE_KEYS = {
   profile: "spiceTableProfile",
   addresses: "spiceTableAddresses",
   selectedAddressId: "spiceTableSelectedAddressId",
+  cart: "spiceTableCart",
+  recentPlacedOrder: "spiceTableRecentPlacedOrder",
   lastAcceptedOrderShown: "spiceTableLastAcceptedOrderShown",
   lastCustomerMessageShown: "spiceTableLastCustomerMessageShown",
   lastCancelledOrderShown: "spiceTableLastCancelledOrderShown",
@@ -54,6 +59,9 @@ const state = {
   loadingMenu: false,
   checkoutNeedsAccountConfirm: true,
 };
+
+const pageMode = document.body?.dataset.page || "home";
+const isCartPage = pageMode === "cart";
 
 const DEFAULT_MENU = [
   {
@@ -122,6 +130,7 @@ const menuGrid = document.querySelector("#menuGrid");
 const menuFilters = document.querySelector("#menuFilters");
 const orderShell = document.querySelector("#orderShell");
 const accountButton = document.querySelector("#accountButton");
+const heroAccountButton = document.querySelector("#heroAccountButton");
 const accountOverlay = document.querySelector("#accountOverlay");
 const accountShell = document.querySelector("#accountShell");
 const accountLogoutButton = document.querySelector("#accountLogoutButton");
@@ -185,14 +194,28 @@ const itemPreviewImage = document.querySelector("#itemPreviewImage");
 const itemPreviewName = document.querySelector("#itemPreviewName");
 const itemPreviewPrice = document.querySelector("#itemPreviewPrice");
 const itemPreviewAdd = document.querySelector("#itemPreviewAdd");
+const flavorOverlay = document.querySelector("#flavorOverlay");
+const flavorClose = document.querySelector("#flavorClose");
+const flavorTitle = document.querySelector("#flavorTitle");
+const flavorSubtitle = document.querySelector("#flavorSubtitle");
+const flavorOptions = document.querySelector("#flavorOptions");
 const cartToast = document.querySelector("#cartToast");
 const cartToastText = document.querySelector("#cartToastText");
+const cartToastAction = document.querySelector("#cartToastAction");
+const cartPageEmpty = document.querySelector("#cartPageEmpty");
+const cartPageContent = document.querySelector("#cartPageContent");
+const cartPageFooter = document.querySelector("#cartPageFooter");
+const cartPagePayLabel = document.querySelector("#cartPagePayLabel");
+const cartSummaryPayable = document.querySelector("#cartSummaryPayable");
+const cartPagePaymentMethodText = document.querySelector("#cartPagePaymentMethodText");
+const paymentOptionInputs = document.querySelectorAll("[data-payment-option]");
 
 let trackingMap = null;
 let trackingLayerGroup = null;
 let trackingOpen = false;
 let trackingCurrentOrder = null;
 let previewItemId = null;
+let activeFlavorKey = null;
 
 function vibrate(pattern = 12) {
   if (!navigator.vibrate) return;
@@ -224,6 +247,14 @@ function normalizeCategory(value) {
   return String(value || "").trim().toLowerCase();
 }
 
+function parseMenuVariantName(name) {
+  const [base, variant] = String(name || "").split(/\s+-\s+/, 2);
+  return {
+    flavor: (base || String(name || "")).trim(),
+    variant: (variant || "Single").trim(),
+  };
+}
+
 function formatCategoryLabel(value) {
   const cleaned = String(value || "").trim();
   if (!cleaned) return "Other";
@@ -252,6 +283,30 @@ function writeStoredJson(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function getRoute(path) {
+  if (window.location.protocol === "file:") {
+    return path === "/" ? "index.html" : `${String(path).replace(/^\/+/, "")}.html`;
+  }
+  return path;
+}
+
+function syncPageRoutes() {
+  document.querySelectorAll("[data-route]").forEach((node) => {
+    const route = node.dataset.route;
+    if (!route) return;
+    if ("href" in node) {
+      node.href = getRoute(route);
+    }
+  });
+}
+
+function persistCart() {
+  const snapshot = [...state.cart.entries()]
+    .filter(([, quantity]) => Number(quantity) > 0)
+    .map(([id, quantity]) => [id, quantity]);
+  writeStoredJson(STORAGE_KEYS.cart, snapshot);
+}
+
 function clearSession() {
   state.profile = null;
   state.addresses = [];
@@ -268,6 +323,7 @@ function clearSession() {
   localStorage.removeItem(STORAGE_KEYS.lastCompletedOrderShown);
   localStorage.removeItem(STORAGE_KEYS.lastDeliveryRatingShown);
   localStorage.removeItem(STORAGE_KEYS.lastProductRatingShown);
+  localStorage.removeItem(STORAGE_KEYS.cart);
   state.cart.clear();
 }
 
@@ -280,6 +336,16 @@ function formatReceivedAddressLine(address) {
 
 function closeOrderReceivedCard() {
   orderReceivedOverlay?.classList.add("hidden");
+}
+
+function showPlacedOrderNotice(order) {
+  if (!orderReceivedOverlay || !orderReceivedAddress || !orderReceivedEta) return;
+  if (orderReceivedTitle) orderReceivedTitle.textContent = "Order placed";
+  if (orderReceivedSymbol) orderReceivedSymbol.textContent = "✓";
+  orderReceivedIcon?.classList.remove("cancelled");
+  orderReceivedAddress.textContent = formatReceivedAddressLine(order?.address);
+  orderReceivedEta.textContent = "Payment successful. The restaurant will confirm your order shortly.";
+  orderReceivedOverlay.classList.remove("hidden");
 }
 
 function openOrderReceivedCard(order) {
@@ -597,6 +663,8 @@ function loadLocalState() {
   state.profile = readStoredJson(STORAGE_KEYS.profile) || null;
   state.addresses = readStoredJson(STORAGE_KEYS.addresses) || [];
   state.selectedAddressId = localStorage.getItem(STORAGE_KEYS.selectedAddressId) || null;
+  const storedCart = readStoredJson(STORAGE_KEYS.cart);
+  state.cart = new Map(Array.isArray(storedCart) ? storedCart.filter((entry) => Array.isArray(entry) && entry.length === 2) : []);
 
   if (!state.selectedAddressId && state.addresses.length > 0) {
     state.selectedAddressId = state.addresses[0].id;
@@ -772,6 +840,32 @@ function getMenuCategories() {
   return [{ id: "all", label: "All" }, ...[...categories.entries()].map(([id, label]) => ({ id, label }))];
 }
 
+function getFlavorGroups(items) {
+  const groups = new Map();
+  for (const item of items) {
+    const parsed = parseMenuVariantName(item.name);
+    const key = `${normalizeCategory(item.category)}::${parsed.flavor.toLowerCase()}`;
+    if (!groups.has(key)) {
+      groups.set(key, {
+        key,
+        category: item.category,
+        flavor: parsed.flavor,
+        description: item.description,
+        image: item.image || "assets/hero-food.png",
+        variants: [],
+      });
+    }
+    groups.get(key).variants.push({
+      ...item,
+      variantLabel: parsed.variant,
+    });
+  }
+  for (const group of groups.values()) {
+    group.variants.sort((a, b) => a.price - b.price);
+  }
+  return [...groups.values()];
+}
+
 function renderFilters() {
   if (!menuFilters) return;
   const categories = getMenuCategories();
@@ -802,61 +896,53 @@ function syncCartToStock() {
     }
   }
   if (changed) {
+    persistCart();
     renderCart();
   }
 }
 
 function renderMenu() {
+  if (!menuGrid) return;
   const activeCategory = normalizeCategory(state.activeCategory) || "all";
   const dishes = state.menu.filter((item) => {
     const category = normalizeCategory(item.category);
     return activeCategory === "all" || category === activeCategory;
   });
+  const flavorGroups = getFlavorGroups(dishes);
   const grouped = new Map();
-  for (const item of dishes) {
-    const key = formatCategoryLabel(item.category || "Menu");
+  for (const group of flavorGroups) {
+    const key = formatCategoryLabel(group.category || "Menu");
     if (!grouped.has(key)) grouped.set(key, []);
-    grouped.get(key).push(item);
+    grouped.get(key).push(group);
   }
 
   menuGrid.innerHTML = [...grouped.entries()]
-    .map(([section, sectionItems]) => {
-      const cards = sectionItems
-        .map((item) => {
-        const stockCount = getMenuStock(item);
-        const soldOut = item.available === false || stockCount <= 0;
-        const quantity = state.cart.get(item.id) || 0;
-        const canAddMore = !soldOut && quantity < stockCount;
+    .map(([section, sectionGroups]) => {
+      const cards = sectionGroups
+        .map((group) => {
+        const totalQuantity = group.variants.reduce((sum, item) => sum + (state.cart.get(item.id) || 0), 0);
+        const soldOut = group.variants.every((item) => item.available === false || getMenuStock(item) <= 0);
+        const startingPrice = Math.min(...group.variants.map((item) => Number(item.price) || 0));
+        const variantsText = group.variants.map((item) => item.variantLabel).join(" • ");
         return `
-        <article class="dish-card ${soldOut ? "unavailable" : ""}" data-item-id="${item.id}">
-          <img class="dish-image" src="${item.image || "assets/hero-food.png"}" alt="${item.name}" />
+        <article class="dish-card flavor-card ${soldOut ? "unavailable" : ""}" data-flavor-key="${group.key}">
+          <img class="dish-image" src="${group.image || "assets/hero-food.png"}" alt="${group.flavor}" />
           ${soldOut ? '<span class="next-available-chip">Next available at 9:30 am</span>' : ""}
           <div class="dish-top">
             <div>
-              <h3>${item.name}</h3>
-              <p>${item.description}</p>
+              <h3>${group.flavor}</h3>
+              <p>${variantsText}</p>
             </div>
-            <span class="price">${formatPrice(item.price)}</span>
+            <span class="price">From ${formatPrice(startingPrice)}</span>
           </div>
           <div class="dish-actions">
             <span class="availability ${soldOut ? "off" : "on"}">
-              ${soldOut ? "Sold out" : "In stock"}
+              ${soldOut ? "Sold out" : `${group.variants.length} size options`}
             </span>
-            ${
-              soldOut
-                ? `<button class="add-button" type="button" disabled>Unavailable</button>`
-                : quantity > 0
-                  ? `
-                    <div class="menu-quantity" aria-label="Quantity for ${item.name}">
-                      <button type="button" data-menu-decrease="${item.id}" aria-label="Remove one ${item.name}">−</button>
-                      <span>${quantity}</span>
-                      <button type="button" data-menu-increase="${item.id}" aria-label="Add one ${item.name}" ${canAddMore ? "" : "disabled"}>+</button>
-                    </div>
-                  `
-                  : `<button class="add-button" type="button" data-add="${item.id}">Add</button>`
-            }
+            <button class="add-button" type="button" data-open-flavor="${group.key}" ${soldOut ? "disabled" : ""}>
+              ${totalQuantity > 0 ? `${totalQuantity} added` : "Choose"}
+            </button>
           </div>
-          ${!soldOut && quantity >= stockCount ? `<p class="form-note">You have reached the available stock for this item.</p>` : ""}
         </article>
       `;
         })
@@ -878,6 +964,54 @@ function renderMenuFabSheet() {
   menuFabSheet.innerHTML = sections
     .map((section) => `<button type="button" data-menu-section-target="${section}">${section}</button>`)
     .join("");
+}
+
+function openFlavorMenu(flavorKey) {
+  if (!flavorOverlay || !flavorOptions) return;
+  const group = getFlavorGroups(state.menu).find((entry) => entry.key === flavorKey);
+  if (!group) return;
+  activeFlavorKey = flavorKey;
+  if (flavorTitle) flavorTitle.textContent = group.flavor;
+  if (flavorSubtitle) flavorSubtitle.textContent = formatCategoryLabel(group.category || "");
+  flavorOptions.innerHTML = group.variants
+    .map((item) => {
+      const quantity = state.cart.get(item.id) || 0;
+      const stockCount = getMenuStock(item);
+      const soldOut = item.available === false || stockCount <= 0;
+      return `
+        <div class="flavor-option ${soldOut ? "unavailable" : ""}">
+          <div class="flavor-option-copy">
+            <strong>${item.variantLabel}</strong>
+            <small>${formatPrice(item.price)}</small>
+          </div>
+          ${
+            soldOut
+              ? `<button class="add-button compact" type="button" disabled>Sold out</button>`
+              : quantity > 0
+                ? `
+                  <div class="menu-quantity compact" aria-label="Quantity for ${item.name}">
+                    <button type="button" data-menu-decrease="${item.id}" aria-label="Remove one ${item.name}">−</button>
+                    <span>${quantity}</span>
+                    <button type="button" data-menu-increase="${item.id}" aria-label="Add one ${item.name}" ${quantity >= stockCount ? "disabled" : ""}>+</button>
+                  </div>
+                `
+                : `<button class="add-button compact" type="button" data-add="${item.id}">Add</button>`
+          }
+        </div>
+      `;
+    })
+    .join("");
+  flavorOverlay.classList.remove("hidden");
+  flavorOverlay.classList.add("show");
+  flavorOverlay.setAttribute("aria-hidden", "false");
+}
+
+function closeFlavorMenu() {
+  if (!flavorOverlay) return;
+  flavorOverlay.classList.remove("show");
+  flavorOverlay.classList.add("hidden");
+  flavorOverlay.setAttribute("aria-hidden", "true");
+  activeFlavorKey = null;
 }
 
 function getCartRows() {
@@ -906,35 +1040,52 @@ function getTotals() {
 
 function renderCart() {
   const totals = getTotals();
-  itemCount.textContent = `${totals.quantity} ${totals.quantity === 1 ? "item" : "items"}`;
-  subtotalEl.textContent = formatPrice(totals.subtotal);
-  deliveryFeeEl.textContent = formatPrice(totals.delivery);
-  grandTotalEl.textContent = formatPrice(totals.total);
+  if (itemCount) itemCount.textContent = `${totals.quantity} ${totals.quantity === 1 ? "item" : "items"}`;
+  if (subtotalEl) subtotalEl.textContent = formatPrice(totals.subtotal);
+  if (deliveryFeeEl) deliveryFeeEl.textContent = formatPrice(totals.delivery);
+  if (grandTotalEl) grandTotalEl.textContent = formatPrice(totals.total);
 
-  if (!totals.rows.length) {
-    cartItems.innerHTML = '<p class="empty">Add cookies from the menu to begin.</p>';
-  } else {
-    cartItems.innerHTML = totals.rows
-      .map(
-        (item) => `
-          <div class="cart-row">
-        <div>
-          <strong>${item.name}</strong>
-          <small>${formatPrice(item.price)} each</small>
+  if (cartItems) {
+    if (!totals.rows.length) {
+      cartItems.innerHTML = '<p class="empty">Add cookies from the menu to begin.</p>';
+    } else {
+      cartItems.innerHTML = totals.rows
+        .map(
+          (item) => `
+            <div class="cart-row">
+          <div>
+            <strong>${item.name}</strong>
+            <small>${formatPrice(item.price)} each</small>
+          </div>
+          <div class="quantity" aria-label="Quantity for ${item.name}">
+            <button type="button" data-decrease="${item.id}" aria-label="Remove one ${item.name}">−</button>
+            <span>${item.quantity}</span>
+            <button type="button" data-increase="${item.id}" aria-label="Add one ${item.name}" ${item.quantity >= getMenuStock(item) ? "disabled" : ""}>+</button>
+          </div>
         </div>
-        <div class="quantity" aria-label="Quantity for ${item.name}">
-          <button type="button" data-decrease="${item.id}" aria-label="Remove one ${item.name}">−</button>
-          <span>${item.quantity}</span>
-          <button type="button" data-increase="${item.id}" aria-label="Add one ${item.name}" ${item.quantity >= getMenuStock(item) ? "disabled" : ""}>+</button>
-        </div>
-      </div>
-    `,
-      )
-      .join("");
+      `,
+        )
+        .join("");
+    }
   }
 
   if (selectedAddressText) {
     selectedAddressText.textContent = formatAddressLine(getActiveAddress());
+  }
+
+  if (cartSummaryPayable) {
+    cartSummaryPayable.textContent = formatPrice(totals.total);
+  }
+
+  if (cartPagePayLabel) {
+    cartPagePayLabel.textContent = totals.total > 0 ? `Pay ${formatPrice(totals.total)}` : "Pay ₹0";
+  }
+
+  if (cartPageEmpty && cartPageContent && cartPageFooter) {
+    const hasItems = totals.quantity > 0;
+    cartPageEmpty.classList.toggle("hidden", hasItems);
+    cartPageContent.classList.toggle("hidden", !hasItems);
+    cartPageFooter.classList.toggle("hidden", !hasItems);
   }
 
   if (cartToast && cartToastText) {
@@ -968,9 +1119,13 @@ function updateQuantity(id, change) {
   } else {
     state.cart.set(id, next);
   }
+  persistCart();
   state.checkoutNeedsAccountConfirm = true;
   renderCart();
   renderMenu();
+  if (activeFlavorKey) {
+    openFlavorMenu(activeFlavorKey);
+  }
 }
 
 function renderProfileSetup() {
@@ -1224,9 +1379,10 @@ function renderCareTab() {
 }
 
 function renderAccount() {
+  if (!accountShell || !accountOverlay || !accountContent) return;
   accountShell.classList.toggle("open", state.drawerOpen);
   accountOverlay.classList.toggle("open", state.drawerOpen);
-  accountLogoutButton.classList.toggle("hidden", !state.profile);
+  accountLogoutButton?.classList.toggle("hidden", !state.profile);
 
   accountTabs.forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.accountTab === state.activeTab);
@@ -1259,8 +1415,12 @@ async function logoutCustomer() {
 }
 
 function syncCheckoutFields() {
-  customerName.value = state.profile?.name || "";
-  customerPhone.value = state.profile?.phone || "";
+  const activeAddress = getActiveAddress();
+  if (customerName) customerName.value = state.profile?.name || activeAddress?.name || "";
+  if (customerPhone) customerPhone.value = state.profile?.phone || activeAddress?.phone || "";
+  if (paymentMethod && !paymentMethod.value) {
+    paymentMethod.value = "prepaid";
+  }
   if (selectedAddressText) {
     selectedAddressText.textContent = formatAddressLine(getActiveAddress());
   }
@@ -1502,10 +1662,13 @@ async function saveAddress(form) {
   }
 
   const profile = state.profile || {};
+  const existingRecord = state.editingAddressId
+    ? state.addresses.find((entry) => entry.id === state.editingAddressId)
+    : null;
   const record = {
     id: state.editingAddressId || Date.now().toString(),
-    name: profile.name || "",
-    phone: profile.phone || "",
+    name: profile.name || existingRecord?.name || getActiveAddress()?.name || "",
+    phone: profile.phone || existingRecord?.phone || getActiveAddress()?.phone || "",
     houseNumber,
     streetName,
     type: addressType,
@@ -1564,7 +1727,9 @@ function renderAccountContent() {
 
 async function createPrepaidIntent() {
   const activeAddress = getActiveAddress();
-  if (!state.profile || !activeAddress) {
+  const resolvedName = state.profile?.name || activeAddress?.name || "";
+  const resolvedPhone = normalizePhone(state.profile?.phone || activeAddress?.phone || "");
+  if (!activeAddress || !resolvedName || resolvedPhone.length !== 10) {
     openDrawer();
     state.activeTab = "profile";
     renderAccount();
@@ -1572,10 +1737,10 @@ async function createPrepaidIntent() {
   }
 
   const payload = {
-    customerName: state.profile.name,
-    customerPhone: state.profile.phone,
+    customerName: resolvedName,
+    customerPhone: resolvedPhone,
     orderType: "delivery",
-    address: activeAddress,
+    address: { ...activeAddress, name: activeAddress.name || resolvedName, phone: activeAddress.phone || resolvedPhone },
     items: getCartRows().map((item) => ({ id: item.id, quantity: item.quantity })),
   };
 
@@ -1598,8 +1763,8 @@ function openRazorpayCheckout(intent, paymentSessionId) {
     description: `Order payment`,
     order_id: intent.razorpay.orderId,
     prefill: {
-      name: state.profile?.name || "",
-      contact: state.profile?.phone || "",
+      name: state.profile?.name || getActiveAddress()?.name || "",
+      contact: state.profile?.phone || getActiveAddress()?.phone || "",
     },
     method: { upi: true },
     handler: async (response) => {
@@ -1616,33 +1781,46 @@ function openRazorpayCheckout(intent, paymentSessionId) {
 
         paymentSummary.textContent = `${result.order.id} payment verified. Waiting for restaurant confirmation.`;
         adminNotice.textContent = "Payment verified by the server.";
-        razorpayRetryButton.classList.add("hidden");
+        razorpayRetryButton?.classList.add("hidden");
         state.cart.clear();
+        persistCart();
+        writeStoredJson(STORAGE_KEYS.recentPlacedOrder, {
+          id: result.order.id,
+          address: result.order.address,
+          createdAt: result.order.createdAt,
+        });
         await loadPreviousOrders();
         await loadOrdersForAccount();
         renderCart();
+        paymentDialog?.close();
+        window.location.href = getRoute("/");
       } catch (error) {
         paymentSummary.textContent = `Payment response received, but verification failed. ${error.message}`;
-        razorpayRetryButton.classList.remove("hidden");
+        razorpayRetryButton?.classList.remove("hidden");
       }
     },
     modal: {
       ondismiss: () => {
         paymentSummary.textContent = "Payment failed or was closed. Please try again.";
         adminNotice.textContent = "No order was created because the payment was not completed.";
-        razorpayRetryButton.classList.remove("hidden");
+        razorpayRetryButton?.classList.remove("hidden");
       },
     },
   });
 
-  razorpayRetryButton.onclick = () => checkoutInstance.open();
+  if (razorpayRetryButton) {
+    razorpayRetryButton.onclick = () => checkoutInstance.open();
+  }
   checkoutInstance.open();
 }
 
 async function handleCheckout(event) {
   event.preventDefault();
 
-  if (!state.profile || !getActiveAddress()) {
+  const activeAddress = getActiveAddress();
+  const hasName = Boolean(state.profile?.name || activeAddress?.name);
+  const hasPhone = normalizePhone(state.profile?.phone || activeAddress?.phone || "").length === 10;
+  if (!activeAddress || !hasName || !hasPhone) {
     openDrawer();
     state.activeTab = "profile";
     renderAccount();
@@ -1653,15 +1831,6 @@ async function handleCheckout(event) {
   const totals = getTotals();
   if (!totals.rows.length) {
     alert("Please add at least one item to your cart.");
-    return;
-  }
-
-  if (state.checkoutNeedsAccountConfirm) {
-    state.activeTab = "profile";
-    state.drawerOpen = true;
-    renderAccount();
-    state.checkoutNeedsAccountConfirm = false;
-    alert("Please confirm your account details, then click Place order again to continue payment.");
     return;
   }
 
@@ -1711,6 +1880,11 @@ async function loadOrdersForAccount() {
 }
 
 accountButton.addEventListener("click", () => {
+  state.drawerOpen = true;
+  renderAccount();
+});
+
+heroAccountButton?.addEventListener("click", () => {
   state.drawerOpen = true;
   renderAccount();
 });
@@ -1786,6 +1960,20 @@ accountShell.addEventListener("click", async (event) => {
   }
 });
 
+paymentOptionInputs.forEach((input) => {
+  input.addEventListener("change", () => {
+    if (paymentMethod) {
+      paymentMethod.value = input.value;
+    }
+    if (cartPagePaymentMethodText) {
+      cartPagePaymentMethodText.textContent = input.value === "card" ? "Debit / Credit card" : "UPI / Razorpay";
+    }
+    paymentOptionInputs.forEach((node) => {
+      node.closest(".payment-option")?.classList.toggle("active", node.checked);
+    });
+  });
+});
+
 menuFilters?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-category]");
   if (!button) return;
@@ -1796,17 +1984,19 @@ menuFilters?.addEventListener("click", (event) => {
   renderMenu();
 });
 
-menuGrid.addEventListener("click", (event) => {
+menuGrid?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-add]");
   const increase = event.target.closest("[data-menu-increase]");
   const decrease = event.target.closest("[data-menu-decrease]");
-  const card = event.target.closest(".dish-card");
+  const openFlavor = event.target.closest("[data-open-flavor]");
+  const card = event.target.closest(".flavor-card");
   const actionTap = button || increase || decrease;
-  if (!actionTap && card?.dataset.itemId) {
-    const item = state.menu.find((entry) => entry.id === card.dataset.itemId);
-    if (item) openItemPreview(item);
+  if (openFlavor) {
+    openFlavorMenu(openFlavor.dataset.openFlavor);
+  } else if (!actionTap && card?.dataset.flavorKey) {
+    openFlavorMenu(card.dataset.flavorKey);
   }
-  const trigger = button || increase || decrease;
+  const trigger = button || increase || decrease || openFlavor || card;
   if (trigger) {
     pulseElement(trigger);
     vibrate(12);
@@ -1844,6 +2034,7 @@ function toggleMenuFab(open) {
   const shouldOpen = open ?? menuFabSheet.classList.contains("hidden");
   menuFabSheet.classList.toggle("hidden", !shouldOpen);
   menuFabBackdrop.classList.toggle("hidden", !shouldOpen);
+  menuFab.classList.toggle("hidden", shouldOpen);
   menuFab.setAttribute("aria-expanded", shouldOpen ? "true" : "false");
 }
 
@@ -1874,7 +2065,24 @@ itemPreviewAdd?.addEventListener("click", () => {
   closeItemPreview();
 });
 
-cartItems.addEventListener("click", (event) => {
+flavorClose?.addEventListener("click", closeFlavorMenu);
+flavorOverlay?.addEventListener("click", (event) => {
+  if (event.target === flavorOverlay) closeFlavorMenu();
+});
+flavorOptions?.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-add]");
+  const increase = event.target.closest("[data-menu-increase]");
+  const decrease = event.target.closest("[data-menu-decrease]");
+  const trigger = button || increase || decrease;
+  if (!trigger) return;
+  pulseElement(trigger);
+  vibrate(10);
+  if (button) updateQuantity(button.dataset.add, 1);
+  if (increase) updateQuantity(increase.dataset.menuIncrease, 1);
+  if (decrease) updateQuantity(decrease.dataset.menuDecrease, -1);
+});
+
+cartItems?.addEventListener("click", (event) => {
   const increase = event.target.closest("[data-increase]");
   const decrease = event.target.closest("[data-decrease]");
   const trigger = increase || decrease;
@@ -1894,7 +2102,7 @@ document.addEventListener("click", (event) => {
   vibrate(8);
 });
 
-checkout.addEventListener("submit", handleCheckout);
+checkout?.addEventListener("submit", handleCheckout);
 closeOrderReceivedOverlay?.addEventListener("click", closeOrderReceivedCard);
 orderReceivedOverlay?.addEventListener("click", (event) => {
   if (event.target === orderReceivedOverlay) closeOrderReceivedCard();
@@ -1984,6 +2192,7 @@ productRatingForm?.addEventListener("submit", async (event) => {
 });
 
 async function boot() {
+  syncPageRoutes();
   loadLocalState();
   await loadCustomerState();
   state.drawerOpen = false;
@@ -1993,6 +2202,11 @@ async function boot() {
   await loadMenu();
   if (state.profile?.phone) {
     await loadOrdersForAccount();
+  }
+  const recentPlacedOrder = readStoredJson(STORAGE_KEYS.recentPlacedOrder);
+  if (recentPlacedOrder && !isCartPage) {
+    showPlacedOrderNotice(recentPlacedOrder);
+    localStorage.removeItem(STORAGE_KEYS.recentPlacedOrder);
   }
   renderAccount();
   setInterval(loadMenu, 300000);
