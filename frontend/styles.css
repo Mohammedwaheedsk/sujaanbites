@@ -367,26 +367,23 @@ h2 {
 
 .dish-card {
   position: relative;
+  gap: 14px;
 }
 
 .dish-top {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
   align-items: start;
-  gap: 10px 12px;
+  gap: 8px 12px;
 }
 
 .dish-card h3 {
-  margin: 0 0 4px;
-  font-size: 1rem;
-  line-height: 1.15;
-}
-
-.dish-card p {
   margin: 0;
-  color: var(--muted);
-  line-height: 1.4;
-  font-size: 0.88rem;
+  font-size: 1rem;
+  line-height: 1.25;
+  max-width: calc(100% - 112px);
 }
 
 .price {
@@ -394,11 +391,13 @@ h2 {
   white-space: nowrap;
   align-self: start;
   text-align: right;
+  font-size: 0.98rem;
+  margin-left: auto;
 }
 
 .dish-actions {
   display: grid;
-  gap: 8px;
+  gap: 12px;
 }
 
 .availability {

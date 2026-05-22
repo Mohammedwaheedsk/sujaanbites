@@ -923,16 +923,12 @@ function renderMenu() {
         const totalQuantity = group.variants.reduce((sum, item) => sum + (state.cart.get(item.id) || 0), 0);
         const soldOut = group.variants.every((item) => item.available === false || getMenuStock(item) <= 0);
         const startingPrice = Math.min(...group.variants.map((item) => Number(item.price) || 0));
-        const descriptionText = group.description || "Freshly baked signature cookies.";
         return `
         <article class="dish-card flavor-card ${soldOut ? "unavailable" : ""}" data-flavor-key="${group.key}">
           <img class="dish-image" src="${group.image || "assets/hero-food.png"}" alt="${group.flavor}" />
           ${soldOut ? '<span class="next-available-chip">Next available at 9:30 am</span>' : ""}
           <div class="dish-top">
-            <div>
-              <h3>${group.flavor}</h3>
-              <p>${descriptionText}</p>
-            </div>
+            <h3>${group.flavor}</h3>
             <span class="price">From ${formatPrice(startingPrice)}</span>
           </div>
           <div class="dish-actions">
