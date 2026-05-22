@@ -371,28 +371,25 @@ h2 {
 }
 
 .dish-top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  align-items: start;
-  gap: 8px 12px;
+  display: grid;
+  gap: 8px;
 }
 
 .dish-card h3 {
   margin: 0;
   font-size: 1rem;
   line-height: 1.25;
-  max-width: calc(100% - 112px);
+  max-width: 100%;
 }
 
 .price {
   font-weight: 800;
-  white-space: nowrap;
-  align-self: start;
-  text-align: right;
   font-size: 0.98rem;
-  margin-left: auto;
+}
+
+.price-line {
+  color: #ef6a1d;
+  line-height: 1;
 }
 
 .dish-actions {

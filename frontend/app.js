@@ -929,7 +929,7 @@ function renderMenu() {
           ${soldOut ? '<span class="next-available-chip">Next available at 9:30 am</span>' : ""}
           <div class="dish-top">
             <h3>${group.flavor}</h3>
-            <span class="price">From ${formatPrice(startingPrice)}</span>
+            <span class="price price-line">From ${formatPrice(startingPrice)}</span>
           </div>
           <div class="dish-actions">
             <span class="availability ${soldOut ? "off" : "on"}">
