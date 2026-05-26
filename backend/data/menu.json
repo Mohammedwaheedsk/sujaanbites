@@ -5,7 +5,7 @@
     "description": "Classic Collection",
     "price": 99,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/chocolate.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/chocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -16,7 +16,7 @@
     "description": "Classic Collection",
     "price": 349,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/chocolate.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/chocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -27,7 +27,7 @@
     "description": "Classic Collection",
     "price": 539,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/chocolate.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/chocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -38,7 +38,7 @@
     "description": "Classic Collection",
     "price": 669,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/chocolate.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/chocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -49,7 +49,7 @@
     "description": "Classic Collection",
     "price": 119,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/doublechocolate.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/doublechocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -60,7 +60,7 @@
     "description": "Classic Collection",
     "price": 439,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/doublechocolate.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/doublechocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -71,7 +71,7 @@
     "description": "Classic Collection",
     "price": 629,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/doublechocolate.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/doublechocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -82,7 +82,7 @@
     "description": "Classic Collection",
     "price": 799,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/doublechocolate.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/doublechocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -93,7 +93,7 @@
     "description": "Classic Collection",
     "price": 109,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/redvelvet.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/redvelvet.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -104,7 +104,7 @@
     "description": "Classic Collection",
     "price": 399,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/redvelvet.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/redvelvet.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -115,7 +115,7 @@
     "description": "Classic Collection",
     "price": 579,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/redvelvet.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/redvelvet.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -126,7 +126,7 @@
     "description": "Classic Collection",
     "price": 759,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/redvelvet.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/redvelvet.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -137,7 +137,7 @@
     "description": "Classic Collection",
     "price": 109,
     "category": "Classic Collection",
-    "image": "",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/oreo.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -148,7 +148,7 @@
     "description": "Classic Collection",
     "price": 399,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/oreo.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/oreo.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -159,7 +159,7 @@
     "description": "Classic Collection",
     "price": 579,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/oreo.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/oreo.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -170,7 +170,7 @@
     "description": "Classic Collection",
     "price": 759,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/oreo.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/oreo.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -181,7 +181,7 @@
     "description": "Classic Collection",
     "price": 99,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/eggless.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/eggless.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -192,7 +192,7 @@
     "description": "Classic Collection",
     "price": 349,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/eggless.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/eggless.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -203,7 +203,7 @@
     "description": "Classic Collection",
     "price": 539,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/eggless.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/eggless.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -214,7 +214,7 @@
     "description": "Classic Collection",
     "price": 659,
     "category": "Classic Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/eggless.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/eggless.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -225,7 +225,7 @@
     "description": "Premium Collection",
     "price": 139,
     "category": "Premium Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/biscoff.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/biscoff.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -236,7 +236,7 @@
     "description": "Premium Collection",
     "price": 499,
     "category": "Premium Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/biscoff.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/biscoff.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -247,7 +247,7 @@
     "description": "Premium Collection",
     "price": 699,
     "category": "Premium Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/biscoff.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/biscoff.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -258,7 +258,7 @@
     "description": "Premium Collection",
     "price": 889,
     "category": "Premium Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/biscoff.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/biscoff.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -269,7 +269,7 @@
     "description": "Premium Collection",
     "price": 129,
     "category": "Premium Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/dryfruit.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/dryfruit.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -280,7 +280,7 @@
     "description": "Premium Collection",
     "price": 449,
     "category": "Premium Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/dryfruit.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/dryfruit.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -291,7 +291,7 @@
     "description": "Premium Collection",
     "price": 649,
     "category": "Premium Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/dryfruit.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/dryfruit.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -302,7 +302,7 @@
     "description": "Premium Collection",
     "price": 829,
     "category": "Premium Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/assets/dryfruit.jpgß",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/dryfruit.jpgß",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
