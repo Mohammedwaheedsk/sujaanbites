@@ -51,9 +51,13 @@ const state = {
   activeTab: "profile",
   drawerOpen: false,
   editingAddressId: null,
-  addressMode: "profile",
+  addressMode: null,
   selectedLocation: null,
   previousOrders: [],
+  deliveryMeta: null,
+  quotedTotals: null,
+  quoteKey: "",
+  quoteLoading: false,
   map: null,
   marker: null,
   loadingMenu: false,
@@ -352,6 +356,7 @@ function openOrderReceivedCard(order) {
   if (!orderReceivedOverlay || !orderReceivedAddress || !orderReceivedEta) return;
   const cancelled = order?.status === "cancelled";
   const completed = order?.status === "completed";
+  const isLongDistance = order?.deliveryMeta?.isLongDistance === true || order?.deliveryWindow === "3-7 days";
   if (orderReceivedTitle) {
     orderReceivedTitle.textContent = cancelled
       ? "Order Update"
@@ -368,7 +373,9 @@ function openOrderReceivedCard(order) {
     ? "The order can not be delivered"
     : completed
       ? "Delivery completed. Please rate the delivery and products."
-      : order.etaMinutes && Number.isFinite(Number(order.etaMinutes))
+      : isLongDistance
+        ? "The order will be delivered within 3-7 days."
+        : order.etaMinutes && Number.isFinite(Number(order.etaMinutes))
         ? `${Math.round(Number(order.etaMinutes))} minutes to reach your location`
         : "Your order is confirmed by the restaurant.";
   orderReceivedOverlay.classList.remove("hidden");
@@ -557,6 +564,11 @@ function updateTrackingEtaText(order) {
   }
 
   if (!Number.isFinite(Number(order?.etaMinutes)) || Number(order.etaMinutes) <= 0) {
+    if (order?.deliveryMeta?.isLongDistance === true || order?.deliveryWindow === "3-7 days") {
+      trackingBarEta.textContent = "Delivery in 3-7 days";
+      trackingEta.textContent = "The order will be delivered within 3-7 days. Delivery charge is calculated by distance.";
+      return;
+    }
     trackingBarEta.textContent = "Order confirmed by restaurant";
     trackingEta.textContent = "Your order is confirmed by the restaurant. Delivery agent will call you for address and time confirmation.";
     return;
@@ -673,10 +685,21 @@ function loadLocalState() {
   if (state.addresses.length > 0) {
     localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
   }
+
+  const fallbackAddress = state.addresses.find((entry) => entry.id === state.selectedAddressId) || state.addresses[0] || null;
+  const fallbackName = String(state.profile?.name || fallbackAddress?.name || "").trim();
+  const fallbackPhone = normalizePhone(state.profile?.phone || fallbackAddress?.phone || "");
+  if (fallbackName || fallbackPhone.length === 10) {
+    state.profile = {
+      name: fallbackName,
+      phone: fallbackPhone,
+    };
+    writeStoredJson(STORAGE_KEYS.profile, state.profile);
+  }
 }
 
 async function loadCustomerState() {
-  const phone = state.profile?.phone || getActiveAddress()?.phone;
+  const phone = getResolvedCustomerProfile()?.phone || getActiveAddress()?.phone;
   if (!phone) return;
 
   try {
@@ -685,6 +708,8 @@ async function loadCustomerState() {
       state.profile = result.profile || state.profile;
       state.addresses = Array.isArray(result.addresses) ? result.addresses.slice(0, MAX_ADDRESSES) : state.addresses;
       state.selectedAddressId = result.selectedAddressId || state.addresses[0]?.id || state.selectedAddressId;
+      const resolved = getResolvedCustomerProfile();
+      if (resolved) state.profile = resolved;
       writeStoredJson(STORAGE_KEYS.profile, state.profile);
       writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
       if (state.selectedAddressId) {
@@ -697,14 +722,15 @@ async function loadCustomerState() {
 }
 
 async function syncCustomerState() {
-  if (!state.profile?.phone) return;
+  const resolved = getResolvedCustomerProfile();
+  if (!resolved?.phone) return;
 
   try {
     const result = await apiRequest("/api/customer/state", {
       method: "PUT",
       body: JSON.stringify({
-        phone: state.profile.phone,
-        profile: state.profile,
+        phone: resolved.phone,
+        profile: resolved,
         addresses: state.addresses,
         selectedAddressId: state.selectedAddressId,
       }),
@@ -714,6 +740,8 @@ async function syncCustomerState() {
       state.profile = result.profile || state.profile;
       state.addresses = Array.isArray(result.addresses) ? result.addresses.slice(0, MAX_ADDRESSES) : state.addresses;
       state.selectedAddressId = result.selectedAddressId || state.addresses[0]?.id || state.selectedAddressId;
+      const nextResolved = getResolvedCustomerProfile();
+      if (nextResolved) state.profile = nextResolved;
       writeStoredJson(STORAGE_KEYS.profile, state.profile);
       writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
       if (state.selectedAddressId) {
@@ -728,6 +756,14 @@ async function syncCustomerState() {
 function getActiveAddress() {
   if (!state.addresses.length) return null;
   return state.addresses.find((entry) => entry.id === state.selectedAddressId) || state.addresses[0];
+}
+
+function getResolvedCustomerProfile() {
+  const activeAddress = getActiveAddress();
+  const name = String(state.profile?.name || activeAddress?.name || "").trim();
+  const phone = normalizePhone(state.profile?.phone || activeAddress?.phone || "");
+  if (!name && phone.length !== 10) return null;
+  return { name, phone };
 }
 
 function formatAddressLine(address) {
@@ -1021,23 +1057,91 @@ function getCartRows() {
     .filter((item) => item.quantity > 0);
 }
 
+function getSinglePieceCount(rows) {
+  return (rows || []).reduce((sum, item) => {
+    const label = String(item?.name || "").toLowerCase();
+    const isSingle = label.includes("single") || label.includes("(1 pc)") || label.includes("1 pc");
+    return sum + (isSingle ? Number(item.quantity || 0) : 0);
+  }, 0);
+}
+
+function getQuoteKey(rows, address) {
+  if (!rows.length || !address) return "";
+  return JSON.stringify({
+    a: address.id || null,
+    lat: Number(address?.location?.lat || 0),
+    lng: Number(address?.location?.lng || 0),
+    i: rows.map((item) => [item.id, Number(item.quantity || 0)]),
+  });
+}
+
+async function ensureDeliveryQuote() {
+  const rows = getCartRows();
+  const address = getActiveAddress();
+  const hasAddressPin = Boolean(address?.location && Number.isFinite(Number(address.location.lat)) && Number.isFinite(Number(address.location.lng)));
+  const nextKey = hasAddressPin ? getQuoteKey(rows, address) : "";
+
+  if (!rows.length || !nextKey) {
+    state.deliveryMeta = null;
+    state.quotedTotals = null;
+    state.quoteKey = "";
+    return;
+  }
+
+  if (state.quoteLoading || state.quoteKey === nextKey) return;
+  state.quoteLoading = true;
+  state.quoteKey = nextKey;
+  try {
+    const payload = await apiRequest("/api/delivery/quote", {
+      method: "POST",
+      body: JSON.stringify({
+        orderType: "delivery",
+        address,
+        items: rows.map((item) => ({ id: item.id, quantity: item.quantity })),
+      }),
+    });
+    if (state.quoteKey !== nextKey) return;
+    state.deliveryMeta = payload.deliveryMeta || null;
+    state.quotedTotals = payload.totals || null;
+    renderCart();
+  } catch (error) {
+    console.warn("Delivery quote failed:", error.message);
+  } finally {
+    if (state.quoteKey === nextKey) {
+      state.quoteLoading = false;
+    }
+  }
+}
+
 function getTotals() {
   const rows = getCartRows();
   const subtotal = rows.reduce((sum, item) => sum + item.lineTotal, 0);
   const quantity = rows.reduce((sum, item) => sum + item.quantity, 0);
-  const delivery = subtotal > 0
+  const fallbackDelivery = subtotal > 0
     ? BUSINESS.deliveryFee + Math.max(0, quantity - 3) * 5
     : 0;
+  const activeAddress = getActiveAddress();
+  const activeKey = activeAddress ? getQuoteKey(rows, activeAddress) : "";
+  const canUseQuote = Boolean(
+    activeKey &&
+    state.quoteKey === activeKey &&
+    state.quotedTotals &&
+    Number.isFinite(Number(state.quotedTotals.total)),
+  );
+  const delivery = canUseQuote ? Number(state.quotedTotals.delivery || 0) : fallbackDelivery;
+  const total = canUseQuote ? Number(state.quotedTotals.total || 0) : subtotal + delivery;
   return {
     rows,
     subtotal,
     delivery,
-    total: subtotal + delivery,
+    total,
     quantity,
+    singlePieceCount: getSinglePieceCount(rows),
   };
 }
 
 function renderCart() {
+  void ensureDeliveryQuote();
   const totals = getTotals();
   if (itemCount) itemCount.textContent = `${totals.quantity} ${totals.quantity === 1 ? "item" : "items"}`;
   if (subtotalEl) subtotalEl.textContent = formatPrice(totals.subtotal);
@@ -1074,6 +1178,21 @@ function renderCart() {
 
   if (cartSummaryPayable) {
     cartSummaryPayable.textContent = formatPrice(totals.total);
+  }
+
+  const deliveryCardTitle = document.querySelector("#deliveryEtaLabel");
+  const deliveryCardSub = document.querySelector("#deliveryEtaHint");
+  if (deliveryCardTitle && deliveryCardSub) {
+    if (state.deliveryMeta?.isLongDistance) {
+      deliveryCardTitle.textContent = "Delivery in 3-7 days";
+      const distanceText = Number.isFinite(Number(state.deliveryMeta.distanceKm))
+        ? `${Math.round(Number(state.deliveryMeta.distanceKm))} km from restaurant`
+        : "Far from restaurant location";
+      deliveryCardSub.textContent = `${distanceText}. Delivery charge auto-calculated.`;
+    } else {
+      deliveryCardTitle.textContent = "Delivery ETA after confirmation";
+      deliveryCardSub.textContent = "Restaurant confirms the delivery time after order acceptance.";
+    }
   }
 
   if (cartPagePayLabel) {
@@ -1128,13 +1247,14 @@ function updateQuantity(id, change) {
 }
 
 function renderProfileSetup() {
-  const existing = state.profile || {};
+  const existing = getResolvedCustomerProfile() || state.profile || {};
   const savedAddress = state.addresses[0] || null;
   const selectedAddress = getActiveAddress();
+  const hasSavedIdentity = Boolean(existing?.name || existing?.phone || state.addresses.length);
 
-  accountShellTitle.textContent = state.profile ? "Your details" : "Complete your details";
+  accountShellTitle.textContent = hasSavedIdentity ? "Your details" : "Complete your details";
 
-  if (!state.profile || state.addressMode === "profile") {
+  if (!hasSavedIdentity || state.addressMode === "profile") {
     accountContent.innerHTML = `
     <form class="auth-form" id="profileSetupForm">
       <label>
@@ -1310,6 +1430,8 @@ function renderOrdersTab() {
             const deliveryLine =
               order.status === "cancelled"
                 ? "Order cannot be delivered."
+                : order?.deliveryMeta?.isLongDistance === true || order?.deliveryWindow === "3-7 days"
+                  ? "Delivery in 3-7 days"
                 : order.etaMinutes
                   ? `${order.etaMinutes} minutes to reach your location`
                   : "";
@@ -1381,7 +1503,7 @@ function renderAccount() {
   if (!accountShell || !accountOverlay || !accountContent) return;
   accountShell.classList.toggle("open", state.drawerOpen);
   accountOverlay.classList.toggle("open", state.drawerOpen);
-  accountLogoutButton?.classList.toggle("hidden", !state.profile);
+  accountLogoutButton?.classList.toggle("hidden", !getResolvedCustomerProfile());
 
   accountTabs.forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.accountTab === state.activeTab);
@@ -1454,7 +1576,7 @@ async function loadMenu() {
 }
 
 async function loadPreviousOrders() {
-  const phone = state.profile?.phone || getActiveAddress()?.phone;
+  const phone = getResolvedCustomerProfile()?.phone || getActiveAddress()?.phone;
   if (!phone) {
     state.previousOrders = [];
     return;
@@ -1832,6 +1954,10 @@ async function handleCheckout(event) {
     alert("Please add at least one item to your cart.");
     return;
   }
+  if (totals.singlePieceCount > 0 && totals.singlePieceCount < 3) {
+    alert("Atleast 3 pieces to purchase single pieces");
+    return;
+  }
 
   try {
     const intent = await createPrepaidIntent();
@@ -1845,7 +1971,7 @@ async function handleCheckout(event) {
 }
 
 async function loadOrdersForAccount() {
-  if (!state.profile?.phone) {
+  if (!getResolvedCustomerProfile()?.phone) {
     state.previousOrders = [];
     renderTrackingPanel(null);
     return;
@@ -2199,7 +2325,7 @@ async function boot() {
   renderAccount();
   renderCart();
   await loadMenu();
-  if (state.profile?.phone) {
+  if (getResolvedCustomerProfile()?.phone) {
     await loadOrdersForAccount();
   }
   const recentPlacedOrder = readStoredJson(STORAGE_KEYS.recentPlacedOrder);
@@ -2210,7 +2336,7 @@ async function boot() {
   renderAccount();
   setInterval(loadMenu, 300000);
   setInterval(async () => {
-    if (!state.profile?.phone) return;
+    if (!getResolvedCustomerProfile()?.phone) return;
     await loadOrdersForAccount();
     if (state.activeTab === "orders" || state.activeTab === "spends") renderAccount();
   }, 45000);
