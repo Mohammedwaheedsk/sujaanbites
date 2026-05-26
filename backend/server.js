@@ -35,6 +35,7 @@ const BUSINESS = {
   whatsappNumber: "916301000409",
   deliveryFee: 30,
 };
+const LONG_DISTANCE_THRESHOLD_KM = 20;
 
 const DEFAULT_STOCK_COUNT = 20;
 
@@ -274,6 +275,85 @@ function timingSafeEqual(a, b) {
 
 function withinServiceArea(location) {
   return Boolean(location && Number.isFinite(location.lat) && Number.isFinite(location.lng));
+}
+
+function toRad(value) {
+  return (Number(value) * Math.PI) / 180;
+}
+
+function haversineDistanceKm(from, to) {
+  if (!withinServiceArea(from) || !withinServiceArea(to)) return null;
+  const lat1 = Number(from.lat);
+  const lng1 = Number(from.lng);
+  const lat2 = Number(to.lat);
+  const lng2 = Number(to.lng);
+  const earthRadiusKm = 6371;
+  const dLat = toRad(lat2 - lat1);
+  const dLng = toRad(lng2 - lng1);
+  const a = Math.sin(dLat / 2) ** 2
+    + Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) * Math.sin(dLng / 2) ** 2;
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return earthRadiusKm * c;
+}
+
+function getSinglePieceCount(rows = []) {
+  return rows.reduce((sum, row) => {
+    const label = String(row?.name || "").toLowerCase();
+    const isSingle = label.includes("single") || label.includes("(1 pc)") || label.includes("1 pc");
+    return sum + (isSingle ? Number(row.quantity || 0) : 0);
+  }, 0);
+}
+
+function buildDeliveryMeta({ orderType, quantity, address, settings }) {
+  if (orderType !== "delivery" || quantity < 1) {
+    return {
+      baseDelivery: 0,
+      distanceSurcharge: 0,
+      delivery: 0,
+      distanceKm: null,
+      isLongDistance: false,
+      estimatedWindow: "",
+      etaMessage: "",
+      restaurantLocation: null,
+    };
+  }
+
+  const baseDelivery = BUSINESS.deliveryFee + Math.max(0, quantity - 3) * 5;
+  const restaurantLocation = settings?.adminLocation && withinServiceArea(settings.adminLocation)
+    ? {
+      lat: Number(settings.adminLocation.lat),
+      lng: Number(settings.adminLocation.lng),
+      address: String(settings.adminLocation.address || ""),
+      updatedAt: settings.adminLocation.updatedAt || null,
+    }
+    : null;
+
+  const customerLocation = address?.location && withinServiceArea(address.location)
+    ? { lat: Number(address.location.lat), lng: Number(address.location.lng) }
+    : null;
+
+  const distanceKm = restaurantLocation && customerLocation
+    ? haversineDistanceKm(restaurantLocation, customerLocation)
+    : null;
+
+  const isLongDistance = Number.isFinite(distanceKm) && distanceKm > LONG_DISTANCE_THRESHOLD_KM;
+  const distanceSurcharge = isLongDistance
+    ? Math.max(0, Math.round((distanceKm - LONG_DISTANCE_THRESHOLD_KM) * 8))
+    : 0;
+  const delivery = baseDelivery + distanceSurcharge;
+
+  return {
+    baseDelivery,
+    distanceSurcharge,
+    delivery,
+    distanceKm: Number.isFinite(distanceKm) ? Number(distanceKm.toFixed(2)) : null,
+    isLongDistance,
+    estimatedWindow: isLongDistance ? "3-7 days" : "",
+    etaMessage: isLongDistance
+      ? "The order will be delivered within 3-7 days."
+      : "",
+    restaurantLocation,
+  };
 }
 
 function verifyRazorpaySignature(orderId, paymentId, signature) {
@@ -609,7 +689,7 @@ async function seedMenuIfNeeded() {
   }
 }
 
-function calculateOrder(menu, items, orderType) {
+function calculateOrder(menu, items, orderType, options = {}) {
   const rows = [];
   const requestedCounts = new Map();
 
@@ -640,12 +720,21 @@ function calculateOrder(menu, items, orderType) {
 
   const subtotal = rows.reduce((sum, item) => sum + item.lineTotal, 0);
   const quantity = rows.reduce((sum, item) => sum + item.quantity, 0);
-  const delivery = subtotal > 0 && orderType === "delivery"
-    ? BUSINESS.deliveryFee + Math.max(0, quantity - 3) * 5
-    : 0;
+  const singlePieceCount = getSinglePieceCount(rows);
+  if (singlePieceCount > 0 && singlePieceCount < 3) {
+    throw new Error("Atleast 3 pieces to purchase single pieces");
+  }
+  const deliveryMeta = buildDeliveryMeta({
+    orderType,
+    quantity,
+    address: options.address || null,
+    settings: options.settings || null,
+  });
+  const delivery = subtotal > 0 ? deliveryMeta.delivery : 0;
 
   return {
     rows,
+    deliveryMeta,
     totals: {
       subtotal,
       delivery,
@@ -749,7 +838,11 @@ async function finalizeRazorpayOrder(body) {
 
   const menu = await getMenu();
   const draft = paymentSession.orderDraft;
-  const calculated = calculateOrder(menu, draft.items, draft.orderType);
+  const settings = await getSettings();
+  const calculated = calculateOrder(menu, draft.items, draft.orderType, {
+    address: draft.address || null,
+    settings,
+  });
   const order = {
     id: `ST${Date.now().toString().slice(-7)}`,
     createdAt: new Date().toISOString(),
@@ -763,11 +856,18 @@ async function finalizeRazorpayOrder(body) {
     address: draft.address,
     items: calculated.rows,
     totals: calculated.totals,
+    deliveryMeta: calculated.deliveryMeta,
     notes: draft.notes || "",
     razorpayOrderId: body.razorpay_order_id,
     razorpayPaymentId: body.razorpay_payment_id,
     paymentVerifiedAt: new Date().toISOString(),
   };
+  if (calculated.deliveryMeta?.restaurantLocation) {
+    order.restaurantLocation = calculated.deliveryMeta.restaurantLocation;
+  }
+  if (calculated.deliveryMeta?.isLongDistance) {
+    order.deliveryWindow = "3-7 days";
+  }
 
   const reservedMenu = applyMenuStockChange(menu, calculated.rows, -1);
   const orders = await getOrders();
@@ -798,6 +898,22 @@ async function handleApi(req, res, url) {
     const menu = await getMenu();
     const settings = await getSettings();
     sendJson(res, 200, { menu, categories: settings.menuCategories || [] });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/delivery/quote") {
+    const body = await readBody(req);
+    const menu = await getMenu();
+    const settings = await getSettings();
+    const orderType = body.orderType === "pickup" ? "pickup" : "delivery";
+    const calculated = calculateOrder(menu, body.items, orderType, {
+      address: body.address || null,
+      settings,
+    });
+    sendJson(res, 200, {
+      totals: calculated.totals,
+      deliveryMeta: calculated.deliveryMeta,
+    });
     return;
   }
 
@@ -1004,7 +1120,11 @@ async function handleApi(req, res, url) {
     const customerName = String(body.customerName || body.address?.name || "").trim();
     const orderType = body.orderType === "pickup" ? "pickup" : "delivery";
     const paymentMethod = body.paymentMethod === "cod" ? "cod" : "prepaid";
-    const calculated = calculateOrder(menu, body.items, orderType);
+    const settings = await getSettings();
+    const calculated = calculateOrder(menu, body.items, orderType, {
+      address: body.address || null,
+      settings,
+    });
 
     if (!customerPhone) {
       sendJson(res, 400, { error: "A valid phone number is required to place an order" });
@@ -1036,7 +1156,11 @@ async function handleApi(req, res, url) {
     const customerPhone = normalizePhone(body.customerPhone || body.address?.phone);
     const customerName = String(body.customerName || body.address?.name || "").trim();
     const orderType = body.orderType === "pickup" ? "pickup" : "delivery";
-    const calculated = calculateOrder(menu, body.items, orderType);
+    const settings = await getSettings();
+    const calculated = calculateOrder(menu, body.items, orderType, {
+      address: body.address || null,
+      settings,
+    });
 
     if (!customerPhone) {
       sendJson(res, 400, { error: "A valid phone number is required" });
@@ -1065,12 +1189,18 @@ async function handleApi(req, res, url) {
       address: body.address || null,
       items: calculated.rows,
       totals: calculated.totals,
+      deliveryMeta: calculated.deliveryMeta,
       notes: body.notes || "",
       paymentMethod: "prepaid",
     };
 
     const intent = await createRazorpayIntent(paymentSession);
-    sendJson(res, 201, { ...intent, requestId: paymentSession.requestId });
+    sendJson(res, 201, {
+      ...intent,
+      requestId: paymentSession.requestId,
+      deliveryMeta: calculated.deliveryMeta,
+      totals: calculated.totals,
+    });
     return;
   }
 
@@ -1245,9 +1375,14 @@ async function handleApi(req, res, url) {
       if (settings.adminLocation) {
         orders[index].restaurantLocation = settings.adminLocation;
       }
-      if (hasEtaMinutes) {
+      const isLongDistance = orders[index]?.deliveryMeta?.isLongDistance === true;
+      if (hasEtaMinutes && !isLongDistance) {
         orders[index].etaMinutes = Math.round(etaMinutes);
         orders[index].etaUpdatedAt = new Date().toISOString();
+      } else if (isLongDistance) {
+        orders[index].etaMinutes = null;
+        orders[index].etaUpdatedAt = new Date().toISOString();
+        orders[index].deliveryWindow = "3-7 days";
       }
     }
     if (body.status === "cancelled") {
