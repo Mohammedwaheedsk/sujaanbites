@@ -5,7 +5,7 @@
     "description": "Classic Collection",
     "price": 99,
     "category": "Classic Collection",
-    "image": "chocolate.jpg",
+    "image": "assests/chocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
