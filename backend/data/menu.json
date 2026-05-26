@@ -5,7 +5,7 @@
     "description": "Classic Collection",
     "price": 99,
     "category": "Classic Collection",
-    "image": "assests/chocolate.jpg",
+    "image": "https://sujaanbites.github.io/sujaanbites/assets/chocolate.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
