@@ -14,6 +14,7 @@ const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || "";
 const SUPABASE_URL = process.env.SUPABASE_URL || "";
 const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || "";
 const USE_SUPABASE = Boolean(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+const MENU_SOURCE = (process.env.MENU_SOURCE || "supabase").toLowerCase(); // "supabase" | "file"
 const CORS_ORIGIN = process.env.CORS_ORIGIN || "*";
 
 const ROOT = __dirname;
@@ -354,6 +355,11 @@ function requireAdmin(req, res) {
 }
 
 async function getMenu() {
+  if (MENU_SOURCE === "file") {
+    const menu = await readJson(FILES.menu, DEFAULT_MENU);
+    return Array.isArray(menu) ? menu.map(normalizeMenuItem) : DEFAULT_MENU;
+  }
+
   if (USE_SUPABASE) {
     try {
       const supabase = await getSupabaseClient();
@@ -391,6 +397,10 @@ async function getMenu() {
 
 async function saveMenu(menu) {
   const normalized = Array.isArray(menu) ? menu.map(normalizeMenuItem) : [];
+  if (MENU_SOURCE === "file") {
+    await writeJson(FILES.menu, normalized);
+    return;
+  }
   if (USE_SUPABASE) {
     try {
       const supabase = await getSupabaseClient();
