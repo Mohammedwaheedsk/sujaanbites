@@ -1288,7 +1288,7 @@ footer {
   padding: 16px 16px 22px;
   transform: translateY(24px);
   transition: transform 0.22s ease;
-  max-height: min(54vh, 420px);
+  max-height: min(82vh, 720px);
   overflow: auto;
 }
 
@@ -1319,6 +1319,49 @@ footer {
   gap: 10px;
 }
 
+.flavor-product-hero {
+  display: grid;
+  grid-template-columns: 112px 1fr;
+  gap: 12px;
+  align-items: stretch;
+  padding: 10px;
+  margin-bottom: 12px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: linear-gradient(135deg, #fff9f1, #fff);
+}
+
+.flavor-product-hero img {
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 16px;
+  object-fit: cover;
+  background: #f8eadb;
+}
+
+.flavor-product-copy {
+  min-width: 0;
+  display: grid;
+  align-content: center;
+  gap: 6px;
+}
+
+.flavor-product-copy strong {
+  font-size: 1.05rem;
+}
+
+.flavor-product-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+
+.flavor-option-list {
+  display: grid;
+  gap: 10px;
+}
+
 .flavor-option {
   display: flex;
   align-items: center;
@@ -1328,6 +1371,14 @@ footer {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: #fffaf5;
+  cursor: pointer;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.flavor-option.selected {
+  border-color: rgba(242, 100, 25, 0.72);
+  box-shadow: 0 10px 24px rgba(242, 100, 25, 0.12);
+  transform: translateY(-1px);
 }
 
 .flavor-option-copy {
@@ -1354,6 +1405,31 @@ footer {
   width: auto;
   min-width: 90px;
   padding: 0 14px;
+}
+
+.flavor-sheet-footer {
+  position: sticky;
+  bottom: -22px;
+  display: grid;
+  gap: 10px;
+  padding: 12px 0 0;
+  margin-top: 2px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff 18%, #fff);
+}
+
+.flavor-more-info {
+  justify-self: center;
+}
+
+.flavor-sheet-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.flavor-sheet-actions .secondary-button,
+.flavor-sheet-actions .pay-button {
+  min-height: 48px;
 }
 
 .item-preview-card img {

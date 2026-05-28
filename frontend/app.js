@@ -224,6 +224,7 @@ let trackingOpen = false;
 let trackingCurrentOrder = null;
 let previewItemId = null;
 let activeFlavorKey = null;
+let selectedFlavorVariantId = null;
 
 function vibrate(pattern = 12) {
   if (!navigator.vibrate) return;
@@ -1007,15 +1008,28 @@ function openFlavorMenu(flavorKey) {
   const group = getFlavorGroups(state.menu).find((entry) => entry.key === flavorKey);
   if (!group) return;
   activeFlavorKey = flavorKey;
+  const firstAvailable = group.variants.find((item) => item.available !== false && getMenuStock(item) > 0) || group.variants[0];
+  const alreadyInCart = group.variants.find((item) => (state.cart.get(item.id) || 0) > 0);
+  if (!selectedFlavorVariantId || !group.variants.some((item) => item.id === selectedFlavorVariantId)) {
+    selectedFlavorVariantId = alreadyInCart?.id || firstAvailable?.id || null;
+  }
+  const selectedItem = group.variants.find((item) => item.id === selectedFlavorVariantId) || firstAvailable;
+  const productDescription = String(
+    selectedItem?.description
+      || group.variants.find((item) => item.description)?.description
+      || `${group.flavor} cookies baked fresh by Sujaan Bites. Choose your pack size and continue to cart.`,
+  ).trim();
+  const infoHref = `${getRoute("/product-info")}?item=${encodeURIComponent(selectedItem?.id || firstAvailable?.id || "")}`;
   if (flavorTitle) flavorTitle.textContent = group.flavor;
   if (flavorSubtitle) flavorSubtitle.textContent = formatCategoryLabel(group.category || "");
-  flavorOptions.innerHTML = group.variants
+  const variantRows = group.variants
     .map((item) => {
       const quantity = state.cart.get(item.id) || 0;
       const stockCount = getMenuStock(item);
       const soldOut = item.available === false || stockCount <= 0;
+      const selected = selectedFlavorVariantId === item.id;
       return `
-        <div class="flavor-option ${soldOut ? "unavailable" : ""}">
+        <div class="flavor-option ${soldOut ? "unavailable" : ""} ${selected ? "selected" : ""}" data-select-flavor-variant="${item.id}">
           <div class="flavor-option-copy">
             <strong>${item.variantLabel}</strong>
             <small>${formatPrice(item.price)}</small>
@@ -1037,6 +1051,23 @@ function openFlavorMenu(flavorKey) {
       `;
     })
     .join("");
+  flavorOptions.innerHTML = `
+    <div class="flavor-product-hero">
+      <img src="${group.image || selectedItem?.image || "assets/hero-food.png"}" alt="${group.flavor}" />
+      <div class="flavor-product-copy">
+        <strong>${group.flavor}</strong>
+        <p>${productDescription}</p>
+      </div>
+    </div>
+    <div class="flavor-option-list">${variantRows}</div>
+    <div class="flavor-sheet-footer">
+      <a class="secondary-link flavor-more-info" href="${infoHref}">More info</a>
+      <div class="flavor-sheet-actions">
+        <button class="secondary-button" type="button" data-flavor-add-selected>Add to cart</button>
+        <button class="pay-button" type="button" data-flavor-buy-selected>Buy now</button>
+      </div>
+    </div>
+  `;
   flavorOverlay.classList.remove("hidden");
   flavorOverlay.classList.add("show");
   flavorOverlay.setAttribute("aria-hidden", "false");
@@ -1048,6 +1079,7 @@ function closeFlavorMenu() {
   flavorOverlay.classList.add("hidden");
   flavorOverlay.setAttribute("aria-hidden", "true");
   activeFlavorKey = null;
+  selectedFlavorVariantId = null;
 }
 
 function getCartRows() {
@@ -1190,7 +1222,10 @@ function renderCart() {
   const deliveryCardTitle = document.querySelector("#deliveryEtaLabel");
   const deliveryCardSub = document.querySelector("#deliveryEtaHint");
   if (deliveryCardTitle && deliveryCardSub) {
-    if (state.deliveryMeta?.isLongDistance) {
+    if (state.deliveryMeta?.freeDelivery) {
+      deliveryCardTitle.textContent = "Free delivery unlocked";
+      deliveryCardSub.textContent = "Your cart value is above ₹1599, so delivery is free.";
+    } else if (state.deliveryMeta?.isLongDistance) {
       deliveryCardTitle.textContent = "Delivery in 3-7 days";
       const distanceText = Number.isFinite(Number(state.deliveryMeta.distanceKm))
         ? `${Math.round(Number(state.deliveryMeta.distanceKm))} km from restaurant`
@@ -2217,11 +2252,36 @@ flavorOverlay?.addEventListener("click", (event) => {
   if (event.target === flavorOverlay) closeFlavorMenu();
 });
 flavorOptions?.addEventListener("click", (event) => {
+  const addSelected = event.target.closest("[data-flavor-add-selected]");
+  const buySelected = event.target.closest("[data-flavor-buy-selected]");
+  if (addSelected || buySelected) {
+    const group = getFlavorGroups(state.menu).find((entry) => entry.key === activeFlavorKey);
+    const selectedItem = group?.variants.find((item) => item.id === selectedFlavorVariantId)
+      || group?.variants.find((item) => item.available !== false && getMenuStock(item) > 0)
+      || group?.variants[0];
+    if (!selectedItem) return;
+    pulseElement(addSelected || buySelected);
+    vibrate(10);
+    updateQuantity(selectedItem.id, 1);
+    if (buySelected) {
+      closeFlavorMenu();
+      window.location.href = getRoute("/cart");
+    }
+    return;
+  }
+
   const button = event.target.closest("[data-add]");
   const increase = event.target.closest("[data-menu-increase]");
   const decrease = event.target.closest("[data-menu-decrease]");
   const trigger = button || increase || decrease;
-  if (!trigger) return;
+  const selectedRow = event.target.closest("[data-select-flavor-variant]");
+  if (selectedRow) {
+    selectedFlavorVariantId = selectedRow.dataset.selectFlavorVariant;
+  }
+  if (!trigger) {
+    if (selectedRow && activeFlavorKey) openFlavorMenu(activeFlavorKey);
+    return;
+  }
   pulseElement(trigger);
   vibrate(10);
   if (button) updateQuantity(button.dataset.add, 1);
