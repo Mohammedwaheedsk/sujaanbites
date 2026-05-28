@@ -32,8 +32,8 @@ const BUSINESS = {
   name: "Sujaan Bites",
   upiId: "6301000409@kotakbank",
   upiPayeeName: "Sujaan Bites",
-  whatsappNumber: "916301000409",
-  deliveryFee: 30,
+  whatsappNumber: "9493480594",
+  customerCareEmail: "sujaanbites@gmail.com",
 };
 const LONG_DISTANCE_THRESHOLD_KM = 20;
 
@@ -318,7 +318,6 @@ function buildDeliveryMeta({ orderType, quantity, address, settings }) {
     };
   }
 
-  const baseDelivery = BUSINESS.deliveryFee + Math.max(0, quantity - 3) * 5;
   const restaurantLocation = settings?.adminLocation && withinServiceArea(settings.adminLocation)
     ? {
       lat: Number(settings.adminLocation.lat),
@@ -337,14 +336,15 @@ function buildDeliveryMeta({ orderType, quantity, address, settings }) {
     : null;
 
   const isLongDistance = Number.isFinite(distanceKm) && distanceKm > LONG_DISTANCE_THRESHOLD_KM;
-  const distanceSurcharge = isLongDistance
-    ? Math.max(0, Math.round((distanceKm - LONG_DISTANCE_THRESHOLD_KM) * 8))
-    : 0;
-  const delivery = baseDelivery + distanceSurcharge;
+  const delivery = Number.isFinite(distanceKm)
+    ? distanceKm <= 180
+      ? 49
+      : distanceKm <= 250
+        ? 59
+        : 79
+    : 49;
 
   return {
-    baseDelivery,
-    distanceSurcharge,
     delivery,
     distanceKm: Number.isFinite(distanceKm) ? Number(distanceKm.toFixed(2)) : null,
     isLongDistance,
@@ -1481,6 +1481,8 @@ async function serveStatic(res, url) {
         ? "/admin.html"
         : url.pathname === "/cart"
           ? "/cart.html"
+          : url.pathname === "/product-info"
+            ? "/product-info.html"
           : url.pathname;
   const filePath = path.normalize(path.join(FRONTEND_DIR, requestedPath));
 
