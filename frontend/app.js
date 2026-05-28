@@ -200,8 +200,6 @@ const itemPreviewName = document.querySelector("#itemPreviewName");
 const itemPreviewPrice = document.querySelector("#itemPreviewPrice");
 const itemPreviewDescription = document.querySelector("#itemPreviewDescription");
 const itemPreviewMoreInfo = document.querySelector("#itemPreviewMoreInfo");
-const itemPreviewAdd = document.querySelector("#itemPreviewAdd");
-const itemPreviewBuyNow = document.querySelector("#itemPreviewBuyNow");
 const flavorOverlay = document.querySelector("#flavorOverlay");
 const flavorClose = document.querySelector("#flavorClose");
 const flavorTitle = document.querySelector("#flavorTitle");
@@ -1171,7 +1169,7 @@ function getTotals() {
     state.quotedTotals &&
     Number.isFinite(Number(state.quotedTotals.total)),
   );
-  const delivery = canUseQuote ? Number(state.quotedTotals.delivery || 0) : 0;
+  const delivery = canUseQuote ? Number(state.quotedTotals.delivery || 0) : (rows.length ? BUSINESS.deliveryFee : 0);
   const total = canUseQuote ? Number(state.quotedTotals.total || 0) : subtotal + delivery;
   return {
     rows,
@@ -2186,13 +2184,13 @@ menuGrid?.addEventListener("click", (event) => {
 });
 
 function openItemPreview(item) {
-  if (!itemPreviewOverlay || !itemPreviewImage || !itemPreviewName || !itemPreviewPrice || !itemPreviewAdd || !itemPreviewBuyNow) return;
+  if (!itemPreviewOverlay || !itemPreviewImage || !itemPreviewName || !itemPreviewPrice) return;
   previewItemId = item.id;
   itemPreviewImage.src = item.image || "assets/hero-food.png";
   itemPreviewImage.alt = item.name;
   itemPreviewName.textContent = item.name;
   itemPreviewPrice.textContent = formatPrice(item.price);
-  if (itemPreviewDescription) itemPreviewDescription.value = item.description || "Freshly prepared cookie with a rich homemade feel.";
+  if (itemPreviewDescription) itemPreviewDescription.textContent = item.description || "Freshly prepared cookie with a rich homemade feel.";
   if (itemPreviewMoreInfo) itemPreviewMoreInfo.href = `${getRoute("/product-info")}?item=${encodeURIComponent(item.id)}`;
   itemPreviewOverlay.classList.remove("hidden");
   itemPreviewOverlay.classList.add("show");
@@ -2238,18 +2236,6 @@ menuFabSheet?.addEventListener("click", (event) => {
 itemPreviewClose?.addEventListener("click", closeItemPreview);
 itemPreviewOverlay?.addEventListener("click", (event) => {
   if (event.target === itemPreviewOverlay) closeItemPreview();
-});
-itemPreviewAdd?.addEventListener("click", () => {
-  if (!previewItemId) return;
-  updateQuantity(previewItemId, 1);
-  closeItemPreview();
-});
-
-itemPreviewBuyNow?.addEventListener("click", () => {
-  if (!previewItemId) return;
-  updateQuantity(previewItemId, 1);
-  closeItemPreview();
-  window.location.href = getRoute("/cart");
 });
 
 flavorClose?.addEventListener("click", closeFlavorMenu);

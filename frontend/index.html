@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="preconnect" href="https://api.qrserver.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260528b" />
+  <link rel="stylesheet" href="styles.css?v=20260528c" />
 </head>
 
 <body data-page="home">
@@ -105,12 +105,8 @@
         <div class="item-preview-meta">
           <h3 id="itemPreviewName"></h3>
           <p id="itemPreviewPrice"></p>
-          <textarea id="itemPreviewDescription" readonly rows="4" aria-label="Item description"></textarea>
+          <p id="itemPreviewDescription" class="item-preview-description" aria-label="Item description"></p>
           <a class="secondary-link item-preview-moreinfo" id="itemPreviewMoreInfo" href="/product-info" data-route="/product-info">More info</a>
-          <div class="item-preview-actions">
-            <button class="secondary-button" id="itemPreviewAdd" type="button">Add to cart</button>
-            <button class="pay-button" id="itemPreviewBuyNow" type="button">Buy now</button>
-          </div>
         </div>
       </article>
     </div>
@@ -260,7 +256,7 @@
       }, 420);
     });
   </script>
-  <script src="app.js?v=20260528c"></script>
+  <script src="app.js?v=20260528e"></script>
 </body>
 
 </html>
