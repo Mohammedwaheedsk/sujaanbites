@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="theme-color" content="#fc8019" />
+  <title>Sujaan Bites | Product Info</title>
+  <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #fff7ed;
+      --panel: rgba(255, 255, 255, 0.86);
+      --ink: #2f1f14;
+      --muted: #775646;
+      --line: rgba(147, 91, 43, 0.18);
+      --accent: #fc8019;
+      --shadow: 0 20px 50px rgba(80, 42, 16, 0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(252, 128, 25, 0.12), transparent 32%),
+        radial-gradient(circle at top right, rgba(82, 53, 28, 0.12), transparent 28%),
+        linear-gradient(180deg, #fffaf3, var(--bg));
+    }
+    .wrap { width: min(980px, calc(100% - 24px)); margin: 0 auto; padding: 18px 0 32px; }
+    .topbar {
+      display: flex; justify-content: space-between; align-items: center; gap: 14px;
+      padding: 14px 0 18px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; color: inherit; }
+    .brand img { width: 52px; height: 52px; border-radius: 14px; object-fit: cover; box-shadow: var(--shadow); }
+    .brand strong { display: block; font-size: 1.1rem; }
+    .brand small { display: block; color: var(--muted); }
+    .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-height: 42px; padding: 0 16px; border-radius: 999px;
+      border: 1px solid var(--line); text-decoration: none; color: var(--ink); background: rgba(255,255,255,0.78);
+      font-weight: 800;
+    }
+    .btn.primary { background: var(--accent); border-color: transparent; color: #fff; }
+    .hero, .card {
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .hero { padding: 24px; display: grid; gap: 12px; margin-bottom: 16px; }
+    .hero .eyebrow { margin: 0; text-transform: uppercase; letter-spacing: .12em; color: #c96c1f; font-weight: 900; font-size: .78rem; }
+    .hero h1 { margin: 0; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1; }
+    .hero p { margin: 0; color: var(--muted); font-size: 1.02rem; line-height: 1.6; max-width: 60ch; }
+    .grid { display: grid; gap: 14px; }
+    .card { padding: 18px; }
+    .card h2 { margin: 0 0 10px; font-size: 1.2rem; }
+    .card p, .card li { color: var(--muted); line-height: 1.65; }
+    .card ul { margin: 0; padding-left: 18px; }
+    .tag-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .tag { padding: 8px 12px; border-radius: 999px; background: rgba(252, 128, 25, 0.1); color: #9a5316; font-weight: 800; }
+    footer { padding: 18px 0 8px; color: var(--muted); text-align: center; }
+    @media (min-width: 760px) {
+      .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .hero { grid-template-columns: 1.3fr 0.9fr; align-items: end; }
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="index.html">
+        <img src="assets/sujaan-logo.png" alt="Sujaan Bites logo" />
+        <span>
+          <strong>Sujaan Bites</strong>
+          <small>Product information</small>
+        </span>
+      </a>
+      <div class="actions">
+        <a class="btn" href="index.html">Home</a>
+        <a class="btn primary" href="cart.html">Cart</a>
+      </div>
+    </header>
+
+    <section class="hero">
+      <div>
+        <p class="eyebrow">More info</p>
+        <h1>Everything you need to know before ordering</h1>
+        <p>We keep the product story simple: fresh cookies, transparent ingredients, and a clear set of ordering rules so customers know exactly what to expect.</p>
+      </div>
+      <div class="tag-row" aria-label="Highlights">
+        <span class="tag">Fresh baked</span>
+        <span class="tag">Cookie boxes</span>
+        <span class="tag">Prepaid UPI</span>
+        <span class="tag">Support available</span>
+      </div>
+    </section>
+
+    <section class="grid">
+      <article class="card">
+        <h2>Ingredients</h2>
+        <ul>
+          <li>Premium flour, butter, sugar, cocoa, and flavour-specific fillings.</li>
+          <li>Each flavour may include chocolate chips, jam, dry fruits, or biscuit crumbs.</li>
+          <li>Prepared fresh in small batches for a soft centre and crisp finish.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h2>Why choose Sujaan Bites</h2>
+        <p>We focus on strong flavour, consistent packing, and reliable delivery updates. The menu is designed for easy mobile ordering, quick checkout, and a calm customer experience from cart to delivery.</p>
+      </article>
+      <article class="card">
+        <h2>Terms & Conditions</h2>
+        <ul>
+          <li>Orders are confirmed only after successful payment or accepted order processing.</li>
+          <li>Menu availability and stock can change based on real-time demand.</li>
+          <li>Delivery ETA and charges are calculated automatically from the saved location.</li>
+        </ul>
+      </article>
+      <article class="card">
+        <h2>Policies</h2>
+        <ul>
+          <li>We use the customer's saved account and delivery details for repeat orders.</li>
+          <li>Customer care is available by phone at 9493480594, WhatsApp, or email at sujaanbites@gmail.com.</li>
+          <li>Reviews and ratings remain stored for future reference and service quality checks.</li>
+        </ul>
+      </article>
+    </section>
+
+    <footer>Sujaan Bites - Fresh cookies made daily - Built for a smoother mobile checkout</footer>
+  </div>
+</body>
+</html>

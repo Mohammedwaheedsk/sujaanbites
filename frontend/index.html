@@ -105,7 +105,12 @@
         <div class="item-preview-meta">
           <h3 id="itemPreviewName"></h3>
           <p id="itemPreviewPrice"></p>
-          <button class="add-button" id="itemPreviewAdd" type="button">ADD</button>
+          <textarea id="itemPreviewDescription" readonly rows="4" aria-label="Item description"></textarea>
+          <a class="secondary-link item-preview-moreinfo" id="itemPreviewMoreInfo" href="/product-info" data-route="/product-info">More info</a>
+          <div class="item-preview-actions">
+            <button class="secondary-button" id="itemPreviewAdd" type="button">Add to cart</button>
+            <button class="pay-button" id="itemPreviewBuyNow" type="button">Buy now</button>
+          </div>
         </div>
       </article>
     </div>

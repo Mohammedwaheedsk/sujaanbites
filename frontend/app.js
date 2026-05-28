@@ -2,8 +2,9 @@ const BUSINESS = {
   name: "Sujaan Bites",
   upiId: "6301000409@kotakbank",
   upiPayeeName: "Sujaan Bites",
-  whatsappNumber: "916301000409",
-  deliveryFee: 30,
+  whatsappNumber: "9493480594",
+  customerCareEmail: "sujaanbites@gmail.com",
+  deliveryFee: 49,
 };
 
 const API_BASE = (() => {
@@ -197,7 +198,10 @@ const itemPreviewClose = document.querySelector("#itemPreviewClose");
 const itemPreviewImage = document.querySelector("#itemPreviewImage");
 const itemPreviewName = document.querySelector("#itemPreviewName");
 const itemPreviewPrice = document.querySelector("#itemPreviewPrice");
+const itemPreviewDescription = document.querySelector("#itemPreviewDescription");
+const itemPreviewMoreInfo = document.querySelector("#itemPreviewMoreInfo");
 const itemPreviewAdd = document.querySelector("#itemPreviewAdd");
+const itemPreviewBuyNow = document.querySelector("#itemPreviewBuyNow");
 const flavorOverlay = document.querySelector("#flavorOverlay");
 const flavorClose = document.querySelector("#flavorClose");
 const flavorTitle = document.querySelector("#flavorTitle");
@@ -1106,6 +1110,12 @@ async function ensureDeliveryQuote() {
     renderCart();
   } catch (error) {
     console.warn("Delivery quote failed:", error.message);
+    if (state.quoteKey === nextKey) {
+      state.quoteKey = "";
+      state.quoteLoading = false;
+      state.deliveryMeta = null;
+      state.quotedTotals = null;
+    }
   } finally {
     if (state.quoteKey === nextKey) {
       state.quoteLoading = false;
@@ -1117,9 +1127,6 @@ function getTotals() {
   const rows = getCartRows();
   const subtotal = rows.reduce((sum, item) => sum + item.lineTotal, 0);
   const quantity = rows.reduce((sum, item) => sum + item.quantity, 0);
-  const fallbackDelivery = subtotal > 0
-    ? BUSINESS.deliveryFee + Math.max(0, quantity - 3) * 5
-    : 0;
   const activeAddress = getActiveAddress();
   const activeKey = activeAddress ? getQuoteKey(rows, activeAddress) : "";
   const canUseQuote = Boolean(
@@ -1128,7 +1135,7 @@ function getTotals() {
     state.quotedTotals &&
     Number.isFinite(Number(state.quotedTotals.total)),
   );
-  const delivery = canUseQuote ? Number(state.quotedTotals.delivery || 0) : fallbackDelivery;
+  const delivery = canUseQuote ? Number(state.quotedTotals.delivery || 0) : 0;
   const total = canUseQuote ? Number(state.quotedTotals.total || 0) : subtotal + delivery;
   return {
     rows,
@@ -1493,8 +1500,12 @@ function renderCareTab() {
   accountContent.innerHTML = `
     <div class="saved-user">
       <strong>Need help?</strong>
-      <p>Call or WhatsApp us at ${BUSINESS.whatsappNumber}. Share your order ID for faster help.</p>
-      <a class="secondary-link" href="https://wa.me/${BUSINESS.whatsappNumber}" target="_blank" rel="noreferrer">Contact customer care</a>
+      <p>Call ${BUSINESS.whatsappNumber} or email ${BUSINESS.customerCareEmail}. Share your order ID for faster help.</p>
+      <div class="customer-care-actions">
+        <a class="secondary-link" href="tel:${BUSINESS.whatsappNumber}">Call now</a>
+        <a class="secondary-link" href="https://wa.me/91${BUSINESS.whatsappNumber}?text=${encodeURIComponent("Hi Sujaan Bites, I need help with my order.")}" target="_blank" rel="noreferrer">WhatsApp</a>
+        <a class="secondary-link" href="mailto:${BUSINESS.customerCareEmail}">Email us</a>
+      </div>
     </div>
   `;
 }
@@ -1847,6 +1858,7 @@ function renderAccountContent() {
 }
 
 async function createPrepaidIntent() {
+  await ensureDeliveryQuote();
   const activeAddress = getActiveAddress();
   const resolvedName = state.profile?.name || activeAddress?.name || "";
   const resolvedPhone = normalizePhone(state.profile?.phone || activeAddress?.phone || "");
@@ -1938,6 +1950,7 @@ function openRazorpayCheckout(intent, paymentSessionId) {
 async function handleCheckout(event) {
   event.preventDefault();
 
+  await ensureDeliveryQuote();
   const activeAddress = getActiveAddress();
   const hasName = Boolean(state.profile?.name || activeAddress?.name);
   const hasPhone = normalizePhone(state.profile?.phone || activeAddress?.phone || "").length === 10;
@@ -2133,12 +2146,14 @@ menuGrid?.addEventListener("click", (event) => {
 });
 
 function openItemPreview(item) {
-  if (!itemPreviewOverlay || !itemPreviewImage || !itemPreviewName || !itemPreviewPrice || !itemPreviewAdd) return;
+  if (!itemPreviewOverlay || !itemPreviewImage || !itemPreviewName || !itemPreviewPrice || !itemPreviewAdd || !itemPreviewBuyNow) return;
   previewItemId = item.id;
   itemPreviewImage.src = item.image || "assets/hero-food.png";
   itemPreviewImage.alt = item.name;
   itemPreviewName.textContent = item.name;
   itemPreviewPrice.textContent = formatPrice(item.price);
+  if (itemPreviewDescription) itemPreviewDescription.value = item.description || "Freshly prepared cookie with a rich homemade feel.";
+  if (itemPreviewMoreInfo) itemPreviewMoreInfo.href = `${getRoute("/product-info")}?item=${encodeURIComponent(item.id)}`;
   itemPreviewOverlay.classList.remove("hidden");
   itemPreviewOverlay.classList.add("show");
   itemPreviewOverlay.setAttribute("aria-hidden", "false");
@@ -2188,6 +2203,13 @@ itemPreviewAdd?.addEventListener("click", () => {
   if (!previewItemId) return;
   updateQuantity(previewItemId, 1);
   closeItemPreview();
+});
+
+itemPreviewBuyNow?.addEventListener("click", () => {
+  if (!previewItemId) return;
+  updateQuantity(previewItemId, 1);
+  closeItemPreview();
+  window.location.href = getRoute("/cart");
 });
 
 flavorClose?.addEventListener("click", closeFlavorMenu);

@@ -37,6 +37,7 @@ let lastOrderSnapshot = "";
 let lastDashboardFocusedAt = 0;
 let alertAudio = null;
 let configuredCategories = [];
+let ordersCache = [];
 
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -149,6 +150,7 @@ async function pollDashboard() {
       startAlerting();
     }
     lastOrderSnapshot = nextSnapshot;
+    ordersCache = payload.orders || [];
     renderStats(payload.orders || []);
     renderOrders(payload.orders || []);
   } catch {
@@ -549,6 +551,7 @@ async function loadDashboard() {
       adminRequest("/api/admin/categories"),
     ]);
     showDashboard(true);
+    ordersCache = ordersPayload.orders || [];
     renderStats(ordersPayload.orders || []);
     renderOrders(ordersPayload.orders || []);
     renderMenuManager(menuPayload.menu || []);
@@ -597,12 +600,14 @@ dashboardPanel.addEventListener("click", async (event) => {
   if (!target) return;
 
   const orderId = target.dataset.orderId || target.dataset.saveStatus;
+  const order = (ordersCache || []).find((entry) => entry.id === orderId) || null;
+  const isLongDistance = order?.deliveryMeta?.isLongDistance === true || order?.deliveryWindow === "3-7 days";
   const status =
     acceptButton ? "accepted" : rejectButton ? "cancelled" : document.querySelector(`[data-status-for="${orderId}"]`).value;
   const etaInput = document.querySelector(`[data-eta-for="${orderId}"]`);
   const messageInput = document.querySelector(`[data-message-for="${orderId}"]`);
   let etaMinutes = Number(etaInput?.value);
-  if (status === "accepted" && (!Number.isFinite(etaMinutes) || etaMinutes <= 0)) {
+  if (status === "accepted" && !isLongDistance && (!Number.isFinite(etaMinutes) || etaMinutes <= 0)) {
     const etaPrompt = prompt("Enter delivery time in minutes for customer:");
     etaMinutes = Number(etaPrompt);
   }
@@ -610,9 +615,9 @@ dashboardPanel.addEventListener("click", async (event) => {
   if (messageInput?.value?.trim()) {
     payload.customerMessage = messageInput.value.trim();
   }
-  if (status === "accepted" && Number.isFinite(etaMinutes) && etaMinutes > 0) {
+  if (status === "accepted" && !isLongDistance && Number.isFinite(etaMinutes) && etaMinutes > 0) {
     payload.etaMinutes = etaMinutes;
-  } else if (status === "accepted") {
+  } else if (status === "accepted" && !isLongDistance) {
     alert("Please enter a valid ETA in minutes.");
     return;
   }
