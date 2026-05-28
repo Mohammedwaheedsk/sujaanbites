@@ -296,10 +296,14 @@ function haversineDistanceKm(from, to) {
   return earthRadiusKm * c;
 }
 
+function isSinglePieceRow(row) {
+  const label = String(row?.name || "").toLowerCase();
+  return label.includes("single") || label.includes("(1 pc)") || label.includes("1 pc");
+}
+
 function getSinglePieceCount(rows = []) {
   return rows.reduce((sum, row) => {
-    const label = String(row?.name || "").toLowerCase();
-    const isSingle = label.includes("single") || label.includes("(1 pc)") || label.includes("1 pc");
+    const isSingle = isSinglePieceRow(row);
     return sum + (isSingle ? Number(row.quantity || 0) : 0);
   }, 0);
 }
@@ -728,7 +732,8 @@ function calculateOrder(menu, items, orderType, options = {}) {
   const subtotal = rows.reduce((sum, item) => sum + item.lineTotal, 0);
   const quantity = rows.reduce((sum, item) => sum + item.quantity, 0);
   const singlePieceCount = getSinglePieceCount(rows);
-  if (singlePieceCount > 0 && singlePieceCount < 3) {
+  const onlySinglePieceItems = rows.length > 0 && rows.every((row) => isSinglePieceRow(row));
+  if (onlySinglePieceItems && singlePieceCount > 0 && singlePieceCount < 3) {
     throw new Error("Atleast 3 pieces to purchase single pieces");
   }
   const deliveryMeta = buildDeliveryMeta({
