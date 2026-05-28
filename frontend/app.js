@@ -1093,10 +1093,14 @@ function getCartRows() {
     .filter((item) => item.quantity > 0);
 }
 
+function isSinglePieceItem(item) {
+  const label = String(item?.name || "").toLowerCase();
+  return label.includes("single") || label.includes("(1 pc)") || label.includes("1 pc");
+}
+
 function getSinglePieceCount(rows) {
   return (rows || []).reduce((sum, item) => {
-    const label = String(item?.name || "").toLowerCase();
-    const isSingle = label.includes("single") || label.includes("(1 pc)") || label.includes("1 pc");
+    const isSingle = isSinglePieceItem(item);
     return sum + (isSingle ? Number(item.quantity || 0) : 0);
   }, 0);
 }
@@ -1176,6 +1180,7 @@ function getTotals() {
     total,
     quantity,
     singlePieceCount: getSinglePieceCount(rows),
+    onlySinglePieceItems: rows.length > 0 && rows.every((item) => isSinglePieceItem(item)),
   };
 }
 
@@ -2002,7 +2007,7 @@ async function handleCheckout(event) {
     alert("Please add at least one item to your cart.");
     return;
   }
-  if (totals.singlePieceCount > 0 && totals.singlePieceCount < 3) {
+  if (totals.onlySinglePieceItems && totals.singlePieceCount > 0 && totals.singlePieceCount < 3) {
     alert("Atleast 3 pieces to purchase single pieces");
     return;
   }
