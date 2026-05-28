@@ -304,12 +304,14 @@ function getSinglePieceCount(rows = []) {
   }, 0);
 }
 
-function buildDeliveryMeta({ orderType, quantity, address, settings }) {
+function buildDeliveryMeta({ orderType, quantity, subtotal, address, settings }) {
   if (orderType !== "delivery" || quantity < 1) {
     return {
       baseDelivery: 0,
       distanceSurcharge: 0,
       delivery: 0,
+      freeDelivery: false,
+      freeDeliveryThreshold: 1599,
       distanceKm: null,
       isLongDistance: false,
       estimatedWindow: "",
@@ -336,16 +338,21 @@ function buildDeliveryMeta({ orderType, quantity, address, settings }) {
     : null;
 
   const isLongDistance = Number.isFinite(distanceKm) && distanceKm > LONG_DISTANCE_THRESHOLD_KM;
-  const delivery = Number.isFinite(distanceKm)
+  const freeDelivery = Number(subtotal || 0) > 1599;
+  const calculatedDelivery = Number.isFinite(distanceKm)
     ? distanceKm <= 180
       ? 49
       : distanceKm <= 250
         ? 59
         : 79
     : 49;
+  const delivery = freeDelivery ? 0 : calculatedDelivery;
 
   return {
     delivery,
+    calculatedDelivery,
+    freeDelivery,
+    freeDeliveryThreshold: 1599,
     distanceKm: Number.isFinite(distanceKm) ? Number(distanceKm.toFixed(2)) : null,
     isLongDistance,
     estimatedWindow: isLongDistance ? "3-7 days" : "",
@@ -727,6 +734,7 @@ function calculateOrder(menu, items, orderType, options = {}) {
   const deliveryMeta = buildDeliveryMeta({
     orderType,
     quantity,
+    subtotal,
     address: options.address || null,
     settings: options.settings || null,
   });
