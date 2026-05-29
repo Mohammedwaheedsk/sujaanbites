@@ -1544,11 +1544,11 @@ function renderSpendsTab() {
     <div class="spend-summary">
       <article class="spend-card total">
         <strong>${formatPrice(spends.total)}</strong>
-        <small>Total spend (COD + UPI combined)</small>
+        <small>Total spend</small>
       </article>
       <article class="spend-card">
         <strong>${formatPrice(spends.upi)}</strong>
-        <small>Prepaid UPI spend</small>
+        <small>Prepaid spend</small>
       </article>
       <article class="spend-card total">
         <strong>${totalOrders}</strong>
@@ -2067,7 +2067,7 @@ async function handleCheckout(event) {
 
   try {
     const intent = await createPrepaidIntent();
-    paymentSummary.textContent = `Pay ${formatPrice(totals.total)} using Razorpay UPI.`;
+    paymentSummary.textContent = `Pay ${formatPrice(totals.total)} using Razorpay.`;
     adminNotice.textContent = "Complete the payment. If the payment is not completed, no order will be saved.";
     paymentDialog.showModal();
     openRazorpayCheckout(intent, intent.paymentSessionId);
@@ -2213,7 +2213,7 @@ paymentOptionInputs.forEach((input) => {
       paymentMethod.value = input.value;
     }
     if (cartPagePaymentMethodText) {
-      cartPagePaymentMethodText.textContent = input.value === "card" ? "Debit / Credit card" : "UPI / Razorpay";
+      cartPagePaymentMethodText.textContent = input.value === "card" ? "Debit / Credit card" : "Razorpay";
     }
     paymentOptionInputs.forEach((node) => {
       node.closest(".payment-option")?.classList.toggle("active", node.checked);
