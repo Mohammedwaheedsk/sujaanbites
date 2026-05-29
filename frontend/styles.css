@@ -528,6 +528,32 @@ h2 {
   gap: 8px;
 }
 
+.delivery-free {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: flex-end;
+  white-space: nowrap;
+}
+
+.delivery-strike {
+  color: rgba(44, 26, 18, 0.55);
+  text-decoration: line-through;
+  text-decoration-thickness: 2px;
+}
+
+.free-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: rgba(83, 165, 103, 0.14);
+  color: #1a5427;
+  font-weight: 900;
+  font-size: 0.82rem;
+  border: 1px solid rgba(83, 165, 103, 0.22);
+}
+
 .totals span {
   color: var(--muted);
 }

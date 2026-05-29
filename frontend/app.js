@@ -1189,7 +1189,17 @@ function renderCart() {
   const totals = getTotals();
   if (itemCount) itemCount.textContent = `${totals.quantity} ${totals.quantity === 1 ? "item" : "items"}`;
   if (subtotalEl) subtotalEl.textContent = formatPrice(totals.subtotal);
-  if (deliveryFeeEl) deliveryFeeEl.textContent = formatPrice(totals.delivery);
+  if (deliveryFeeEl) {
+    const qualifiesFree = totals.subtotal > 1599;
+    const metaFree = Boolean(state.deliveryMeta?.freeDelivery);
+    const showFree = qualifiesFree || metaFree;
+    if (showFree) {
+      const actual = Number(state.deliveryMeta?.calculatedDelivery || state.quotedTotals?.delivery || totals.delivery || BUSINESS.deliveryFee);
+      deliveryFeeEl.innerHTML = `<span class="delivery-free"><span class="delivery-strike">${formatPrice(actual)}</span><span class="free-badge">FREE DELIVERY</span></span>`;
+    } else {
+      deliveryFeeEl.textContent = formatPrice(totals.delivery);
+    }
+  }
   if (grandTotalEl) grandTotalEl.textContent = formatPrice(totals.total);
 
   if (cartItems) {
