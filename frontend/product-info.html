@@ -173,6 +173,41 @@
       min-height: 48px;
       width: 100%;
     }
+    .qty-stepper {
+      display: inline-flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+      min-height: 48px;
+      border-radius: 999px;
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,0.84);
+      box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset;
+      padding: 0 10px;
+      gap: 10px;
+    }
+    .qty-stepper button {
+      width: 44px;
+      height: 40px;
+      border-radius: 999px;
+      border: 1px solid rgba(147, 91, 43, 0.22);
+      background: #fff;
+      color: #7d3a11;
+      font-size: 1.25rem;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .qty-stepper button:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .qty-stepper strong {
+      min-width: 40px;
+      text-align: center;
+      font-weight: 900;
+      color: var(--ink);
+      font-size: 1.05rem;
+    }
     .section-card {
       padding: 16px;
       margin-top: 14px;
@@ -322,6 +357,24 @@
       box-shadow: 0 18px 32px rgba(26, 84, 39, 0.32);
       font-weight: 800;
     }
+    .toast-text {
+      font-size: 1.02rem;
+      letter-spacing: 0;
+    }
+    .toast-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 42px;
+      padding: 0 16px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      color: #fff;
+      text-decoration: none;
+      white-space: nowrap;
+      font-weight: 900;
+    }
     .toast.show { display: flex; }
     @media (min-width: 760px) {
       .hero-card {
@@ -373,7 +426,11 @@
           <span class="pill">Support available</span>
         </div>
         <div class="hero-actions">
-          <button class="btn" id="featuredAddBtn" type="button">Add to cart</button>
+          <div class="qty-stepper" aria-label="Quantity selector">
+            <button id="featuredDecBtn" type="button" aria-label="Decrease quantity">−</button>
+            <strong id="featuredQty">0</strong>
+            <button id="featuredIncBtn" type="button" aria-label="Increase quantity">+</button>
+          </div>
           <button class="btn primary" id="featuredBuyBtn" type="button">Buy now</button>
         </div>
       </div>
@@ -426,7 +483,10 @@
     <footer class="footer">Sujaan Bites - Fresh cookies made daily - Built for a smoother mobile checkout</footer>
   </div>
 
-  <div class="toast" id="toast" aria-live="polite"></div>
+  <div class="toast" id="toast" aria-live="polite">
+    <span class="toast-text" id="toastText"></span>
+    <a class="toast-action" id="toastAction" href="cart.html">View Cart ></a>
+  </div>
 
   <script>
     const API_BASE = (() => {
@@ -446,9 +506,13 @@
     const featuredItemImage = document.getElementById("featuredItemImage");
     const featuredItemTitle = document.getElementById("featuredItemTitle");
     const featuredItemDescription = document.getElementById("featuredItemDescription");
-    const featuredAddBtn = document.getElementById("featuredAddBtn");
+    const featuredQty = document.getElementById("featuredQty");
+    const featuredIncBtn = document.getElementById("featuredIncBtn");
+    const featuredDecBtn = document.getElementById("featuredDecBtn");
     const featuredBuyBtn = document.getElementById("featuredBuyBtn");
     const toast = document.getElementById("toast");
+    const toastText = document.getElementById("toastText");
+    const toastAction = document.getElementById("toastAction");
     const itemParam = new URLSearchParams(window.location.search).get("item") || "";
 
     let menu = [];
@@ -485,13 +549,19 @@
     }
 
     function toastMessage(message) {
-      if (!toast) return;
-      toast.textContent = message;
+      if (!toast || !toastText) return;
+      toastText.textContent = message;
       toast.classList.add("show");
       window.clearTimeout(window.__toastTimer);
       window.__toastTimer = window.setTimeout(() => {
         toast.classList.remove("show");
       }, 1800);
+    }
+
+    function getCartCount(cart) {
+      let count = 0;
+      for (const qty of cart.values()) count += Number(qty || 0);
+      return count;
     }
 
     function promptQuantity(defaultValue = 1) {
@@ -501,11 +571,48 @@
       return quantity > 0 ? quantity : null;
     }
 
+    function setFeaturedQty(next) {
+      if (!featuredQty || !featuredIncBtn || !featuredDecBtn) return;
+      const safe = Math.max(0, Math.floor(Number(next) || 0));
+      featuredQty.textContent = String(safe);
+      featuredDecBtn.disabled = safe <= 0;
+    }
+
+    function syncFeaturedQty(itemId) {
+      if (!featuredQty) return;
+      const cart = readCart();
+      const qty = cart.get(itemId) || 0;
+      setFeaturedQty(qty);
+    }
+
     function addToCart(item, quantity) {
       const cart = readCart();
       cart.set(item.id, (cart.get(item.id) || 0) + quantity);
       saveCart(cart);
-      toastMessage(`${quantity} ${item.name} added to cart`);
+      const totalCount = getCartCount(cart);
+      toastMessage(`${totalCount} ${totalCount === 1 ? "Item" : "Items"} added`);
+      if (toastAction) toastAction.href = getRoute("/cart");
+      syncFeaturedQty(item.id);
+    }
+
+    function changeFeaturedQuantity(item, delta) {
+      const cart = readCart();
+      const current = cart.get(item.id) || 0;
+      const next = Math.max(0, current + delta);
+      if (next === 0) {
+        cart.delete(item.id);
+      } else {
+        cart.set(item.id, next);
+      }
+      saveCart(cart);
+      syncFeaturedQty(item.id);
+      const totalCount = getCartCount(cart);
+      if (totalCount > 0) {
+        toastMessage(`${totalCount} ${totalCount === 1 ? "Item" : "Items"} added`);
+      } else {
+        toastMessage("Cart updated");
+      }
+      if (toastAction) toastAction.href = getRoute("/cart");
     }
 
     function buyNow(item) {
@@ -530,11 +637,12 @@
       featuredItemImage.alt = item.name || "Selected product";
       featuredItemTitle.textContent = item.name || "Selected item";
       featuredItemDescription.textContent = item.description || "Freshly baked cookie with a rich homemade feel.";
-      featuredAddBtn.onclick = () => {
-        const quantity = promptQuantity(1);
-        if (!quantity) return;
-        addToCart(item, quantity);
-      };
+      if (featuredIncBtn) {
+        featuredIncBtn.onclick = () => changeFeaturedQuantity(item, 1);
+      }
+      if (featuredDecBtn) {
+        featuredDecBtn.onclick = () => changeFeaturedQuantity(item, -1);
+      }
       featuredBuyBtn.onclick = () => {
         const quantity = promptQuantity(1);
         if (!quantity) return;
@@ -542,6 +650,7 @@
         window.location.href = getRoute("/cart");
       };
       updateFeaturedHighlights(item);
+      syncFeaturedQty(item.id);
     }
 
     function updateFeaturedHighlights(item) {

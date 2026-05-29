@@ -154,6 +154,9 @@ const customerPhone = document.querySelector("#customerPhone");
 const orderType = document.querySelector("#orderType");
 const paymentMethod = document.querySelector("#paymentMethod");
 const selectedAddressText = document.querySelector("#selectedAddressText");
+const checkoutAddressPicker = document.querySelector("#checkoutAddressPicker");
+const checkoutAddressSelect = document.querySelector("#checkoutAddressSelect");
+const manageAddressesButton = document.querySelector("#manageAddressesButton");
 const paymentDialog = document.querySelector("#paymentDialog");
 const paymentSummary = document.querySelector("#paymentSummary");
 const razorpayRetryButton = document.querySelector("#razorpayRetryButton");
@@ -1059,10 +1062,9 @@ function openFlavorMenu(flavorKey) {
     </div>
     <div class="flavor-option-list">${variantRows}</div>
     <div class="flavor-sheet-footer">
-      <a class="secondary-link flavor-more-info" href="${infoHref}">More info</a>
       <div class="flavor-sheet-actions">
-        <button class="secondary-button" type="button" data-flavor-add-selected>Add to cart</button>
-        <button class="pay-button" type="button" data-flavor-buy-selected>Buy now</button>
+        <a class="secondary-link flavor-more-info" href="${infoHref}">More info</a>
+        <a class="pay-button" href="${getRoute("/cart")}" data-route="/cart">View cart</a>
       </div>
     </div>
   `;
@@ -1217,6 +1219,8 @@ function renderCart() {
   if (selectedAddressText) {
     selectedAddressText.textContent = formatAddressLine(getActiveAddress());
   }
+
+  renderCheckoutAddressPicker();
 
   if (cartSummaryPayable) {
     cartSummaryPayable.textContent = formatPrice(totals.total);
@@ -1594,6 +1598,36 @@ function syncCheckoutFields() {
   if (selectedAddressText) {
     selectedAddressText.textContent = formatAddressLine(getActiveAddress());
   }
+  renderCheckoutAddressPicker();
+}
+
+function formatAddressOption(address) {
+  const type = String(address?.type || "Delivery").trim() || "Delivery";
+  const line1 = `${address?.houseNumber || ""} ${address?.streetName || ""}`.trim();
+  const line2 = String(address?.address || "").trim();
+  const compact = [line1, line2].filter(Boolean).join(" - ");
+  return compact ? `${type}: ${compact}` : `${type} address`;
+}
+
+function renderCheckoutAddressPicker() {
+  if (!checkoutAddressPicker || !checkoutAddressSelect) return;
+
+  const addresses = state.addresses || [];
+  if (addresses.length <= 1) {
+    checkoutAddressPicker.classList.add("hidden");
+    checkoutAddressSelect.innerHTML = "";
+    return;
+  }
+
+  checkoutAddressPicker.classList.remove("hidden");
+  const selected = getActiveAddress();
+  checkoutAddressSelect.innerHTML = addresses
+    .map((address) => {
+      const label = formatAddressOption(address);
+      const isSelected = selected && address.id === selected.id;
+      return `<option value="${address.id}" ${isSelected ? "selected" : ""}>${label}</option>`;
+    })
+    .join("");
 }
 
 async function loadMenu() {
@@ -2065,6 +2099,22 @@ heroAccountButton?.addEventListener("click", () => {
   renderAccount();
 });
 
+manageAddressesButton?.addEventListener("click", async () => {
+  state.drawerOpen = true;
+  state.activeTab = "addresses";
+  renderAccount();
+});
+
+checkoutAddressSelect?.addEventListener("change", async (event) => {
+  const nextId = event.target.value;
+  if (!nextId || nextId === state.selectedAddressId) return;
+  state.selectedAddressId = nextId;
+  localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+  await syncCustomerState();
+  renderCart();
+  syncCheckoutFields();
+});
+
 closeSidebarBtn.addEventListener("click", closeDrawer);
 accountOverlay.addEventListener("click", closeDrawer);
 
@@ -2243,24 +2293,6 @@ flavorOverlay?.addEventListener("click", (event) => {
   if (event.target === flavorOverlay) closeFlavorMenu();
 });
 flavorOptions?.addEventListener("click", (event) => {
-  const addSelected = event.target.closest("[data-flavor-add-selected]");
-  const buySelected = event.target.closest("[data-flavor-buy-selected]");
-  if (addSelected || buySelected) {
-    const group = getFlavorGroups(state.menu).find((entry) => entry.key === activeFlavorKey);
-    const selectedItem = group?.variants.find((item) => item.id === selectedFlavorVariantId)
-      || group?.variants.find((item) => item.available !== false && getMenuStock(item) > 0)
-      || group?.variants[0];
-    if (!selectedItem) return;
-    pulseElement(addSelected || buySelected);
-    vibrate(10);
-    updateQuantity(selectedItem.id, 1);
-    if (buySelected) {
-      closeFlavorMenu();
-      window.location.href = getRoute("/cart");
-    }
-    return;
-  }
-
   const button = event.target.closest("[data-add]");
   const increase = event.target.closest("[data-menu-increase]");
   const decrease = event.target.closest("[data-menu-decrease]");

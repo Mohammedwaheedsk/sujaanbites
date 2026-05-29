@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="preconnect" href="https://api.qrserver.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260528c" />
+  <link rel="stylesheet" href="styles.css?v=20260529c" />
 </head>
 
 <body data-page="cart">
@@ -113,7 +113,14 @@
           </div>
 
           <div class="selected-address" id="selectedAddressSummary">
-            <strong>Saved address</strong>
+            <div class="selected-address-head">
+              <strong>Delivery address</strong>
+              <button class="secondary-button small" id="manageAddressesButton" type="button">Manage</button>
+            </div>
+            <label class="address-picker" id="checkoutAddressPicker">
+              <span class="sr-only">Choose saved address</span>
+              <select id="checkoutAddressSelect" aria-label="Choose saved address"></select>
+            </label>
             <p id="selectedAddressText">No address saved yet.</p>
           </div>
 
@@ -269,7 +276,7 @@
       }, 420);
     });
   </script>
-  <script src="app.js?v=20260528e"></script>
+  <script src="app.js?v=20260529c"></script>
 </body>
 
 </html>
