@@ -1504,7 +1504,7 @@ function renderOrdersTab() {
 function calculateSpends(orders) {
   return (orders || []).reduce(
     (acc, order) => {
-      if (order?.status === "cancelled") return acc;
+      if (!isVisibleCustomerOrder(order)) return acc;
       const amount = Number(order?.totals?.total || 0);
       acc.total += amount;
       acc.upi += amount;
@@ -1512,6 +1512,17 @@ function calculateSpends(orders) {
     },
     { total: 0, upi: 0 },
   );
+}
+
+function isVisibleCustomerOrder(order) {
+  if (!order || typeof order !== "object") return false;
+  if (order.status === "cancelled") return false;
+  // Hide legacy/failed orders that were never paid/verified.
+  const paymentStatus = String(order.paymentStatus || "").toLowerCase();
+  const status = String(order.status || "").toLowerCase();
+  if (status === "payment_pending") return false;
+  if (paymentStatus === "not_verified") return false;
+  return true;
 }
 
 function renderSpendsTab() {
@@ -2064,7 +2075,7 @@ async function loadOrdersForAccount() {
 
   try {
     const result = await apiRequest("/api/orders/my");
-    state.previousOrders = result.orders || [];
+    state.previousOrders = (result.orders || []).filter((order) => isVisibleCustomerOrder(order));
     maybeShowCustomerMessage(state.previousOrders);
     const latestOrder = getLatestOrder(state.previousOrders);
     maybeShowCancelledOrder(latestOrder);
