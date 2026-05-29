@@ -13,6 +13,15 @@
   --shadow-md: 0 10px 26px rgba(63, 33, 14, 0.1);
 }
 
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  overflow-x: hidden;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -753,6 +762,16 @@ textarea {
   padding: 10px;
   background: #fff;
   color: var(--ink);
+}
+
+/* iOS Safari auto-zooms when form controls render smaller than 16px.
+   Our labels use ~14px, so enforce 16px on the controls to prevent layout zoom/shift. */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
 }
 
 textarea {
