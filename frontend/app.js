@@ -39,6 +39,8 @@ const STORAGE_KEYS = {
   lastCompletedOrderShown: "spiceTableLastCompletedOrderShown",
   lastDeliveryRatingShown: "spiceTableLastDeliveryRatingShown",
   lastProductRatingShown: "spiceTableLastProductRatingShown",
+  sessionToken: "spiceTableSessionToken",
+  deviceId: "spiceTableDeviceId",
 };
 
 const state = {
@@ -321,6 +323,30 @@ function writeStoredJson(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function randomId(prefix = "") {
+  if (window.crypto?.randomUUID) return `${prefix}${window.crypto.randomUUID()}`;
+  const block = () => Math.random().toString(36).slice(2);
+  return `${prefix}${Date.now().toString(36)}-${block()}-${block()}`;
+}
+
+function getDeviceId() {
+  let value = localStorage.getItem(STORAGE_KEYS.deviceId);
+  if (!value) {
+    value = randomId("dev_");
+    localStorage.setItem(STORAGE_KEYS.deviceId, value);
+  }
+  return value;
+}
+
+function getSessionToken() {
+  let value = localStorage.getItem(STORAGE_KEYS.sessionToken);
+  if (!value) {
+    value = randomId("sess_");
+    localStorage.setItem(STORAGE_KEYS.sessionToken, value);
+  }
+  return value;
+}
+
 function getRoute(path) {
   if (window.location.protocol === "file:") {
     return path === "/" ? "index.html" : `${String(path).replace(/^\/+/, "")}.html`;
@@ -362,6 +388,7 @@ function clearSession() {
   localStorage.removeItem(STORAGE_KEYS.lastDeliveryRatingShown);
   localStorage.removeItem(STORAGE_KEYS.lastProductRatingShown);
   localStorage.removeItem(STORAGE_KEYS.cart);
+  localStorage.removeItem(STORAGE_KEYS.sessionToken);
   state.cart.clear();
 }
 
@@ -751,6 +778,11 @@ async function loadCustomerState() {
       }
     }
   } catch (error) {
+    if (isSessionLockedError(error)) {
+      explainSessionLock();
+      clearSession();
+      return;
+    }
     console.warn("Customer state sync skipped:", error.message);
   }
 }
@@ -759,31 +791,54 @@ async function syncCustomerState() {
   const resolved = getResolvedCustomerProfile();
   if (!resolved?.phone) return;
 
-  try {
-    const result = await apiRequest("/api/customer/state", {
-      method: "PUT",
-      body: JSON.stringify({
-        phone: resolved.phone,
-        profile: resolved,
-        addresses: state.addresses,
-        selectedAddressId: state.selectedAddressId,
-      }),
-    });
+  const result = await apiRequest("/api/customer/state", {
+    method: "PUT",
+    body: JSON.stringify({
+      phone: resolved.phone,
+      profile: resolved,
+      addresses: state.addresses,
+      selectedAddressId: state.selectedAddressId,
+      sessionToken: getSessionToken(),
+    }),
+  });
 
-    if (result.profile || Array.isArray(result.addresses)) {
-      state.profile = result.profile || state.profile;
-      state.addresses = Array.isArray(result.addresses) ? result.addresses.slice(0, MAX_ADDRESSES) : state.addresses;
-      state.selectedAddressId = result.selectedAddressId || state.addresses[0]?.id || state.selectedAddressId;
-      const nextResolved = getResolvedCustomerProfile();
-      if (nextResolved) state.profile = nextResolved;
-      writeStoredJson(STORAGE_KEYS.profile, state.profile);
-      writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
-      if (state.selectedAddressId) {
-        localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
-      }
+  if (result.profile || Array.isArray(result.addresses)) {
+    state.profile = result.profile || state.profile;
+    state.addresses = Array.isArray(result.addresses) ? result.addresses.slice(0, MAX_ADDRESSES) : state.addresses;
+    state.selectedAddressId = result.selectedAddressId || state.addresses[0]?.id || state.selectedAddressId;
+    const nextResolved = getResolvedCustomerProfile();
+    if (nextResolved) state.profile = nextResolved;
+    writeStoredJson(STORAGE_KEYS.profile, state.profile);
+    writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
+    if (state.selectedAddressId) {
+      localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
     }
-  } catch (error) {
-    console.warn("Customer state save skipped:", error.message);
+  }
+}
+
+function isSessionLockedError(error) {
+  return error?.code === "SESSION_LOCKED" || Number(error?.status) === 409;
+}
+
+function explainSessionLock() {
+  alert("This mobile number is already active on another device/browser. Please logout there first, then try again.");
+}
+
+function restoreLocalIdentity(snapshot) {
+  if (!snapshot) return;
+  state.profile = snapshot.profile;
+  state.addresses = snapshot.addresses;
+  state.selectedAddressId = snapshot.selectedAddressId;
+  if (snapshot.profile) {
+    writeStoredJson(STORAGE_KEYS.profile, snapshot.profile);
+  } else {
+    localStorage.removeItem(STORAGE_KEYS.profile);
+  }
+  writeStoredJson(STORAGE_KEYS.addresses, snapshot.addresses || []);
+  if (snapshot.selectedAddressId) {
+    localStorage.setItem(STORAGE_KEYS.selectedAddressId, snapshot.selectedAddressId);
+  } else {
+    localStorage.removeItem(STORAGE_KEYS.selectedAddressId);
   }
 }
 
@@ -840,11 +895,16 @@ function apiRequest(path, options = {}) {
   } else if (state.profile?.phone) {
     headers["x-customer-phone"] = state.profile.phone;
   }
+  headers["x-customer-session"] = getSessionToken();
+  headers["x-customer-device"] = getDeviceId();
 
   return fetch(`${API_BASE}${path}`, { ...options, headers }).then(async (response) => {
     const payload = await response.json().catch(() => ({}));
     if (!response.ok) {
-      throw new Error(payload.error || "Request failed");
+      const error = new Error(payload.error || "Request failed");
+      error.status = response.status;
+      error.code = payload.code || "";
+      throw error;
     }
     return payload;
   });
@@ -1628,6 +1688,20 @@ function renderAccount() {
 }
 
 async function logoutCustomer() {
+  const profile = getResolvedCustomerProfile();
+  try {
+    if (profile?.phone) {
+      await apiRequest("/api/customer/logout", {
+        method: "POST",
+        body: JSON.stringify({
+          phone: profile.phone,
+          sessionToken: getSessionToken(),
+        }),
+      });
+    }
+  } catch {
+    // proceed with local logout anyway
+  }
   clearSession();
   state.drawerOpen = true;
   state.activeTab = "profile";
@@ -1883,6 +1957,12 @@ async function saveProfileAndFirstAddress(form) {
     location: state.selectedLocation,
   };
 
+  const snapshot = {
+    profile: state.profile ? { ...state.profile } : null,
+    addresses: state.addresses.map((entry) => ({ ...entry })),
+    selectedAddressId: state.selectedAddressId || null,
+  };
+
   state.profile = profile;
   state.addresses = [addressRecord];
   state.selectedAddressId = addressRecord.id;
@@ -1893,8 +1973,18 @@ async function saveProfileAndFirstAddress(form) {
   writeStoredJson(STORAGE_KEYS.profile, profile);
   writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
   localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
-  await syncCustomerState();
-  renderAccount();
+  try {
+    await syncCustomerState();
+    renderAccount();
+  } catch (error) {
+    if (isSessionLockedError(error)) {
+      restoreLocalIdentity(snapshot);
+      explainSessionLock();
+      renderAccount();
+      return;
+    }
+    throw error;
+  }
 }
 
 async function saveAddress(form) {
@@ -1945,8 +2035,18 @@ async function saveAddress(form) {
 
   writeStoredJson(STORAGE_KEYS.addresses, state.addresses);
   localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
-  await syncCustomerState();
-  renderAccount();
+  try {
+    await syncCustomerState();
+    renderAccount();
+  } catch (error) {
+    if (isSessionLockedError(error)) {
+      explainSessionLock();
+      clearSession();
+      renderAccount();
+      return;
+    }
+    alert(error.message || "Could not save address right now.");
+  }
 }
 
 async function deleteAddress(id) {
@@ -1962,8 +2062,18 @@ async function deleteAddress(id) {
     localStorage.removeItem(STORAGE_KEYS.selectedAddressId);
   }
 
-  await syncCustomerState();
-  renderAccount();
+  try {
+    await syncCustomerState();
+    renderAccount();
+  } catch (error) {
+    if (isSessionLockedError(error)) {
+      explainSessionLock();
+      clearSession();
+      renderAccount();
+      return;
+    }
+    alert(error.message || "Could not update address right now.");
+  }
 }
 
 function renderAccountContent() {
@@ -2159,7 +2269,17 @@ checkoutAddressSelect?.addEventListener("change", async (event) => {
   if (!nextId || nextId === state.selectedAddressId) return;
   state.selectedAddressId = nextId;
   localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
-  await syncCustomerState();
+  try {
+    await syncCustomerState();
+  } catch (error) {
+    if (isSessionLockedError(error)) {
+      explainSessionLock();
+      clearSession();
+      renderAccount();
+      return;
+    }
+    alert(error.message || "Could not switch address right now.");
+  }
   renderCart();
   syncCheckoutFields();
 });
@@ -2208,7 +2328,17 @@ accountContent.addEventListener("click", async (event) => {
   if (selectAddress) {
     state.selectedAddressId = selectAddress.dataset.selectAddress;
     localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
-    await syncCustomerState();
+    try {
+      await syncCustomerState();
+    } catch (error) {
+      if (isSessionLockedError(error)) {
+        explainSessionLock();
+        clearSession();
+        renderAccount();
+        return;
+      }
+      alert(error.message || "Could not switch address right now.");
+    }
     renderAccount();
     return;
   }
