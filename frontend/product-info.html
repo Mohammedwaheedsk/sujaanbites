@@ -521,6 +521,7 @@
 
     let menu = [];
     let featuredItemId = itemParam;
+    let lastHapticAt = 0;
 
     const currency = new Intl.NumberFormat("en-IN", {
       style: "currency",
@@ -548,6 +549,14 @@
       }
     }
 
+    function vibrateTap(pattern = 8) {
+      if (!navigator?.vibrate) return;
+      const now = Date.now();
+      if (now - lastHapticAt < 35) return;
+      lastHapticAt = now;
+      navigator.vibrate(pattern);
+    }
+
     function saveCart(cart) {
       localStorage.setItem(CART_KEY, JSON.stringify([...cart.entries()]));
     }
@@ -566,13 +575,6 @@
       let count = 0;
       for (const qty of cart.values()) count += Number(qty || 0);
       return count;
-    }
-
-    function promptQuantity(defaultValue = 1) {
-      const answer = window.prompt("How many would you like?", String(defaultValue));
-      if (answer === null) return null;
-      const quantity = Math.max(0, Math.floor(Number(answer)));
-      return quantity > 0 ? quantity : null;
     }
 
     function setFeaturedQty(next) {
@@ -619,11 +621,6 @@
       if (toastAction) toastAction.href = getRoute("/cart");
     }
 
-    function buyNow(item) {
-      addToCart(item, promptQuantity(1) || 1);
-      window.location.href = getRoute("/cart");
-    }
-
     function getSelectedItem() {
       return menu.find((item) => item.id === featuredItemId) || menu[0] || null;
     }
@@ -648,9 +645,15 @@
         featuredDecBtn.onclick = () => changeFeaturedQuantity(item, -1);
       }
       featuredBuyBtn.onclick = () => {
-        const quantity = promptQuantity(1);
-        if (!quantity) return;
-        addToCart(item, quantity);
+        const cart = readCart();
+        const current = cart.get(item.id) || 0;
+        // Buy now should use the selected quantity and never ask via prompt again.
+        if (current <= 0) {
+          cart.set(item.id, 1);
+          saveCart(cart);
+          syncFeaturedQty(item.id);
+          toastMessage("1 Item added");
+        }
         window.location.href = getRoute("/cart");
       };
       updateFeaturedHighlights(item);
@@ -716,6 +719,15 @@
       renderMenu();
       updateUrl(item.id);
       featuredItemImage.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    // Best-effort haptic feedback on supported devices for any tap action.
+    document.addEventListener("click", (event) => {
+      const trigger = event.target.closest(
+        "button, a, input[type='button'], input[type='submit'], [role='button']",
+      );
+      if (!trigger) return;
+      vibrateTap(8);
     });
 
     loadMenu();
