@@ -1230,7 +1230,7 @@ function syncCouponUi() {
   if (couponCodeInput) couponCodeInput.value = normalized;
   if (couponStatus) {
     couponStatus.textContent = normalized === "TEST SITE"
-      ? "Coupon TEST SITE applied. Your payable amount is now ₹1."
+      ? "Coupon applied. Your payable amount is now ₹1."
       : normalized
         ? "Coupon not recognized."
         : "No coupon applied.";
