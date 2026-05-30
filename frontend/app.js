@@ -1229,8 +1229,10 @@ function syncCouponUi() {
   const normalized = normalizeCouponCode(state.couponCode);
   if (couponCodeInput) couponCodeInput.value = normalized;
   if (couponStatus) {
+    couponStatus.classList.toggle("success", normalized === "TEST SITE");
+    couponStatus.classList.toggle("error", Boolean(normalized && normalized !== "TEST SITE"));
     couponStatus.textContent = normalized === "TEST SITE"
-      ? "Coupon applied. Your payable amount is now ₹1."
+      ? "Offer unlocked. Your payable amount has been updated."
       : normalized
         ? "Coupon not recognized."
         : "No coupon applied.";

@@ -110,11 +110,24 @@
             </div>
           </div>
 
-          <section class="offers-panel" aria-label="Offers">
+          <section class="offers-panel" aria-label="Offers and coupons">
             <div class="offers-panel-head">
-              <p class="eyebrow">Offers</p>
+              <p class="eyebrow">Offers and Coupons</p>
               <strong>Save more on checkout</strong>
             </div>
+
+            <article class="coupon-card">
+              <div class="coupon-copy">
+                <strong>Apply coupon code</strong>
+                <p>Enter a valid code to unlock your offer.</p>
+              </div>
+              <div class="coupon-form">
+                <input id="couponCodeInput" type="text" placeholder="Enter coupon code" autocomplete="off" />
+                <button class="secondary-button" id="applyCouponButton" type="button">Apply</button>
+              </div>
+              <p class="coupon-status" id="couponStatus">No coupon applied.</p>
+              <button class="secondary-button small hidden" id="clearCouponButton" type="button">Remove coupon</button>
+            </article>
 
             <article class="offer-card">
               <div class="offer-card-copy">
@@ -128,19 +141,6 @@
               <div class="offer-progress-track" aria-hidden="true">
                 <div class="offer-progress-fill" id="freeDeliveryProgressBar"></div>
               </div>
-            </article>
-
-            <article class="coupon-card">
-              <div class="coupon-copy">
-                <strong>Have a coupon?</strong>
-                <p>Enter your code to test a ₹1 checkout.</p>
-              </div>
-              <div class="coupon-form">
-                <input id="couponCodeInput" type="text" placeholder="Enter coupon code" autocomplete="off" />
-                <button class="secondary-button" id="applyCouponButton" type="button">Apply</button>
-              </div>
-              <p class="coupon-status" id="couponStatus">No coupon applied.</p>
-              <button class="secondary-button small hidden" id="clearCouponButton" type="button">Remove coupon</button>
             </article>
           </section>
 
