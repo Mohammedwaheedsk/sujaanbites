@@ -110,9 +110,44 @@
             </div>
           </div>
 
+          <section class="offers-panel" aria-label="Offers and coupons">
+            <div class="offers-panel-head">
+              <p class="eyebrow">Offers and Coupons</p>
+              <strong>Save more on checkout</strong>
+            </div>
+
+            <article class="offer-card">
+              <div class="offer-card-copy">
+                <strong>Orders above ₹1599 is free</strong>
+                <p>Keep adding items to unlock free delivery.</p>
+              </div>
+              <div class="offer-progress-meta">
+                <span id="freeDeliveryProgressLabel">₹0 / ₹1599</span>
+                <small id="freeDeliveryProgressRemaining">₹1599 away from free delivery</small>
+              </div>
+              <div class="offer-progress-track" aria-hidden="true">
+                <div class="offer-progress-fill" id="freeDeliveryProgressBar"></div>
+              </div>
+            </article>
+
+            <article class="coupon-card">
+              <div class="coupon-copy">
+                <strong>Have a coupon?</strong>
+                <p>Use <span class="coupon-code">TEST SITE</span> to test a ₹1 checkout.</p>
+              </div>
+              <div class="coupon-form">
+                <input id="couponCodeInput" type="text" placeholder="Enter coupon code" autocomplete="off" />
+                <button class="secondary-button" id="applyCouponButton" type="button">Apply</button>
+              </div>
+              <p class="coupon-status" id="couponStatus">No coupon applied.</p>
+              <button class="secondary-button small hidden" id="clearCouponButton" type="button">Remove coupon</button>
+            </article>
+          </section>
+
           <div class="totals">
             <div><span>Subtotal</span><strong id="subtotal">₹0</strong></div>
             <div><span>Delivery</span><strong id="deliveryFee">₹0</strong></div>
+            <div class="discount-row hidden" id="discountRow"><span>Coupon discount</span><strong id="couponDiscount">-₹0</strong></div>
             <div class="grand-total"><span>To Pay</span><strong id="grandTotal">₹0</strong></div>
           </div>
 

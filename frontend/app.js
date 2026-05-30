@@ -39,6 +39,7 @@ const STORAGE_KEYS = {
   lastCompletedOrderShown: "spiceTableLastCompletedOrderShown",
   lastDeliveryRatingShown: "spiceTableLastDeliveryRatingShown",
   lastProductRatingShown: "spiceTableLastProductRatingShown",
+  couponCode: "spiceTableCouponCode",
   sessionToken: "spiceTableSessionToken",
   deviceId: "spiceTableDeviceId",
 };
@@ -65,6 +66,7 @@ const state = {
   marker: null,
   loadingMenu: false,
   checkoutNeedsAccountConfirm: true,
+  couponCode: "",
 };
 
 const pageMode = document.body?.dataset.page || "home";
@@ -159,6 +161,15 @@ const selectedAddressText = document.querySelector("#selectedAddressText");
 const checkoutAddressPicker = document.querySelector("#checkoutAddressPicker");
 const checkoutAddressSelect = document.querySelector("#checkoutAddressSelect");
 const manageAddressesButton = document.querySelector("#manageAddressesButton");
+const couponCodeInput = document.querySelector("#couponCodeInput");
+const applyCouponButton = document.querySelector("#applyCouponButton");
+const clearCouponButton = document.querySelector("#clearCouponButton");
+const couponStatus = document.querySelector("#couponStatus");
+const freeDeliveryProgressBar = document.querySelector("#freeDeliveryProgressBar");
+const freeDeliveryProgressLabel = document.querySelector("#freeDeliveryProgressLabel");
+const freeDeliveryProgressRemaining = document.querySelector("#freeDeliveryProgressRemaining");
+const discountRow = document.querySelector("#discountRow");
+const couponDiscount = document.querySelector("#couponDiscount");
 const paymentDialog = document.querySelector("#paymentDialog");
 const paymentSummary = document.querySelector("#paymentSummary");
 const razorpayRetryButton = document.querySelector("#razorpayRetryButton");
@@ -323,6 +334,13 @@ function writeStoredJson(key, value) {
   localStorage.setItem(key, JSON.stringify(value));
 }
 
+function normalizeCouponCode(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
 function randomId(prefix = "") {
   if (window.crypto?.randomUUID) return `${prefix}${window.crypto.randomUUID()}`;
   const block = () => Math.random().toString(36).slice(2);
@@ -387,9 +405,11 @@ function clearSession() {
   localStorage.removeItem(STORAGE_KEYS.lastCompletedOrderShown);
   localStorage.removeItem(STORAGE_KEYS.lastDeliveryRatingShown);
   localStorage.removeItem(STORAGE_KEYS.lastProductRatingShown);
+  localStorage.removeItem(STORAGE_KEYS.couponCode);
   localStorage.removeItem(STORAGE_KEYS.cart);
   localStorage.removeItem(STORAGE_KEYS.sessionToken);
   state.cart.clear();
+  state.couponCode = "";
 }
 
 function formatReceivedAddressLine(address) {
@@ -736,6 +756,7 @@ function loadLocalState() {
   state.profile = readStoredJson(STORAGE_KEYS.profile) || null;
   state.addresses = readStoredJson(STORAGE_KEYS.addresses) || [];
   state.selectedAddressId = localStorage.getItem(STORAGE_KEYS.selectedAddressId) || null;
+  state.couponCode = normalizeCouponCode(localStorage.getItem(STORAGE_KEYS.couponCode) || "");
   const storedCart = readStoredJson(STORAGE_KEYS.cart);
   state.cart = new Map(Array.isArray(storedCart) ? storedCart.filter((entry) => Array.isArray(entry) && entry.length === 2) : []);
 
@@ -1200,7 +1221,45 @@ function getQuoteKey(rows, address) {
     lat: Number(address?.location?.lat || 0),
     lng: Number(address?.location?.lng || 0),
     i: rows.map((item) => [item.id, Number(item.quantity || 0)]),
+    c: state.couponCode || "",
   });
+}
+
+function syncCouponUi() {
+  const normalized = normalizeCouponCode(state.couponCode);
+  if (couponCodeInput) couponCodeInput.value = normalized;
+  if (couponStatus) {
+    couponStatus.textContent = normalized === "TEST SITE"
+      ? "Coupon TEST SITE applied. Your payable amount is now ₹1."
+      : normalized
+        ? "Coupon not recognized."
+        : "No coupon applied.";
+  }
+  if (clearCouponButton) {
+    clearCouponButton.classList.toggle("hidden", !normalized);
+  }
+}
+
+function applyCouponCode(rawCode) {
+  const normalized = normalizeCouponCode(rawCode);
+  state.couponCode = normalized;
+  localStorage.setItem(STORAGE_KEYS.couponCode, normalized);
+  syncCouponUi();
+  if (couponCodeInput) couponCodeInput.value = normalized;
+  state.quoteKey = "";
+  state.quoteLoading = false;
+  void ensureDeliveryQuote();
+  renderCart();
+}
+
+function clearCouponCode() {
+  state.couponCode = "";
+  localStorage.removeItem(STORAGE_KEYS.couponCode);
+  syncCouponUi();
+  state.quoteKey = "";
+  state.quoteLoading = false;
+  void ensureDeliveryQuote();
+  renderCart();
 }
 
 async function ensureDeliveryQuote() {
@@ -1226,6 +1285,7 @@ async function ensureDeliveryQuote() {
         orderType: "delivery",
         address,
         items: rows.map((item) => ({ id: item.id, quantity: item.quantity })),
+        couponCode: state.couponCode || "",
       }),
     });
     if (state.quoteKey !== nextKey) return;
@@ -1260,12 +1320,19 @@ function getTotals() {
     Number.isFinite(Number(state.quotedTotals.total)),
   );
   const delivery = canUseQuote ? Number(state.quotedTotals.delivery || 0) : (rows.length ? BUSINESS.deliveryFee : 0);
-  const total = canUseQuote ? Number(state.quotedTotals.total || 0) : subtotal + delivery;
+  const couponCode = normalizeCouponCode(state.couponCode);
+  const couponApplied = couponCode === "TEST SITE";
+  const quotedTotal = canUseQuote ? Number(state.quotedTotals.total || 0) : subtotal + delivery;
+  const total = couponApplied ? 1 : quotedTotal;
+  const discount = couponApplied ? Math.max(0, subtotal + delivery - 1) : Number(state.quotedTotals?.discount || 0);
   return {
     rows,
     subtotal,
     delivery,
     total,
+    discount,
+    couponCode,
+    couponApplied,
     quantity,
     singlePieceCount: getSinglePieceCount(rows),
     onlySinglePieceItems: rows.length > 0 && rows.every((item) => isSinglePieceItem(item)),
@@ -1275,6 +1342,7 @@ function getTotals() {
 function renderCart() {
   void ensureDeliveryQuote();
   const totals = getTotals();
+  syncCouponUi();
   if (itemCount) itemCount.textContent = `${totals.quantity} ${totals.quantity === 1 ? "item" : "items"}`;
   if (subtotalEl) subtotalEl.textContent = formatPrice(totals.subtotal);
   if (deliveryFeeEl) {
@@ -1322,6 +1390,27 @@ function renderCart() {
 
   if (cartSummaryPayable) {
     cartSummaryPayable.textContent = formatPrice(totals.total);
+  }
+
+  if (discountRow && couponDiscount) {
+    const showDiscount = totals.discount > 0;
+    discountRow.classList.toggle("hidden", !showDiscount);
+    couponDiscount.textContent = `-${formatPrice(totals.discount)}`;
+  }
+
+  const freeDeliveryThreshold = 1599;
+  const progress = Math.max(0, Math.min(1, totals.subtotal / freeDeliveryThreshold));
+  if (freeDeliveryProgressBar) {
+    freeDeliveryProgressBar.style.width = `${Math.round(progress * 100)}%`;
+  }
+  if (freeDeliveryProgressLabel) {
+    freeDeliveryProgressLabel.textContent = `${formatPrice(totals.subtotal)} / ${formatPrice(freeDeliveryThreshold)}`;
+  }
+  if (freeDeliveryProgressRemaining) {
+    const remaining = Math.max(0, freeDeliveryThreshold - totals.subtotal);
+    freeDeliveryProgressRemaining.textContent = remaining > 0
+      ? `${formatPrice(remaining)} away from free delivery`
+      : "Free delivery unlocked";
   }
 
   const deliveryCardTitle = document.querySelector("#deliveryEtaLabel");
@@ -2106,6 +2195,7 @@ async function createPrepaidIntent() {
     orderType: "delivery",
     address: { ...activeAddress, name: activeAddress.name || resolvedName, phone: activeAddress.phone || resolvedPhone },
     items: getCartRows().map((item) => ({ id: item.id, quantity: item.quantity })),
+    couponCode: state.couponCode || "",
   };
 
   return apiRequest("/api/payments/razorpay/create-intent", {
@@ -2282,6 +2372,21 @@ checkoutAddressSelect?.addEventListener("change", async (event) => {
   }
   renderCart();
   syncCheckoutFields();
+});
+
+applyCouponButton?.addEventListener("click", () => {
+  applyCouponCode(couponCodeInput?.value || "");
+});
+
+clearCouponButton?.addEventListener("click", () => {
+  clearCouponCode();
+});
+
+couponCodeInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Enter") {
+    event.preventDefault();
+    applyCouponCode(couponCodeInput.value || "");
+  }
 });
 
 closeSidebarBtn.addEventListener("click", closeDrawer);
@@ -2613,6 +2718,7 @@ productRatingForm?.addEventListener("submit", async (event) => {
 async function boot() {
   syncPageRoutes();
   loadLocalState();
+  syncCouponUi();
   await loadCustomerState();
   state.drawerOpen = false;
   state.activeTab = "profile";

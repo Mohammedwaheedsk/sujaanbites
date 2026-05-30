@@ -785,6 +785,113 @@ h2 {
   background: #fff;
 }
 
+.offers-panel {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(255, 247, 238, 0.96));
+}
+
+.offers-panel-head {
+  display: grid;
+  gap: 2px;
+}
+
+.offers-panel-head strong {
+  font-size: 1.05rem;
+}
+
+.offer-card,
+.coupon-card {
+  display: grid;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.offer-card-copy,
+.coupon-copy {
+  display: grid;
+  gap: 4px;
+}
+
+.offer-card-copy strong,
+.coupon-copy strong {
+  color: var(--ink);
+  font-size: 1rem;
+}
+
+.offer-card-copy p,
+.coupon-copy p {
+  margin: 0;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.coupon-code {
+  font-weight: 900;
+  color: var(--accent);
+}
+
+.offer-progress-meta {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: baseline;
+  color: var(--muted);
+}
+
+.offer-progress-meta span {
+  font-weight: 800;
+  color: var(--ink);
+}
+
+.offer-progress-track {
+  width: 100%;
+  height: 10px;
+  border-radius: 999px;
+  background: rgba(232, 207, 183, 0.6);
+  overflow: hidden;
+}
+
+.offer-progress-fill {
+  width: 0%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #f26419, #f7a14b);
+  transition: width 0.25s ease;
+}
+
+.coupon-form {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+}
+
+.coupon-form input {
+  min-width: 0;
+  border-radius: 14px;
+  border: 1px solid var(--line);
+  padding: 12px 14px;
+  background: #fff;
+  color: var(--ink);
+}
+
+.coupon-status {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.discount-row strong {
+  color: #1f6d35;
+}
+
 .delivery-card p,
 .delivery-card .eyebrow,
 .cart-total-card small {
@@ -831,6 +938,17 @@ h2 {
   border-radius: 18px;
   background: #53a567;
   box-shadow: 0 20px 30px rgba(26, 84, 39, 0.25);
+}
+
+@media (max-width: 520px) {
+  .coupon-form {
+    grid-template-columns: 1fr;
+  }
+
+  .offer-progress-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }
 
 label {
