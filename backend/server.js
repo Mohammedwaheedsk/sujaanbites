@@ -37,6 +37,8 @@ const BUSINESS = {
 };
 const LONG_DISTANCE_THRESHOLD_KM = 20;
 const SESSION_LOCK_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
+const FREE_DELIVERY_THRESHOLD = 1599;
+const TEST_COUPON_CODE = "TEST SITE";
 
 const DEFAULT_STOCK_COUNT = 20;
 
@@ -408,6 +410,31 @@ function getSinglePieceCount(rows = []) {
   }, 0);
 }
 
+function normalizeCouponCode(value) {
+  return String(value || "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .toUpperCase();
+}
+
+function applyCouponToTotals(subtotal, delivery, couponCode) {
+  const normalized = normalizeCouponCode(couponCode);
+  if (normalized === TEST_COUPON_CODE) {
+    return {
+      couponCode: normalized,
+      discount: Math.max(0, subtotal + delivery - 1),
+      total: 1,
+      couponLabel: "TEST SITE",
+    };
+  }
+  return {
+    couponCode: normalized || "",
+    discount: 0,
+    total: subtotal + delivery,
+    couponLabel: "",
+  };
+}
+
 function buildDeliveryMeta({ orderType, quantity, subtotal, address, settings }) {
   if (orderType !== "delivery" || quantity < 1) {
     return {
@@ -415,7 +442,7 @@ function buildDeliveryMeta({ orderType, quantity, subtotal, address, settings })
       distanceSurcharge: 0,
       delivery: 0,
       freeDelivery: false,
-      freeDeliveryThreshold: 1599,
+      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
       distanceKm: null,
       isLongDistance: false,
       estimatedWindow: "",
@@ -442,7 +469,7 @@ function buildDeliveryMeta({ orderType, quantity, subtotal, address, settings })
     : null;
 
   const isLongDistance = Number.isFinite(distanceKm) && distanceKm > LONG_DISTANCE_THRESHOLD_KM;
-  const freeDelivery = Number(subtotal || 0) > 1599;
+  const freeDelivery = Number(subtotal || 0) > FREE_DELIVERY_THRESHOLD;
   const calculatedDelivery = Number.isFinite(distanceKm)
     ? distanceKm <= 180
       ? 49
@@ -456,7 +483,7 @@ function buildDeliveryMeta({ orderType, quantity, subtotal, address, settings })
     delivery,
     calculatedDelivery,
     freeDelivery,
-    freeDeliveryThreshold: 1599,
+    freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
     distanceKm: Number.isFinite(distanceKm) ? Number(distanceKm.toFixed(2)) : null,
     isLongDistance,
     estimatedWindow: isLongDistance ? "3-7 days" : "",
@@ -844,6 +871,7 @@ function calculateOrder(menu, items, orderType, options = {}) {
     settings: options.settings || null,
   });
   const delivery = subtotal > 0 ? deliveryMeta.delivery : 0;
+  const coupon = applyCouponToTotals(subtotal, delivery, options.couponCode);
 
   return {
     rows,
@@ -851,7 +879,10 @@ function calculateOrder(menu, items, orderType, options = {}) {
     totals: {
       subtotal,
       delivery,
-      total: subtotal + delivery,
+      discount: coupon.discount,
+      couponCode: coupon.couponCode,
+      couponLabel: coupon.couponLabel,
+      total: coupon.total,
     },
   };
 }
@@ -955,6 +986,7 @@ async function finalizeRazorpayOrder(body) {
   const calculated = calculateOrder(menu, draft.items, draft.orderType, {
     address: draft.address || null,
     settings,
+    couponCode: draft.couponCode || "",
   });
   const order = {
     id: `ST${Date.now().toString().slice(-7)}`,
@@ -1022,6 +1054,7 @@ async function handleApi(req, res, url) {
     const calculated = calculateOrder(menu, body.items, orderType, {
       address: body.address || null,
       settings,
+      couponCode: body.couponCode || "",
     });
     sendJson(res, 200, {
       totals: calculated.totals,
@@ -1303,6 +1336,7 @@ async function handleApi(req, res, url) {
     const calculated = calculateOrder(menu, body.items, orderType, {
       address: body.address || null,
       settings,
+      couponCode: body.couponCode || "",
     });
 
     if (!customerPhone) {
@@ -1339,6 +1373,7 @@ async function handleApi(req, res, url) {
     const calculated = calculateOrder(menu, body.items, orderType, {
       address: body.address || null,
       settings,
+      couponCode: body.couponCode || "",
     });
 
     if (!customerPhone) {
