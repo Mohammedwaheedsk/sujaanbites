@@ -22,6 +22,63 @@ body {
   overflow-x: hidden;
 }
 
+.announcement-bar {
+  position: sticky;
+  top: 0;
+  z-index: 110;
+  width: 100%;
+  background: rgba(252, 128, 25, 0.14);
+  border-bottom: 1px solid rgba(147, 91, 43, 0.18);
+  color: #7d3a11;
+  font-weight: 900;
+  letter-spacing: 0;
+  overflow: hidden;
+}
+
+.announcement-track {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 0;
+  width: max-content;
+  animation: sujaan-marquee 16s linear infinite;
+  will-change: transform;
+}
+
+.announcement-track span {
+  white-space: nowrap;
+  font-size: 0.92rem;
+}
+
+.announcement-sep {
+  opacity: 0.55;
+}
+
+.announcement-static {
+  display: none;
+  padding: 10px 14px;
+  text-align: center;
+  font-size: 0.92rem;
+}
+
+@keyframes sujaan-marquee {
+  from {
+    transform: translateX(100vw);
+  }
+  to {
+    transform: translateX(-100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .announcement-track {
+    display: none;
+  }
+  .announcement-static {
+    display: block;
+  }
+}
+
 * {
   box-sizing: border-box;
 }
