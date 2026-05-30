@@ -25,7 +25,7 @@ body {
 .announcement-bar {
   position: sticky;
   top: 0;
-  z-index: 110;
+  z-index: 40;
   width: 100%;
   background: rgba(252, 128, 25, 0.14);
   border-bottom: 1px solid rgba(147, 91, 43, 0.18);
@@ -33,6 +33,19 @@ body {
   font-weight: 900;
   letter-spacing: 0;
   overflow: hidden;
+}
+
+body[data-page="home"] .topbar {
+  top: 44px;
+}
+
+@supports (top: env(safe-area-inset-top)) {
+  body[data-page="home"] .announcement-bar {
+    top: env(safe-area-inset-top);
+  }
+  body[data-page="home"] .topbar {
+    top: calc(env(safe-area-inset-top) + 44px);
+  }
 }
 
 .announcement-track {
