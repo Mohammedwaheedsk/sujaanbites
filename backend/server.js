@@ -36,6 +36,7 @@ const BUSINESS = {
   customerCareEmail: "sujaanbites@gmail.com",
 };
 const LONG_DISTANCE_THRESHOLD_KM = 20;
+const SESSION_LOCK_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 
 const DEFAULT_STOCK_COUNT = 20;
 
@@ -70,7 +71,7 @@ function sendResponse(req, res, status, body, contentType, extraHeaders = {}) {
     "content-length": payload.length,
     "access-control-allow-origin": CORS_ORIGIN,
     "access-control-allow-methods": "GET,POST,PUT,PATCH,DELETE,OPTIONS",
-    "access-control-allow-headers": "Content-Type,X-Admin-Pin,X-Customer-Phone",
+    "access-control-allow-headers": "Content-Type,X-Admin-Pin,X-Customer-Phone,X-Customer-Session,X-Customer-Device",
     ...(shouldGzip ? { "content-encoding": "gzip", vary: "Accept-Encoding" } : {}),
     ...extraHeaders,
   });
@@ -206,11 +207,13 @@ function toOrderRow(order) {
 
 function fromCustomerRow(row) {
   const payload = row.payload && typeof row.payload === "object" ? row.payload : {};
+  const activeSession = payload.activeSession && typeof payload.activeSession === "object" ? payload.activeSession : null;
   return {
     phone: row.phone || payload.phone || "",
     profile: payload.profile || null,
     addresses: Array.isArray(payload.addresses) ? payload.addresses : [],
     selectedAddressId: payload.selectedAddressId || null,
+    activeSession: activeSession && activeSession.token ? activeSession : null,
     updatedAt: row.updated_at || payload.updatedAt || null,
   };
 }
@@ -223,6 +226,7 @@ function toCustomerRow(phone, state) {
       profile: state.profile || null,
       addresses: Array.isArray(state.addresses) ? state.addresses.slice(0, 10) : [],
       selectedAddressId: state.selectedAddressId || null,
+      activeSession: state.activeSession && state.activeSession.token ? state.activeSession : null,
       updatedAt: new Date().toISOString(),
     },
   };
@@ -261,6 +265,102 @@ function normalizeMenuCategories(values) {
 
 function normalizePhone(phone) {
   return String(phone || "").replace(/\D/g, "").slice(-10);
+}
+
+function normalizeSessionToken(token) {
+  const normalized = String(token || "").trim();
+  if (!normalized) return "";
+  if (normalized.length < 12 || normalized.length > 512) return "";
+  return normalized;
+}
+
+function isSessionExpired(session) {
+  const stamp = Date.parse(session?.lastSeenAt || session?.createdAt || "");
+  if (!Number.isFinite(stamp)) return true;
+  return Date.now() - stamp > SESSION_LOCK_TTL_MS;
+}
+
+function buildSessionLock(phone, token, req, previous = null) {
+  const nowIso = new Date().toISOString();
+  return {
+    token,
+    phone,
+    deviceId: String(req.headers["x-customer-device"] || "").trim().slice(0, 128),
+    userAgent: String(req.headers["user-agent"] || "").trim().slice(0, 256),
+    createdAt: previous?.createdAt || nowIso,
+    lastSeenAt: nowIso,
+  };
+}
+
+function getSessionLockError() {
+  const error = new Error(
+    "This mobile number is already active on another device/browser. Please logout there first.",
+  );
+  error.code = "SESSION_LOCKED";
+  return error;
+}
+
+async function assertAndTouchCustomerSession(phone, req, { allowMissingToken = false } = {}) {
+  const normalizedPhone = normalizePhone(phone);
+  if (!normalizedPhone) return { customer: null, changed: false };
+
+  const token = normalizeSessionToken(req.headers["x-customer-session"]);
+  if (!token && !allowMissingToken) {
+    const error = new Error("Session token is required");
+    error.code = "SESSION_TOKEN_REQUIRED";
+    throw error;
+  }
+
+  const customer = await getCustomerRecord(normalizedPhone);
+  if (!customer) {
+    if (!token && allowMissingToken) return { customer: null, changed: false };
+    return {
+      customer: {
+        phone: normalizedPhone,
+        profile: null,
+        addresses: [],
+        selectedAddressId: null,
+        activeSession: buildSessionLock(normalizedPhone, token, req),
+      },
+      changed: true,
+    };
+  }
+
+  const lock = customer.activeSession;
+  if (!lock?.token || isSessionExpired(lock)) {
+    if (!token && allowMissingToken) {
+      return {
+        customer: { ...customer, activeSession: null },
+        changed: lock?.token ? true : false,
+      };
+    }
+    return {
+      customer: {
+        ...customer,
+        activeSession: buildSessionLock(normalizedPhone, token, req, lock),
+      },
+      changed: true,
+    };
+  }
+
+  if (!token) {
+    throw getSessionLockError();
+  }
+  if (lock.token !== token) {
+    throw getSessionLockError();
+  }
+
+  const now = Date.now();
+  const lastSeen = Date.parse(lock.lastSeenAt || lock.createdAt || "");
+  const shouldTouch = !Number.isFinite(lastSeen) || now - lastSeen > 60_000;
+  if (!shouldTouch) return { customer, changed: false };
+  return {
+    customer: {
+      ...customer,
+      activeSession: buildSessionLock(normalizedPhone, token, req, lock),
+    },
+    changed: true,
+  };
 }
 
 function makeId(prefix) {
@@ -937,9 +1037,20 @@ async function handleApi(req, res, url) {
       return;
     }
 
-    const customer = await getCustomerRecord(phone);
+    let customer = await getCustomerRecord(phone);
     if (!customer) {
       sendJson(res, 200, { profile: null, addresses: [], selectedAddressId: null });
+      return;
+    }
+    try {
+      const lockState = await assertAndTouchCustomerSession(phone, req, { allowMissingToken: true });
+      if (lockState.customer) customer = lockState.customer;
+      if (lockState.changed && lockState.customer) {
+        await saveCustomerRecord(phone, lockState.customer);
+      }
+    } catch (error) {
+      const status = error.code === "SESSION_LOCKED" ? 409 : 401;
+      sendJson(res, status, { error: error.message, code: error.code || "SESSION_ERROR" });
       return;
     }
 
@@ -959,13 +1070,37 @@ async function handleApi(req, res, url) {
       return;
     }
 
+    const token = normalizeSessionToken(req.headers["x-customer-session"] || body.sessionToken);
+    if (!token) {
+      sendJson(res, 401, { error: "Session token is required", code: "SESSION_TOKEN_REQUIRED" });
+      return;
+    }
+
+    let existing = await getCustomerRecord(phone);
+    if (existing?.activeSession?.token && !isSessionExpired(existing.activeSession) && existing.activeSession.token !== token) {
+      sendJson(res, 409, {
+        error: "This mobile number is already active on another device/browser. Please logout there first.",
+        code: "SESSION_LOCKED",
+      });
+      return;
+    }
+    existing = existing || {
+      phone,
+      profile: null,
+      addresses: [],
+      selectedAddressId: null,
+      activeSession: null,
+    };
+
     const profile = body.profile && typeof body.profile === "object" ? body.profile : null;
     const addresses = Array.isArray(body.addresses) ? body.addresses.slice(0, 10) : [];
     const selectedAddressId = body.selectedAddressId || addresses[0]?.id || null;
+    const activeSession = buildSessionLock(phone, token, req, existing.activeSession || null);
     const saved = await saveCustomerRecord(phone, {
       profile: profile ? { ...profile, phone } : null,
       addresses,
       selectedAddressId,
+      activeSession,
     });
 
     sendJson(res, 200, {
@@ -973,6 +1108,27 @@ async function handleApi(req, res, url) {
       addresses: saved.addresses,
       selectedAddressId: saved.selectedAddressId,
     });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/customer/logout") {
+    const body = await readBody(req);
+    const phone = normalizePhone(body.phone || req.headers["x-customer-phone"]);
+    const token = normalizeSessionToken(req.headers["x-customer-session"] || body.sessionToken);
+    if (!phone || !token) {
+      sendJson(res, 200, { ok: true });
+      return;
+    }
+    const customer = await getCustomerRecord(phone);
+    if (customer?.activeSession?.token && customer.activeSession.token === token) {
+      await saveCustomerRecord(phone, {
+        profile: customer.profile || null,
+        addresses: Array.isArray(customer.addresses) ? customer.addresses : [],
+        selectedAddressId: customer.selectedAddressId || null,
+        activeSession: null,
+      });
+    }
+    sendJson(res, 200, { ok: true });
     return;
   }
 
@@ -1120,6 +1276,16 @@ async function handleApi(req, res, url) {
       sendJson(res, 200, { orders: [] });
       return;
     }
+    try {
+      const lockState = await assertAndTouchCustomerSession(phone, req, { allowMissingToken: false });
+      if (lockState.changed && lockState.customer) {
+        await saveCustomerRecord(phone, lockState.customer);
+      }
+    } catch (error) {
+      const status = error.code === "SESSION_LOCKED" ? 409 : 401;
+      sendJson(res, status, { error: error.message, code: error.code || "SESSION_ERROR" });
+      return;
+    }
 
     const mine = await getOrdersForPhone(phone);
     sendJson(res, 200, { orders: mine });
@@ -1177,6 +1343,16 @@ async function handleApi(req, res, url) {
 
     if (!customerPhone) {
       sendJson(res, 400, { error: "A valid phone number is required" });
+      return;
+    }
+    try {
+      const lockState = await assertAndTouchCustomerSession(customerPhone, req, { allowMissingToken: false });
+      if (lockState.changed && lockState.customer) {
+        await saveCustomerRecord(customerPhone, lockState.customer);
+      }
+    } catch (error) {
+      const status = error.code === "SESSION_LOCKED" ? 409 : 401;
+      sendJson(res, status, { error: error.message, code: error.code || "SESSION_ERROR" });
       return;
     }
 
@@ -1445,6 +1621,16 @@ async function handleApi(req, res, url) {
     }
     if (!customerPhone || customerPhone !== normalizePhone(orders[index].customerPhone)) {
       sendJson(res, 403, { error: "Not allowed for this order" });
+      return;
+    }
+    try {
+      const lockState = await assertAndTouchCustomerSession(customerPhone, req, { allowMissingToken: false });
+      if (lockState.changed && lockState.customer) {
+        await saveCustomerRecord(customerPhone, lockState.customer);
+      }
+    } catch (error) {
+      const status = error.code === "SESSION_LOCKED" ? 409 : 401;
+      sendJson(res, status, { error: error.message, code: error.code || "SESSION_ERROR" });
       return;
     }
 
