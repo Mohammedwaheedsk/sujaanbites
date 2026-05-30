@@ -23,29 +23,21 @@ body {
 }
 
 .announcement-bar {
-  position: sticky;
-  top: 0;
-  z-index: 40;
+  position: relative;
+  z-index: 10;
   width: 100%;
-  background: rgba(252, 128, 25, 0.14);
+  background: rgba(255, 244, 231, 0.96);
   border-bottom: 1px solid rgba(147, 91, 43, 0.18);
   color: #7d3a11;
   font-weight: 900;
   letter-spacing: 0;
   overflow: hidden;
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
 }
 
 body[data-page="home"] .topbar {
-  top: 44px;
-}
-
-@supports (top: env(safe-area-inset-top)) {
-  body[data-page="home"] .announcement-bar {
-    top: env(safe-area-inset-top);
-  }
-  body[data-page="home"] .topbar {
-    top: calc(env(safe-area-inset-top) + 44px);
-  }
+  top: 0;
 }
 
 .announcement-track {
