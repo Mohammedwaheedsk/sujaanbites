@@ -549,12 +549,36 @@
       }
     }
 
-    function vibrateTap(pattern = 8) {
-      if (!navigator?.vibrate) return;
+    function fireTelegramHaptic(kind = "light") {
+      const feedback = window?.Telegram?.WebApp?.HapticFeedback;
+      if (!feedback) return false;
+      try {
+        if (kind === "selection" && typeof feedback.selectionChanged === "function") {
+          feedback.selectionChanged();
+          return true;
+        }
+        if (typeof feedback.impactOccurred === "function") {
+          const impactStyle = kind === "heavy" ? "heavy" : kind === "medium" ? "medium" : "light";
+          feedback.impactOccurred(impactStyle);
+          return true;
+        }
+      } catch {
+        return false;
+      }
+      return false;
+    }
+
+    function vibrateTap(pattern = 8, kind = "light") {
       const now = Date.now();
       if (now - lastHapticAt < 35) return;
       lastHapticAt = now;
-      navigator.vibrate(pattern);
+      if (fireTelegramHaptic(kind)) return;
+      if (typeof navigator?.vibrate !== "function") return;
+      try {
+        navigator.vibrate(pattern);
+      } catch {
+        // no-op
+      }
     }
 
     function saveCart(cart) {
@@ -722,6 +746,14 @@
     });
 
     // Best-effort haptic feedback on supported devices for any tap action.
+    document.addEventListener("pointerdown", (event) => {
+      const trigger = event.target.closest(
+        "button, a, input[type='button'], input[type='submit'], [role='button']",
+      );
+      if (!trigger) return;
+      vibrateTap(8, "selection");
+    });
+
     document.addEventListener("click", (event) => {
       const trigger = event.target.closest(
         "button, a, input[type='button'], input[type='submit'], [role='button']",

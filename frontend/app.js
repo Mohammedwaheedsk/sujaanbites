@@ -226,10 +226,38 @@ let trackingCurrentOrder = null;
 let previewItemId = null;
 let activeFlavorKey = null;
 let selectedFlavorVariantId = null;
+let lastVibrateAt = 0;
 
-function vibrate(pattern = 12) {
-  if (!navigator.vibrate) return;
-  navigator.vibrate(pattern);
+function fireTelegramHaptic(kind = "light") {
+  const feedback = window?.Telegram?.WebApp?.HapticFeedback;
+  if (!feedback) return false;
+  try {
+    if (kind === "selection" && typeof feedback.selectionChanged === "function") {
+      feedback.selectionChanged();
+      return true;
+    }
+    if (typeof feedback.impactOccurred === "function") {
+      const impactStyle = kind === "heavy" ? "heavy" : kind === "medium" ? "medium" : "light";
+      feedback.impactOccurred(impactStyle);
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function vibrate(pattern = 12, kind = "light") {
+  const now = Date.now();
+  if (now - lastVibrateAt < 35) return;
+  lastVibrateAt = now;
+  if (fireTelegramHaptic(kind)) return;
+  if (typeof navigator?.vibrate !== "function") return;
+  try {
+    navigator.vibrate(pattern);
+  } catch {
+    // no-op on browsers that block vibration
+  }
 }
 
 function pulseElement(element) {
@@ -2346,8 +2374,18 @@ cartItems?.addEventListener("click", (event) => {
   state.checkoutNeedsAccountConfirm = true;
 });
 
+document.addEventListener("pointerdown", (event) => {
+  const trigger = event.target.closest(
+    "button, a, input[type='button'], input[type='submit'], [role='button'], .primary-link, .secondary-link, .filter, .account-tab",
+  );
+  if (!trigger) return;
+  vibrate(8, "selection");
+});
+
 document.addEventListener("click", (event) => {
-  const trigger = event.target.closest("button, .primary-link, .secondary-link, .filter, .account-tab");
+  const trigger = event.target.closest(
+    "button, a, input[type='button'], input[type='submit'], [role='button'], .primary-link, .secondary-link, .filter, .account-tab",
+  );
   if (!trigger) return;
   pulseElement(trigger);
   vibrate(8);

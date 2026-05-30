@@ -38,6 +38,7 @@ let lastDashboardFocusedAt = 0;
 let alertAudio = null;
 let configuredCategories = [];
 let ordersCache = [];
+let lastHapticAt = 0;
 
 const currency = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -47,6 +48,38 @@ const currency = new Intl.NumberFormat("en-IN", {
 
 function formatPrice(value) {
   return currency.format(value || 0);
+}
+
+function fireTelegramHaptic(kind = "light") {
+  const feedback = window?.Telegram?.WebApp?.HapticFeedback;
+  if (!feedback) return false;
+  try {
+    if (kind === "selection" && typeof feedback.selectionChanged === "function") {
+      feedback.selectionChanged();
+      return true;
+    }
+    if (typeof feedback.impactOccurred === "function") {
+      const impactStyle = kind === "heavy" ? "heavy" : kind === "medium" ? "medium" : "light";
+      feedback.impactOccurred(impactStyle);
+      return true;
+    }
+  } catch {
+    return false;
+  }
+  return false;
+}
+
+function vibrateTap(pattern = 8, kind = "light") {
+  const now = Date.now();
+  if (now - lastHapticAt < 35) return;
+  lastHapticAt = now;
+  if (fireTelegramHaptic(kind)) return;
+  if (typeof navigator?.vibrate !== "function") return;
+  try {
+    navigator.vibrate(pattern);
+  } catch {
+    // no-op
+  }
 }
 
 function formatDate(value) {
@@ -788,6 +821,22 @@ if (getAdminPin()) {
   loadDashboard();
   refreshTimer = setInterval(pollDashboard, 60_000);
 }
+
+document.addEventListener("pointerdown", (event) => {
+  const trigger = event.target.closest(
+    "button, a, input[type='button'], input[type='submit'], [role='button']",
+  );
+  if (!trigger) return;
+  vibrateTap(8, "selection");
+});
+
+document.addEventListener("click", (event) => {
+  const trigger = event.target.closest(
+    "button, a, input[type='button'], input[type='submit'], [role='button']",
+  );
+  if (!trigger) return;
+  vibrateTap(10, "light");
+});
 
 document.addEventListener("visibilitychange", () => {
   if (!document.hidden) {
