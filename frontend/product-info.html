@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#fc8019" />
+  <meta name="theme-color" content="#050505" />
   <title>Sujaan Bites | Product Info</title>
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
@@ -12,17 +12,17 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <style>
     :root {
-      color-scheme: light;
-      --bg: #fff6ed;
-      --panel: rgba(255, 255, 255, 0.88);
-      --card: #fffdf9;
-      --ink: #2c1a12;
-      --muted: #775646;
-      --line: rgba(147, 91, 43, 0.16);
-      --accent: #fc8019;
-      --accent-2: #f5b463;
-      --shadow: 0 18px 46px rgba(80, 42, 16, 0.12);
-      --shadow-soft: 0 10px 22px rgba(80, 42, 16, 0.08);
+      color-scheme: dark;
+      --bg: #050505;
+      --panel: rgba(17, 17, 17, 0.92);
+      --card: #171717;
+      --ink: #fffaf4;
+      --muted: #b6a99d;
+      --line: rgba(255, 255, 255, 0.11);
+      --accent: #ff7a1a;
+      --accent-2: #f9c56f;
+      --shadow: 0 28px 60px rgba(0, 0, 0, 0.48);
+      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.34);
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
@@ -30,10 +30,11 @@
       margin: 0;
       color: var(--ink);
       font-family: "Poppins", "Segoe UI", sans-serif;
+      padding-bottom: 104px;
       background:
-        radial-gradient(circle at top left, rgba(252, 128, 25, 0.12), transparent 28%),
-        radial-gradient(circle at top right, rgba(82, 53, 28, 0.12), transparent 28%),
-        linear-gradient(180deg, #fffaf3, var(--bg));
+        radial-gradient(circle at 18% 0%, rgba(255, 122, 26, 0.18), transparent 30%),
+        radial-gradient(circle at 92% 8%, rgba(249, 197, 111, 0.1), transparent 28%),
+        linear-gradient(180deg, #080808 0%, #050505 60%, #090604 100%);
     }
     button, input, textarea { font: inherit; }
     a { color: inherit; }
@@ -52,7 +53,7 @@
       top: 0;
       z-index: 5;
       backdrop-filter: blur(14px);
-      background: linear-gradient(180deg, rgba(255, 250, 243, 0.96), rgba(255, 250, 243, 0.84));
+      background: linear-gradient(180deg, rgba(5, 5, 5, 0.96), rgba(5, 5, 5, 0.82));
     }
     .brand {
       display: inline-flex;
@@ -65,7 +66,7 @@
     .brand img {
       width: 48px;
       height: 48px;
-      border-radius: 14px;
+      border-radius: 50%;
       object-fit: cover;
       box-shadow: var(--shadow-soft);
       flex: 0 0 auto;
@@ -94,7 +95,7 @@
       padding: 0 15px;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: rgba(255,255,255,0.84);
+      background: rgba(255, 255, 255, 0.08);
       color: var(--ink);
       text-decoration: none;
       font-weight: 800;
@@ -117,8 +118,9 @@
     .hero-card {
       display: grid;
       gap: 14px;
-      padding: 16px;
+      padding: 18px;
       margin-bottom: 16px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.055)), #171717;
     }
     .hero-image {
       width: 100%;
@@ -136,7 +138,7 @@
       margin: 0;
       text-transform: uppercase;
       letter-spacing: 0.14em;
-      color: #c96c1f;
+      color: #ffd08f;
       font-size: 0.78rem;
       font-weight: 900;
     }
@@ -163,7 +165,7 @@
       padding: 0 12px;
       border-radius: 999px;
       background: rgba(252, 128, 25, 0.12);
-      color: #99511a;
+      color: #ffc28d;
       font-weight: 800;
       font-size: 0.86rem;
     }
@@ -185,7 +187,7 @@
       min-height: 48px;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: rgba(255,255,255,0.84);
+      background: rgba(255, 255, 255, 0.08);
       box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset;
       padding: 0 10px;
       gap: 10px;
@@ -195,8 +197,8 @@
       height: 40px;
       border-radius: 999px;
       border: 1px solid rgba(147, 91, 43, 0.22);
-      background: #fff;
-      color: #7d3a11;
+      background: rgba(255, 122, 26, 0.12);
+      color: #ffbd88;
       font-size: 1.25rem;
       font-weight: 900;
       cursor: pointer;
@@ -286,7 +288,7 @@
     }
     .price {
       font-weight: 900;
-      color: #8f3e12;
+      color: #ffb36d;
     }
     .menu-card button {
       display: inline-flex;
@@ -296,8 +298,8 @@
       padding: 0 14px;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: #fff;
-      color: var(--ink);
+      background: rgba(255, 122, 26, 0.12);
+      color: #ffbd88;
       font-weight: 800;
     }
     .menu-card.active button {
@@ -307,7 +309,7 @@
     .card {
       border: 1px solid var(--line);
       border-radius: 24px;
-      background: var(--card);
+      background: rgba(255, 255, 255, 0.065);
       box-shadow: var(--shadow-soft);
       padding: 16px;
       margin-top: 14px;
@@ -335,7 +337,7 @@
       padding: 8px 12px;
       border-radius: 999px;
       background: rgba(252, 128, 25, 0.1);
-      color: #9a5316;
+      color: #ffc28d;
       font-weight: 800;
     }
     .footer {
@@ -346,40 +348,109 @@
     }
     .toast {
       position: fixed;
-      left: 12px;
-      right: 12px;
-      bottom: 12px;
-      z-index: 25;
+      left: 50%;
+      bottom: calc(90px + env(safe-area-inset-bottom));
+      z-index: 32;
+      width: min(560px, calc(100% - 28px));
+      min-height: 70px;
       display: none;
-      justify-content: space-between;
       align-items: center;
       gap: 12px;
-      padding: 14px 18px;
-      border-radius: 18px;
-      color: #fff;
-      background: #2f8f4f;
-      box-shadow: 0 18px 32px rgba(26, 84, 39, 0.32);
+      padding: 10px 12px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 28px;
+      color: #fffaf4;
+      background: rgba(17, 17, 17, 0.92);
+      box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55), 0 0 34px rgba(255, 255, 255, 0.1);
       font-weight: 800;
+      transform: translate(-50%, 18px);
+      -webkit-backdrop-filter: blur(18px);
+      backdrop-filter: blur(18px);
+    }
+    .toast-thumb {
+      width: 48px;
+      height: 48px;
+      flex: 0 0 auto;
+      border-radius: 16px;
+      object-fit: cover;
+      box-shadow: 0 10px 22px rgba(0, 0, 0, 0.36);
+    }
+    .toast-copy {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+      flex: 1;
     }
     .toast-text {
-      font-size: 1.02rem;
-      letter-spacing: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 1rem;
+      line-height: 1.15;
+    }
+    .toast-copy small {
+      color: rgba(255, 250, 244, 0.68);
+      font-size: 0.78rem;
+      font-weight: 750;
     }
     .toast-action {
       display: inline-flex;
       align-items: center;
       justify-content: center;
-      min-height: 42px;
-      padding: 0 16px;
+      min-height: 44px;
+      padding: 0 14px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.18);
-      border: 1px solid rgba(255, 255, 255, 0.32);
+      background: rgba(255, 255, 255, 0.1);
+      border: 0;
       color: #fff;
       text-decoration: none;
       white-space: nowrap;
       font-weight: 900;
+      font-size: 0.92rem;
     }
-    .toast.show { display: flex; }
+    .toast.show {
+      display: flex;
+      transform: translate(-50%, 0);
+    }
+    .bottom-app-nav {
+      position: fixed;
+      left: 50%;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index: 28;
+      display: grid;
+      grid-template-columns: repeat(4, minmax(58px, 1fr));
+      gap: 4px;
+      width: min(460px, calc(100% - 28px));
+      min-height: 72px;
+      padding: 8px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 30px;
+      background: rgba(19, 19, 19, 0.9);
+      box-shadow: 0 26px 58px rgba(0, 0, 0, 0.5);
+      transform: translateX(-50%);
+      backdrop-filter: blur(18px);
+    }
+    .bottom-app-nav a {
+      display: grid;
+      place-items: center;
+      gap: 2px;
+      min-height: 56px;
+      border-radius: 24px;
+      color: rgba(255, 250, 244, 0.72);
+      text-decoration: none;
+      font-weight: 850;
+    }
+    .bottom-app-nav span {
+      font-size: 1.55rem;
+      line-height: 1;
+    }
+    .bottom-app-nav small {
+      font-size: 0.68rem;
+    }
+    .bottom-app-nav .active {
+      color: #ff7a1a;
+      background: rgba(255, 255, 255, 0.1);
+    }
     @media (min-width: 760px) {
       .hero-card {
         grid-template-columns: 1fr 1.1fr;
@@ -487,8 +558,31 @@
     <footer class="footer">Sujaan Bites - Fresh cookies made daily - Built for a smoother mobile checkout</footer>
   </div>
 
+  <nav class="bottom-app-nav" aria-label="Primary">
+    <a href="index.html">
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+    <a href="index.html#menu">
+      <span>▦</span>
+      <small>Menu</small>
+    </a>
+    <a class="active" href="cart.html">
+      <span>◴</span>
+      <small>Cart</small>
+    </a>
+    <a href="index.html#menu">
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+  </nav>
+
   <div class="toast" id="toast" aria-live="polite">
-    <span class="toast-text" id="toastText"></span>
+    <img class="toast-thumb" src="assets/sujaan-logo.png" alt="" />
+    <span class="toast-copy">
+      <strong class="toast-text" id="toastText"></strong>
+      <small>Ready in your cart</small>
+    </span>
     <a class="toast-action" id="toastAction" href="cart.html">View Cart ></a>
   </div>
 
@@ -585,14 +679,27 @@
       localStorage.setItem(CART_KEY, JSON.stringify([...cart.entries()]));
     }
 
-    function toastMessage(message) {
+    function toastMessage(message, keepVisible = true) {
       if (!toast || !toastText) return;
       toastText.textContent = message;
       toast.classList.add("show");
       window.clearTimeout(window.__toastTimer);
-      window.__toastTimer = window.setTimeout(() => {
+      if (!keepVisible) {
+        window.__toastTimer = window.setTimeout(() => {
+          toast.classList.remove("show");
+        }, 1200);
+      }
+    }
+
+    function syncToastFromCart(cart = readCart()) {
+      if (!toast || !toastText) return;
+      const totalCount = getCartCount(cart);
+      if (totalCount > 0) {
+        toastMessage(`${totalCount} ${totalCount === 1 ? "Item" : "Items"} added`, true);
+        if (toastAction) toastAction.href = getRoute("/cart");
+      } else {
         toast.classList.remove("show");
-      }, 1800);
+      }
     }
 
     function getCartCount(cart) {
@@ -638,9 +745,9 @@
       syncFeaturedQty(item.id);
       const totalCount = getCartCount(cart);
       if (totalCount > 0) {
-        toastMessage(`${totalCount} ${totalCount === 1 ? "Item" : "Items"} added`);
+        toastMessage(`${totalCount} ${totalCount === 1 ? "Item" : "Items"} added`, true);
       } else {
-        toastMessage("Cart updated");
+        toastMessage("Cart updated", false);
       }
       if (toastAction) toastAction.href = getRoute("/cart");
     }
@@ -676,7 +783,7 @@
           cart.set(item.id, 1);
           saveCart(cart);
           syncFeaturedQty(item.id);
-          toastMessage("1 Item added");
+          toastMessage("1 Item added", true);
         }
         window.location.href = getRoute("/cart");
       };
@@ -729,6 +836,7 @@
         const selected = menu.find((item) => item.id === featuredItemId) || menu[0];
         renderFeatured(selected);
         renderMenu();
+        syncToastFromCart();
       } catch (error) {
         menuList.innerHTML = `<p class="card">Could not load the menu right now. ${error.message}</p>`;
       }

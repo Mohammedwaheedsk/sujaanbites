@@ -4,7 +4,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#fc8019" />
+  <meta name="theme-color" content="#050505" />
   <title>Sujaan Bites | Cart</title>
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="preconnect" href="https://api.qrserver.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260530f" />
+  <link rel="stylesheet" href="styles.css?v=20260531b" />
 </head>
 
 <body data-page="cart">
@@ -35,7 +35,10 @@
       </span>
     </a>
     <nav class="nav">
-      <button class="nav-button" id="accountButton" type="button">Account</button>
+      <a class="icon-nav-button" href="/" data-route="/" aria-label="Home">⌂</a>
+      <button class="profile-button" id="accountButton" type="button" aria-label="Account and support">
+        <img src="assets/sujaan-logo.png" alt="" />
+      </button>
     </nav>
   </header>
 
@@ -190,6 +193,29 @@
     <button class="pay-button cart-page-pay-button" id="cartPagePayLabel" type="submit" form="checkout">Pay ₹0</button>
   </div>
 
+  <nav class="bottom-app-nav" aria-label="Primary">
+    <a href="/" data-route="/">
+      <span>⌂</span>
+      <small>Home</small>
+    </a>
+    <a href="index.html#menu">
+      <span>▦</span>
+      <small>Menu</small>
+    </a>
+    <a class="active" href="/cart" data-route="/cart">
+      <span>◴</span>
+      <small>Cart</small>
+    </a>
+    <button type="button" data-open-account>
+      <span>◉</span>
+      <small>Account</small>
+    </button>
+    <a class="search-nav-button" href="index.html#menu">
+      <span>⌕</span>
+      <small>Search</small>
+    </a>
+  </nav>
+
   <section class="tracking-dock hidden" id="trackingDock" aria-label="Order tracking panel">
     <button class="tracking-toggle" id="trackingToggle" type="button" aria-expanded="false">
       <span class="tracking-toggle-left">
@@ -315,7 +341,7 @@
       }, 420);
     });
   </script>
-  <script src="app.js?v=20260530h"></script>
+  <script src="app.js?v=20260531a"></script>
 </body>
 
 </html>
