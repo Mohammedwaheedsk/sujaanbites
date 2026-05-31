@@ -302,7 +302,7 @@
     "description": "Premium Collection",
     "price": 829,
     "category": "Premium Collection",
-    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/dryfruit.jpgß",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/dryfruit.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -313,7 +313,7 @@
     "description": "Includes 1 Chocolate, 1 Double Chocolate, 1 Oreo, 1 Red Velvet",
     "price": 379,
     "category": "Combo Boxes",
-    "image": "",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/regular-combo.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -324,7 +324,7 @@
     "description": "Includes 2 Biscoff, 2 Dry Fruit, Eggless option available",
     "price": 499,
     "category": "Combo Boxes",
-    "image": "",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/premium-combo.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
@@ -335,7 +335,7 @@
     "description": "Includes 3 Biscoff, 3 Dry Fruit",
     "price": 699,
     "category": "Combo Boxes",
-    "image": "",
+    "image": "https://sujaanbites.github.io/sujaanbites/frontend/assets/deluxe-combo.jpg",
     "available": true,
     "stockCount": 20,
     "updatedAt": null
