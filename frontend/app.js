@@ -147,6 +147,7 @@ const searchDock = document.querySelector("#searchDock");
 const searchBackdrop = document.querySelector("#searchBackdrop");
 const searchCloseButton = document.querySelector("#searchCloseButton");
 const menuSearchInput = document.querySelector("#menuSearchInput");
+const searchResults = document.querySelector("#searchResults");
 const accountOverlay = document.querySelector("#accountOverlay");
 const accountShell = document.querySelector("#accountShell");
 const accountLogoutButton = document.querySelector("#accountLogoutButton");
@@ -242,6 +243,10 @@ const cartPanelOverlay = document.querySelector("#cartPanelOverlay");
 const cartPanel = document.querySelector("#cartPanel");
 const cartPanelClose = document.querySelector("#cartPanelClose");
 const bottomTabs = document.querySelectorAll("[data-bottom-tab]");
+const bottomNavIndicator = document.querySelector("#bottomNavIndicator");
+const homePanel = document.querySelector("#homePanel");
+const reorderPanel = document.querySelector("#reorderPanel");
+const reorderList = document.querySelector("#reorderList");
 
 let trackingMap = null;
 let trackingLayerGroup = null;
@@ -251,6 +256,11 @@ let previewItemId = null;
 let activeFlavorKey = null;
 let selectedFlavorVariantId = null;
 let lastVibrateAt = 0;
+let swipeStartX = 0;
+let swipeStartY = 0;
+let swipeStartTime = 0;
+let navDragActive = false;
+let navDragTouchId = null;
 
 function fireTelegramHaptic(kind = "light") {
   const feedback = window?.Telegram?.WebApp?.HapticFeedback;
@@ -978,6 +988,14 @@ function setBottomTab(tabName) {
       tab.removeAttribute("aria-current");
     }
   });
+  const activeTab = [...bottomTabs].find((tab) => tab.dataset.bottomTab === tabName);
+  const nav = activeTab?.closest(".bottom-app-nav");
+  if (activeTab && bottomNavIndicator && nav) {
+    const navRect = nav.getBoundingClientRect();
+    const tabRect = activeTab.getBoundingClientRect();
+    bottomNavIndicator.style.width = `${tabRect.width}px`;
+    bottomNavIndicator.style.transform = `translateX(${Math.round(tabRect.left - navRect.left)}px)`;
+  }
 }
 
 function openCartPanel() {
@@ -996,7 +1014,7 @@ function openCartPanel() {
   cartPanel.classList.add("show");
   cartPanel.setAttribute("aria-hidden", "false");
   document.body.classList.add("cart-panel-open");
-  setBottomTab("cart");
+  setBottomTab("menu");
 }
 
 function closeCartPanel(nextTab = "home") {
@@ -1012,10 +1030,20 @@ function closeCartPanel(nextTab = "home") {
   setBottomTab(nextTab);
 }
 
+function showMainPanels(tabName) {
+  const showHome = tabName === "home";
+  const showMenu = tabName === "menu" || tabName === "search";
+  const showReorder = tabName === "reorder";
+  homePanel?.classList.toggle("hidden", !showHome);
+  orderShell?.classList.toggle("hidden", !showMenu);
+  reorderPanel?.classList.toggle("hidden", !showReorder);
+}
+
 function showHomePanel() {
   closeCartPanel("home");
   closeSearchDock();
   if (state.drawerOpen) closeDrawer();
+  showMainPanels("home");
   window.scrollTo({ top: 0, behavior: "smooth" });
   setBottomTab("home");
 }
@@ -1024,8 +1052,116 @@ function showMenuPanel() {
   closeCartPanel("menu");
   closeSearchDock();
   if (state.drawerOpen) closeDrawer();
-  document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  showMainPanels("menu");
+  window.scrollTo({ top: 0, behavior: "smooth" });
   setBottomTab("menu");
+}
+
+function showReorderPanel() {
+  closeCartPanel("reorder");
+  closeSearchDock();
+  if (state.drawerOpen) closeDrawer();
+  showMainPanels("reorder");
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  renderReorderPanel();
+  setBottomTab("reorder");
+}
+
+function showAccountPanel() {
+  closeCartPanel("account");
+  closeSearchDock();
+  showMainPanels("home");
+  state.drawerOpen = true;
+  renderAccount();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  setBottomTab("account");
+}
+
+function showSearchPanel() {
+  closeCartPanel("search");
+  showMainPanels("menu");
+  openSearchDock();
+  renderSearchResults();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  setBottomTab("search");
+}
+
+function openTabByName(tabName) {
+  if (tabName === "home") {
+    showHomePanel();
+    return;
+  }
+  if (tabName === "menu") {
+    showMenuPanel();
+    return;
+  }
+  if (tabName === "reorder") {
+    showReorderPanel();
+    return;
+  }
+  if (tabName === "account") {
+    showAccountPanel();
+    return;
+  }
+  if (tabName === "search") {
+    showSearchPanel();
+  }
+}
+
+function getCurrentBottomTab() {
+  const active = [...bottomTabs].find((tab) => tab.classList.contains("active"));
+  return active?.dataset.bottomTab || "home";
+}
+
+function shiftTabBy(direction) {
+  const tabOrder = ["home", "menu", "reorder", "account", "search"];
+  const current = getCurrentBottomTab();
+  const index = Math.max(0, tabOrder.indexOf(current));
+  const nextIndex = Math.max(0, Math.min(tabOrder.length - 1, index + direction));
+  if (nextIndex === index) return;
+  openTabByName(tabOrder[nextIndex]);
+}
+
+function renderSearchResults() {
+  if (!searchResults) return;
+  const term = String(state.searchTerm || "").trim().toLowerCase();
+  if (!term) {
+    searchResults.innerHTML = '<p class="search-empty">Start typing to see matching items.</p>';
+    return;
+  }
+
+  const groups = getFlavorGroups(state.menu);
+  const matches = groups.filter((group) => {
+    const searchable = [
+      group.flavor,
+      group.category,
+      group.description || "",
+      ...group.variants.map((variant) => `${variant.name} ${variant.variantLabel}`),
+    ]
+      .join(" ")
+      .toLowerCase();
+    return searchable.includes(term);
+  });
+
+  if (!matches.length) {
+    searchResults.innerHTML = '<p class="search-empty">No matching cookies found.</p>';
+    return;
+  }
+
+  searchResults.innerHTML = matches
+    .slice(0, 16)
+    .map(
+      (group) => `
+        <button class="search-result-item" type="button" data-search-open-flavor="${group.key}">
+          <img src="${group.image || "assets/hero-food.png"}" alt="${group.flavor}" />
+          <span>
+            <strong>${group.flavor}</strong>
+            <small>${formatCategoryLabel(group.category)} • ${group.variants.length} options</small>
+          </span>
+        </button>
+      `,
+    )
+    .join("");
 }
 
 function setActiveTab(tab) {
@@ -1784,6 +1920,67 @@ function renderOrdersTab() {
   `;
 }
 
+function renderReorderPanel() {
+  if (!reorderList) return;
+  const orders = state.previousOrders || [];
+  if (!orders.length) {
+    reorderList.innerHTML = '<p class="menu-loading">No previous orders yet.</p>';
+    return;
+  }
+  reorderList.innerHTML = orders
+    .map((order) => {
+      const lineItems = Array.isArray(order.items) ? order.items : [];
+      const itemsLine = lineItems.length
+        ? lineItems.map((item) => `${item.name} x ${item.quantity}`).join(", ")
+        : "No items";
+      return `
+        <article class="reorder-card">
+          <div class="reorder-card-head">
+            <strong>${order.id}</strong>
+            <span>${formatPrice(Number(order?.totals?.total || 0))}</span>
+          </div>
+          <p>${new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(order.createdAt))}</p>
+          <p>${itemsLine}</p>
+          <button class="secondary-button" type="button" data-reorder-order="${order.id}">Add these items again</button>
+        </article>
+      `;
+    })
+    .join("");
+}
+
+function reorderFromOrder(orderId) {
+  const order = (state.previousOrders || []).find((entry) => entry.id === orderId);
+  if (!order) return;
+  const menuById = new Map((state.menu || []).map((item) => [item.id, item]));
+  const menuByName = new Map((state.menu || []).map((item) => [String(item.name || "").toLowerCase(), item]));
+  let added = 0;
+  for (const line of order.items || []) {
+    const byId = menuById.get(line.id);
+    const byName = menuByName.get(String(line.name || "").toLowerCase());
+    const menuItem = byId || byName;
+    if (!menuItem) continue;
+    const stock = getMenuStock(menuItem);
+    if (!stock || menuItem.available === false) continue;
+    const currentQty = Number(state.cart.get(menuItem.id) || 0);
+    const targetQty = Math.min(stock, currentQty + Number(line.quantity || 0));
+    if (targetQty > currentQty) {
+      state.cart.set(menuItem.id, targetQty);
+      added += targetQty - currentQty;
+    }
+  }
+  persistCart();
+  renderCart();
+  renderMenu();
+  if (added > 0) {
+    cartToastText && (cartToastText.textContent = `${added} ${added === 1 ? "Item" : "Items"} added`);
+    cartToast?.classList.remove("hidden");
+    cartToast?.classList.add("show");
+    showMenuPanel();
+  } else {
+    alert("Those previous items are currently unavailable.");
+  }
+}
+
 function calculateSpends(orders) {
   return (orders || []).reduce(
     (acc, order) => {
@@ -1870,6 +2067,7 @@ function renderAccount() {
 
   renderCart();
   syncCheckoutFields();
+  renderReorderPanel();
 }
 
 async function logoutCustomer() {
@@ -2434,41 +2632,24 @@ async function loadOrdersForAccount() {
       }
     }
     renderTrackingPanel(latestOrder);
+    renderReorderPanel();
   } catch {
     state.previousOrders = [];
     renderTrackingPanel(null);
+    renderReorderPanel();
   }
 }
 
-accountButton.addEventListener("click", () => {
-  closeCartPanel("account");
-  state.drawerOpen = true;
-  renderAccount();
-  setBottomTab("account");
-});
+accountButton.addEventListener("click", showAccountPanel);
 
-heroAccountButton?.addEventListener("click", () => {
-  closeCartPanel("account");
-  state.drawerOpen = true;
-  renderAccount();
-  setBottomTab("account");
-});
+heroAccountButton?.addEventListener("click", showAccountPanel);
 
 accountOpenButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    closeCartPanel("account");
-    state.drawerOpen = true;
-    renderAccount();
-    setBottomTab("account");
-  });
+  button.addEventListener("click", showAccountPanel);
 });
 
 searchOpenButtons.forEach((button) => {
-  button.addEventListener("click", () => {
-    closeCartPanel("search");
-    openSearchDock();
-    setBottomTab("search");
-  });
+  button.addEventListener("click", showSearchPanel);
 });
 
 searchCloseButton?.addEventListener("click", closeSearchDock);
@@ -2476,6 +2657,7 @@ searchBackdrop?.addEventListener("click", closeSearchDock);
 menuSearchInput?.addEventListener("input", (event) => {
   state.searchTerm = event.target.value || "";
   renderMenu();
+  renderSearchResults();
 });
 menuSearchInput?.addEventListener("keydown", (event) => {
   if (event.key === "Escape") {
@@ -2638,8 +2820,97 @@ document.addEventListener("click", (event) => {
   if (cartButton && cartPanel) {
     event.preventDefault();
     openCartPanel();
+    return;
+  }
+
+  const reorderButton = event.target.closest("[data-nav-reorder]");
+  if (reorderButton) {
+    event.preventDefault();
+    showReorderPanel();
+    return;
+  }
+
+  const reorderAction = event.target.closest("[data-reorder-order]");
+  if (reorderAction) {
+    event.preventDefault();
+    reorderFromOrder(reorderAction.dataset.reorderOrder);
+    return;
+  }
+
+  const searchResult = event.target.closest("[data-search-open-flavor]");
+  if (searchResult) {
+    event.preventDefault();
+    closeSearchDock();
+    showMenuPanel();
+    openFlavorMenu(searchResult.dataset.searchOpenFlavor);
+    return;
   }
 });
+
+document.addEventListener("touchstart", (event) => {
+  if (!event.touches || event.touches.length !== 1) return;
+  swipeStartX = event.touches[0].clientX;
+  swipeStartY = event.touches[0].clientY;
+  swipeStartTime = Date.now();
+}, { passive: true });
+
+document.addEventListener("touchend", (event) => {
+  if (!event.changedTouches || event.changedTouches.length !== 1) return;
+  if (itemPreviewOverlay?.classList.contains("show") || flavorOverlay?.classList.contains("show")) return;
+  const dx = event.changedTouches[0].clientX - swipeStartX;
+  const dy = event.changedTouches[0].clientY - swipeStartY;
+  const dt = Date.now() - swipeStartTime;
+  const horizontalIntent = Math.abs(dx) > 58 && Math.abs(dx) > Math.abs(dy) * 1.35;
+  if (!horizontalIntent || dt > 620) return;
+  if (dx < 0) shiftTabBy(1);
+  if (dx > 0) shiftTabBy(-1);
+}, { passive: true });
+
+const bottomNav = document.querySelector(".bottom-app-nav");
+bottomNav?.addEventListener("touchstart", (event) => {
+  const touch = event.changedTouches?.[0];
+  if (!touch) return;
+  navDragActive = true;
+  navDragTouchId = touch.identifier;
+  if (!bottomNavIndicator) return;
+  const navRect = bottomNav.getBoundingClientRect();
+  const indicatorWidth = Number.parseFloat(bottomNavIndicator.style.width || "56") || 56;
+  const x = Math.max(0, Math.min(navRect.width - indicatorWidth, touch.clientX - navRect.left - indicatorWidth / 2));
+  bottomNavIndicator.style.transform = `translateX(${Math.round(x)}px)`;
+}, { passive: true });
+
+bottomNav?.addEventListener("touchmove", (event) => {
+  if (!navDragActive || !bottomNavIndicator) return;
+  const touch = [...(event.changedTouches || [])].find((entry) => entry.identifier === navDragTouchId) || event.changedTouches?.[0];
+  if (!touch) return;
+  const navRect = bottomNav.getBoundingClientRect();
+  const indicatorWidth = Number.parseFloat(bottomNavIndicator.style.width || "56") || 56;
+  const x = Math.max(0, Math.min(navRect.width - indicatorWidth, touch.clientX - navRect.left - indicatorWidth / 2));
+  bottomNavIndicator.style.transform = `translateX(${Math.round(x)}px)`;
+}, { passive: true });
+
+bottomNav?.addEventListener("touchend", (event) => {
+  if (!navDragActive) return;
+  const touch = [...(event.changedTouches || [])].find((entry) => entry.identifier === navDragTouchId) || event.changedTouches?.[0];
+  navDragActive = false;
+  navDragTouchId = null;
+  if (!touch || !bottomTabs.length) return;
+  let nearest = bottomTabs[0];
+  let nearestDistance = Number.POSITIVE_INFINITY;
+  bottomTabs.forEach((tab) => {
+    const rect = tab.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const distance = Math.abs(centerX - touch.clientX);
+    if (distance < nearestDistance) {
+      nearestDistance = distance;
+      nearest = tab;
+    }
+  });
+  const targetTab = nearest?.dataset?.bottomTab;
+  if (targetTab) {
+    openTabByName(targetTab);
+  }
+}, { passive: true });
 
 cartPanelClose?.addEventListener("click", () => closeCartPanel("home"));
 cartPanelOverlay?.addEventListener("click", () => closeCartPanel("home"));
@@ -2888,6 +3159,8 @@ async function boot() {
   if (getResolvedCustomerProfile()?.phone) {
     await loadOrdersForAccount();
   }
+  showHomePanel();
+  requestAnimationFrame(() => setBottomTab("home"));
   const recentPlacedOrder = readStoredJson(STORAGE_KEYS.recentPlacedOrder);
   if (recentPlacedOrder && !isCartPage) {
     showPlacedOrderNotice(recentPlacedOrder);

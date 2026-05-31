@@ -138,6 +138,11 @@ textarea {
   backdrop-filter: blur(14px);
 }
 
+/* Header removed per UX request; announcement bar stays visible. */
+.topbar {
+  display: none;
+}
+
 .brand {
   display: inline-flex;
   align-items: center;
@@ -2557,10 +2562,25 @@ textarea::placeholder {
   transform: translateX(-50%);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
+  overflow: hidden;
+}
+
+.bottom-nav-indicator {
+  position: absolute;
+  top: 8px;
+  left: 0;
+  width: 0;
+  height: 56px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.12);
+  transition: transform 260ms ease, width 260ms ease;
+  pointer-events: none;
 }
 
 .bottom-app-nav a,
 .bottom-app-nav button {
+  position: relative;
+  z-index: 1;
   display: grid;
   place-items: center;
   gap: 2px;
@@ -2587,13 +2607,51 @@ textarea::placeholder {
 
 .bottom-app-nav .active {
   color: #ff7a1a;
-  background: rgba(255, 255, 255, 0.1);
+  background: transparent;
 }
 
 .bottom-app-nav .search-nav-button {
   color: #fff;
   background: #151515;
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 14px 28px rgba(0, 0, 0, 0.38);
+}
+
+.reorder-panel {
+  width: min(560px, calc(100% - 24px));
+  margin: 14px auto 130px;
+  padding: 16px;
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  background: var(--panel);
+  box-shadow: var(--shadow-md);
+}
+
+.reorder-list {
+  display: grid;
+  gap: 10px;
+}
+
+.reorder-card {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 12px;
+  background: var(--card);
+  display: grid;
+  gap: 8px;
+}
+
+.reorder-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+  line-height: 1.4;
+}
+
+.reorder-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
 }
 
 .search-backdrop {
@@ -2638,6 +2696,58 @@ textarea::placeholder {
   border-radius: 999px;
   padding: 0 18px;
   font-weight: 800;
+}
+
+.search-results {
+  display: grid;
+  gap: 8px;
+  max-height: 42vh;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.search-result-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #fff4ea;
+  text-align: left;
+}
+
+.search-result-item img {
+  width: 56px;
+  height: 56px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.search-result-item strong {
+  display: block;
+  font-size: 0.92rem;
+}
+
+.search-result-item small {
+  display: block;
+  margin-top: 2px;
+  opacity: 0.8;
+  font-size: 0.76rem;
+}
+
+.search-empty {
+  margin: 0;
+  padding: 10px;
+  color: rgba(255, 244, 231, 0.8);
+  font-size: 0.86rem;
+}
+
+/* Keep announcement bar only; hide header in all breakpoints. */
+.topbar {
+  display: none !important;
 }
 
 .account-shell {
