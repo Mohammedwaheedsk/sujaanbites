@@ -1,3 +1,69 @@
+:root {
+  color-scheme: light;
+  --bg: #fff4ea;
+  --panel: #fffdf8;
+  --card: #ffffff;
+  --ink: #23150c;
+  --muted: #6b5749;
+  --line: #edd7c3;
+  --accent: #f26419;
+  --accent-dark: #7d3a11;
+  --accent-2: #2f8f4f;
+  --mint: #2f8f4f;
+  --gold: #ffd08f;
+  --danger: #bd1e1e;
+  --shadow: 0 10px 26px rgba(63, 33, 14, 0.1);
+  --shadow-lg: 0 24px 48px rgba(63, 33, 14, 0.14);
+  --shadow-md: 0 10px 26px rgba(63, 33, 14, 0.1);
+}
+
+/* The customer site uses a bright fixed overlay; it washes out the admin UI. */
+body::before {
+  display: none;
+}
+
+/* Admin UI sits on light panels, so the global eyebrow color must be darker. */
+.eyebrow {
+  color: var(--accent-dark);
+}
+
+body {
+  color: var(--ink);
+  background:
+    radial-gradient(1000px 300px at 10% -5%, rgba(255, 130, 37, 0.18), transparent 50%),
+    radial-gradient(900px 220px at 90% -10%, rgba(255, 211, 71, 0.2), transparent 55%),
+    var(--bg);
+}
+
+.topbar {
+  border-bottom: 1px solid rgba(90, 54, 30, 0.12);
+  background: rgba(255, 249, 241, 0.88);
+  box-shadow: none;
+}
+
+.brand small {
+  color: var(--muted);
+}
+
+.brand-mark {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  border: 0;
+}
+
+.nav a {
+  color: var(--muted);
+}
+
+input,
+select,
+textarea {
+  border-color: var(--line);
+  background: #fff;
+  color: var(--ink);
+}
+
 .admin-shell {
   width: min(1180px, calc(100% - 32px));
   margin: 26px auto 56px;
@@ -10,7 +76,7 @@
   padding: clamp(20px, 3vw, 32px);
   border: 1px solid var(--line);
   border-radius: 14px;
-  background: rgba(255, 255, 255, 0.96);
+  background: #ffffff;
   box-shadow: var(--shadow);
 }
 
