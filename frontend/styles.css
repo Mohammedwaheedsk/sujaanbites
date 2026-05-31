@@ -1686,10 +1686,11 @@ footer {
 
 .flavor-sheet-footer {
   position: sticky;
-  bottom: -22px;
+  bottom: 0;
+  z-index: 2;
   display: grid;
   gap: 10px;
-  padding: 12px 0 0;
+  padding: 12px 0 calc(12px + env(safe-area-inset-bottom));
   margin-top: 2px;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0), #fff 18%, #fff);
 }
@@ -1707,6 +1708,25 @@ footer {
 .flavor-sheet-actions .secondary-button,
 .flavor-sheet-actions .pay-button {
   min-height: 48px;
+}
+
+/* Ensure the "More info" button is always visible and readable in the flavour sheet footer. */
+.flavor-sheet-actions .secondary-link {
+  min-height: 48px;
+  border-color: rgba(242, 100, 25, 0.35);
+  background: #fff9f1;
+  color: #7d3a11;
+}
+
+.flavor-sheet-actions .secondary-link:active {
+  filter: brightness(0.98);
+}
+
+/* Same treatment for the preview modal "More info" link. */
+.item-preview-moreinfo {
+  border-color: rgba(242, 100, 25, 0.35);
+  background: #fff9f1;
+  color: #7d3a11;
 }
 
 .item-preview-card img {
