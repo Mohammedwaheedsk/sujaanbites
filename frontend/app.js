@@ -1410,6 +1410,7 @@ function openFlavorMenu(flavorKey) {
   flavorOverlay.classList.remove("hidden");
   flavorOverlay.classList.add("show");
   flavorOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
 }
 
 function closeFlavorMenu() {
@@ -1419,6 +1420,10 @@ function closeFlavorMenu() {
   flavorOverlay.setAttribute("aria-hidden", "true");
   activeFlavorKey = null;
   selectedFlavorVariantId = null;
+
+  // Only clear the modal state if no other modal is still open.
+  const stillOpen = itemPreviewOverlay?.classList.contains("show");
+  if (!stillOpen) document.body.classList.remove("modal-open");
 }
 
 function getCartRows() {
@@ -2960,6 +2965,7 @@ function openItemPreview(item) {
   itemPreviewOverlay.classList.remove("hidden");
   itemPreviewOverlay.classList.add("show");
   itemPreviewOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("modal-open");
 }
 
 function closeItemPreview() {
@@ -2970,6 +2976,9 @@ function closeItemPreview() {
     itemPreviewOverlay.setAttribute("aria-hidden", "true");
   }, 180);
   previewItemId = null;
+
+  const stillOpen = flavorOverlay?.classList.contains("show");
+  if (!stillOpen) document.body.classList.remove("modal-open");
 }
 
 function toggleMenuFab(open) {

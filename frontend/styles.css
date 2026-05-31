@@ -1516,7 +1516,8 @@ footer {
 .item-preview {
   position: fixed;
   inset: 0;
-  z-index: 140;
+  /* Must sit above the bottom nav + toast */
+  z-index: 260;
   background: rgba(0, 0, 0, 0.55);
   display: grid;
   align-items: end;
@@ -1545,7 +1546,8 @@ footer {
 .flavor-overlay {
   position: fixed;
   inset: 0;
-  z-index: 145;
+  /* Must sit above the bottom nav + toast */
+  z-index: 265;
   display: grid;
   align-items: end;
   background: rgba(0, 0, 0, 0.48);
@@ -2357,11 +2359,11 @@ textarea::placeholder {
 }
 
 .cart-toast {
-  left: 50%;
-  right: auto;
+  left: 14px;
+  right: 14px;
   bottom: calc(90px + env(safe-area-inset-bottom));
   z-index: 190;
-  width: min(560px, calc(100% - 28px));
+  width: min(560px, 100%);
   min-height: 70px;
   display: flex;
   justify-content: flex-start;
@@ -2372,13 +2374,14 @@ textarea::placeholder {
   background: rgba(17, 17, 17, 0.92);
   color: #fffaf4;
   box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55), 0 0 34px rgba(255, 255, 255, 0.1);
-  transform: translate(-50%, 18px);
+  margin: 0 auto;
+  transform: translateY(18px);
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
 }
 
 .cart-toast.show {
-  transform: translate(-50%, 0);
+  transform: translateY(0);
 }
 
 .cart-toast-thumb {
@@ -2442,11 +2445,13 @@ textarea::placeholder {
 
 .cart-panel {
   position: fixed;
-  left: 50%;
-  bottom: calc(92px + env(safe-area-inset-bottom));
+  left: 10px;
+  right: 10px;
+  /* When open, we hide the bottom nav so this can sit cleanly at the bottom. */
+  bottom: calc(14px + env(safe-area-inset-bottom));
   z-index: 205;
-  width: min(640px, calc(100% - 20px));
-  max-height: calc(100dvh - 122px);
+  width: min(640px, 100%);
+  max-height: calc(100dvh - 44px);
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 10px;
@@ -2455,7 +2460,8 @@ textarea::placeholder {
   background: rgba(17, 17, 17, 0.96);
   color: #fffaf4;
   box-shadow: 0 34px 80px rgba(0, 0, 0, 0.62), 0 0 40px rgba(255, 255, 255, 0.08);
-  transform: translate(-50%, 24px);
+  margin: 0 auto;
+  transform: translateY(24px);
   opacity: 0;
   transition: transform 0.2s ease, opacity 0.2s ease;
   -webkit-backdrop-filter: blur(20px);
@@ -2463,11 +2469,27 @@ textarea::placeholder {
 }
 
 .cart-panel.show {
-  transform: translate(-50%, 0);
+  transform: translateY(0);
   opacity: 1;
 }
 
 .cart-panel-open .cart-toast {
+  display: none !important;
+}
+
+.cart-panel-open .bottom-app-nav {
+  display: none !important;
+}
+
+/* Prevent the cart panel from feeling "double headed" on small screens. */
+.cart-panel .cart-header .eyebrow,
+.cart-panel .cart-header h2 {
+  display: none;
+}
+
+/* Hide toast + bottom nav whenever a full-screen sheet/modal is open. */
+body.modal-open .bottom-app-nav,
+body.modal-open .cart-toast {
   display: none !important;
 }
 
@@ -2546,20 +2568,21 @@ textarea::placeholder {
 
 .bottom-app-nav {
   position: fixed;
-  left: 50%;
+  left: 14px;
+  right: 14px;
   bottom: calc(14px + env(safe-area-inset-bottom));
   z-index: 180;
   display: grid;
   grid-template-columns: repeat(5, minmax(54px, 1fr));
   gap: 4px;
-  width: min(560px, calc(100% - 28px));
+  width: min(560px, 100%);
   min-height: 72px;
   padding: 8px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 30px;
   background: rgba(19, 19, 19, 0.9);
   box-shadow: 0 26px 58px rgba(0, 0, 0, 0.5);
-  transform: translateX(-50%);
+  margin: 0 auto;
   -webkit-backdrop-filter: blur(18px);
   backdrop-filter: blur(18px);
   overflow: hidden;
@@ -2665,19 +2688,20 @@ textarea::placeholder {
 
 .search-dock {
   position: fixed;
-  left: 50%;
+  left: 14px;
+  right: 14px;
   bottom: calc(102px + env(safe-area-inset-bottom));
   z-index: 220;
   display: grid;
   gap: 14px;
-  width: min(560px, calc(100% - 28px));
+  width: min(560px, 100%);
   padding: 18px;
   border: 1px solid rgba(255, 255, 255, 0.11);
   border-radius: 28px;
   color: var(--ink);
   background: rgba(17, 17, 17, 0.96);
   box-shadow: var(--shadow-lg);
-  transform: translateX(-50%);
+  margin: 0 auto;
 }
 
 .search-dock-head {
