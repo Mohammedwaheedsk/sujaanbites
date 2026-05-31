@@ -256,11 +256,12 @@ let previewItemId = null;
 let activeFlavorKey = null;
 let selectedFlavorVariantId = null;
 let lastVibrateAt = 0;
-let swipeStartX = 0;
-let swipeStartY = 0;
-let swipeStartTime = 0;
 let navDragActive = false;
-let navDragTouchId = null;
+let navDragPointerId = null;
+let navDragOriginX = 0;
+let navDragOriginY = 0;
+let navDragMoved = false;
+let navDragSuppressClick = false;
 
 function fireTelegramHaptic(kind = "light") {
   const feedback = window?.Telegram?.WebApp?.HapticFeedback;
@@ -978,7 +979,7 @@ function closeSearchDock() {
   searchDock.setAttribute("aria-hidden", "true");
 }
 
-function setBottomTab(tabName) {
+function setBottomTab(tabName, animate = true) {
   bottomTabs.forEach((tab) => {
     const active = tab.dataset.bottomTab === tabName;
     tab.classList.toggle("active", active);
@@ -988,13 +989,23 @@ function setBottomTab(tabName) {
       tab.removeAttribute("aria-current");
     }
   });
+  positionBottomNavIndicator(tabName, animate);
+}
+
+function positionBottomNavIndicator(tabName, animate = true) {
   const activeTab = [...bottomTabs].find((tab) => tab.dataset.bottomTab === tabName);
   const nav = activeTab?.closest(".bottom-app-nav");
-  if (activeTab && bottomNavIndicator && nav) {
-    const navRect = nav.getBoundingClientRect();
-    const tabRect = activeTab.getBoundingClientRect();
-    bottomNavIndicator.style.width = `${tabRect.width}px`;
-    bottomNavIndicator.style.transform = `translateX(${Math.round(tabRect.left - navRect.left)}px)`;
+  if (!activeTab || !bottomNavIndicator || !nav) return;
+  const navRect = nav.getBoundingClientRect();
+  const tabRect = activeTab.getBoundingClientRect();
+  const left = Math.max(0, Math.min(navRect.width - tabRect.width, tabRect.left - navRect.left));
+  bottomNavIndicator.style.transition = animate ? "" : "none";
+  bottomNavIndicator.style.width = `${tabRect.width}px`;
+  bottomNavIndicator.style.transform = `translateX(${Math.round(left)}px)`;
+  if (!animate) {
+    window.requestAnimationFrame(() => {
+      if (bottomNavIndicator) bottomNavIndicator.style.transition = "";
+    });
   }
 }
 
@@ -1039,72 +1050,77 @@ function showMainPanels(tabName) {
   reorderPanel?.classList.toggle("hidden", !showReorder);
 }
 
-function showHomePanel() {
+function showHomePanel(options = {}) {
+  const { scrollToTop = true, animate = true } = options;
   closeCartPanel("home");
   closeSearchDock();
   if (state.drawerOpen) closeDrawer();
   showMainPanels("home");
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  setBottomTab("home");
+  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+  setBottomTab("home", animate);
 }
 
-function showMenuPanel() {
+function showMenuPanel(options = {}) {
+  const { scrollToTop = true, animate = true } = options;
   closeCartPanel("menu");
   closeSearchDock();
   if (state.drawerOpen) closeDrawer();
   showMainPanels("menu");
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  setBottomTab("menu");
+  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+  setBottomTab("menu", animate);
 }
 
-function showReorderPanel() {
+function showReorderPanel(options = {}) {
+  const { scrollToTop = true, animate = true } = options;
   closeCartPanel("reorder");
   closeSearchDock();
   if (state.drawerOpen) closeDrawer();
   showMainPanels("reorder");
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
   renderReorderPanel();
-  setBottomTab("reorder");
+  setBottomTab("reorder", animate);
 }
 
-function showAccountPanel() {
+function showAccountPanel(options = {}) {
+  const { scrollToTop = true, animate = true } = options;
   closeCartPanel("account");
   closeSearchDock();
   showMainPanels("home");
   state.drawerOpen = true;
   renderAccount();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  setBottomTab("account");
+  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+  setBottomTab("account", animate);
 }
 
-function showSearchPanel() {
+function showSearchPanel(options = {}) {
+  const { scrollToTop = true, animate = true } = options;
   closeCartPanel("search");
   showMainPanels("menu");
   openSearchDock();
   renderSearchResults();
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  setBottomTab("search");
+  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+  setBottomTab("search", animate);
 }
 
-function openTabByName(tabName) {
+function openTabByName(tabName, options = {}) {
   if (tabName === "home") {
-    showHomePanel();
+    showHomePanel(options);
     return;
   }
   if (tabName === "menu") {
-    showMenuPanel();
+    showMenuPanel(options);
     return;
   }
   if (tabName === "reorder") {
-    showReorderPanel();
+    showReorderPanel(options);
     return;
   }
   if (tabName === "account") {
-    showAccountPanel();
+    showAccountPanel(options);
     return;
   }
   if (tabName === "search") {
-    showSearchPanel();
+    showSearchPanel(options);
   }
 }
 
@@ -1113,13 +1129,13 @@ function getCurrentBottomTab() {
   return active?.dataset.bottomTab || "home";
 }
 
-function shiftTabBy(direction) {
+function shiftTabBy(direction, options = {}) {
   const tabOrder = ["home", "menu", "reorder", "account", "search"];
   const current = getCurrentBottomTab();
   const index = Math.max(0, tabOrder.indexOf(current));
   const nextIndex = Math.max(0, Math.min(tabOrder.length - 1, index + direction));
   if (nextIndex === index) return;
-  openTabByName(tabOrder[nextIndex]);
+  openTabByName(tabOrder[nextIndex], options);
 }
 
 function renderSearchResults() {
@@ -2852,70 +2868,110 @@ document.addEventListener("click", (event) => {
   }
 });
 
-document.addEventListener("touchstart", (event) => {
-  if (!event.touches || event.touches.length !== 1) return;
-  swipeStartX = event.touches[0].clientX;
-  swipeStartY = event.touches[0].clientY;
-  swipeStartTime = Date.now();
-}, { passive: true });
-
-document.addEventListener("touchend", (event) => {
-  if (!event.changedTouches || event.changedTouches.length !== 1) return;
-  if (itemPreviewOverlay?.classList.contains("show") || flavorOverlay?.classList.contains("show")) return;
-  const dx = event.changedTouches[0].clientX - swipeStartX;
-  const dy = event.changedTouches[0].clientY - swipeStartY;
-  const dt = Date.now() - swipeStartTime;
-  const horizontalIntent = Math.abs(dx) > 58 && Math.abs(dx) > Math.abs(dy) * 1.35;
-  if (!horizontalIntent || dt > 620) return;
-  if (dx < 0) shiftTabBy(1);
-  if (dx > 0) shiftTabBy(-1);
-}, { passive: true });
-
 const bottomNav = document.querySelector(".bottom-app-nav");
-bottomNav?.addEventListener("touchstart", (event) => {
-  const touch = event.changedTouches?.[0];
-  if (!touch) return;
-  navDragActive = true;
-  navDragTouchId = touch.identifier;
-  if (!bottomNavIndicator) return;
-  const navRect = bottomNav.getBoundingClientRect();
-  const indicatorWidth = Number.parseFloat(bottomNavIndicator.style.width || "56") || 56;
-  const x = Math.max(0, Math.min(navRect.width - indicatorWidth, touch.clientX - navRect.left - indicatorWidth / 2));
-  bottomNavIndicator.style.transform = `translateX(${Math.round(x)}px)`;
-}, { passive: true });
-
-bottomNav?.addEventListener("touchmove", (event) => {
-  if (!navDragActive || !bottomNavIndicator) return;
-  const touch = [...(event.changedTouches || [])].find((entry) => entry.identifier === navDragTouchId) || event.changedTouches?.[0];
-  if (!touch) return;
-  const navRect = bottomNav.getBoundingClientRect();
-  const indicatorWidth = Number.parseFloat(bottomNavIndicator.style.width || "56") || 56;
-  const x = Math.max(0, Math.min(navRect.width - indicatorWidth, touch.clientX - navRect.left - indicatorWidth / 2));
-  bottomNavIndicator.style.transform = `translateX(${Math.round(x)}px)`;
-}, { passive: true });
-
-bottomNav?.addEventListener("touchend", (event) => {
-  if (!navDragActive) return;
-  const touch = [...(event.changedTouches || [])].find((entry) => entry.identifier === navDragTouchId) || event.changedTouches?.[0];
-  navDragActive = false;
-  navDragTouchId = null;
-  if (!touch || !bottomTabs.length) return;
+function getNearestBottomTab(clientX) {
+  if (!bottomTabs.length) return null;
   let nearest = bottomTabs[0];
   let nearestDistance = Number.POSITIVE_INFINITY;
   bottomTabs.forEach((tab) => {
     const rect = tab.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
-    const distance = Math.abs(centerX - touch.clientX);
+    const distance = Math.abs(centerX - clientX);
     if (distance < nearestDistance) {
       nearestDistance = distance;
       nearest = tab;
     }
   });
-  const targetTab = nearest?.dataset?.bottomTab;
-  if (targetTab) {
-    openTabByName(targetTab);
+  return nearest;
+}
+
+function positionBottomNavIndicatorAtX(clientX, animate = false) {
+  if (!bottomNav || !bottomNavIndicator || !bottomTabs.length) return;
+  const navRect = bottomNav.getBoundingClientRect();
+  const nearest = getNearestBottomTab(clientX) || bottomTabs[0];
+  const tabRect = nearest.getBoundingClientRect();
+  const width = tabRect.width;
+  const left = Math.max(0, Math.min(navRect.width - width, clientX - navRect.left - width / 2));
+  bottomNavIndicator.style.transition = animate ? "" : "none";
+  bottomNavIndicator.style.width = `${width}px`;
+  bottomNavIndicator.style.transform = `translateX(${Math.round(left)}px)`;
+  if (!animate) {
+    window.requestAnimationFrame(() => {
+      if (bottomNavIndicator) bottomNavIndicator.style.transition = "";
+    });
   }
-}, { passive: true });
+}
+
+function settleBottomNavToTab(tabName, animate = true) {
+  if (!tabName) return;
+  openTabByName(tabName, { scrollToTop: false, animate });
+}
+
+bottomNav?.addEventListener("pointerdown", (event) => {
+  if (event.pointerType === "mouse" && event.button !== 0) return;
+  if (itemPreviewOverlay?.classList.contains("show") || flavorOverlay?.classList.contains("show")) return;
+  navDragActive = true;
+  navDragPointerId = event.pointerId;
+  navDragOriginX = event.clientX;
+  navDragOriginY = event.clientY;
+  navDragMoved = false;
+  navDragSuppressClick = false;
+  bottomNav.classList.add("dragging");
+  positionBottomNavIndicatorAtX(event.clientX, false);
+  try {
+    bottomNav.setPointerCapture(event.pointerId);
+  } catch {
+    // Some browsers do not allow capture on hidden or detached nodes.
+  }
+});
+
+bottomNav?.addEventListener("pointermove", (event) => {
+  if (!navDragActive || event.pointerId !== navDragPointerId) return;
+  const dx = event.clientX - navDragOriginX;
+  const dy = event.clientY - navDragOriginY;
+  if (!navDragMoved) {
+    navDragMoved = Math.abs(dx) > 6 || Math.abs(dy) > 6;
+  }
+  if (!navDragMoved) return;
+
+  positionBottomNavIndicatorAtX(event.clientX, false);
+  const nearest = getNearestBottomTab(event.clientX);
+  const targetTab = nearest?.dataset?.bottomTab;
+  if (targetTab && targetTab !== getCurrentBottomTab()) {
+    settleBottomNavToTab(targetTab, false);
+  }
+});
+
+function finishBottomNavDrag(event) {
+  if (!navDragActive || event.pointerId !== navDragPointerId) return;
+  const clientX = event.clientX;
+  navDragActive = false;
+  navDragPointerId = null;
+  bottomNav?.classList.remove("dragging");
+  try {
+    bottomNav?.releasePointerCapture(event.pointerId);
+  } catch {
+    // Ignore if capture was never granted.
+  }
+  if (!navDragMoved) return;
+  navDragSuppressClick = true;
+  const nearest = getNearestBottomTab(clientX);
+  const targetTab = nearest?.dataset?.bottomTab || getCurrentBottomTab();
+  settleBottomNavToTab(targetTab, true);
+  window.setTimeout(() => {
+    navDragSuppressClick = false;
+  }, 0);
+}
+
+bottomNav?.addEventListener("pointerup", finishBottomNavDrag);
+bottomNav?.addEventListener("pointercancel", finishBottomNavDrag);
+bottomNav?.addEventListener("lostpointercapture", finishBottomNavDrag);
+bottomNav?.addEventListener("click", (event) => {
+  if (!navDragSuppressClick) return;
+  event.preventDefault();
+  event.stopImmediatePropagation();
+  navDragSuppressClick = false;
+}, true);
 
 cartPanelClose?.addEventListener("click", () => closeCartPanel("home"));
 cartPanelOverlay?.addEventListener("click", () => closeCartPanel("home"));
