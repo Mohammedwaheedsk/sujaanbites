@@ -32,6 +32,8 @@ body {
   font-weight: 900;
   letter-spacing: 0;
   overflow: hidden;
+  /* Avoid iOS notch/status bar overlap when header is hidden. */
+  padding-top: env(safe-area-inset-top);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
 }
@@ -44,7 +46,7 @@ body[data-page="home"] .topbar {
   display: flex;
   align-items: center;
   gap: 14px;
-  padding: 10px 0;
+  padding: 10px 14px;
   width: max-content;
   animation: sujaan-marquee 16s linear infinite;
   will-change: transform;
@@ -68,7 +70,8 @@ body[data-page="home"] .topbar {
 
 @keyframes sujaan-marquee {
   from {
-    transform: translateX(100vw);
+    /* Use container width instead of viewport width to prevent weird offsets. */
+    transform: translateX(100%);
   }
   to {
     transform: translateX(-100%);
