@@ -13,7 +13,7 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="preconnect" href="https://api.qrserver.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260531b" />
+  <link rel="stylesheet" href="styles.css?v=20260531c" />
 </head>
 
 <body data-page="home">
@@ -151,7 +151,7 @@
         <strong id="cartToastText">1 Item added</strong>
         <small>Ready in your cart</small>
       </span>
-      <a class="cart-toast-action" href="/cart" data-route="/cart" id="cartToastAction">View Cart ›</a>
+      <a class="cart-toast-action" href="/cart" data-route="/cart" data-open-cart id="cartToastAction">View Cart ›</a>
     </div>
 
     <div class="search-backdrop hidden" id="searchBackdrop"></div>
@@ -166,26 +166,162 @@
       <input id="menuSearchInput" type="search" placeholder="Search Chocolate, Biscoff, combos..." autocomplete="off" />
     </section>
 
+    <div class="cart-panel-backdrop hidden" id="cartPanelOverlay"></div>
+    <section class="cart-panel hidden" id="cartPanel" aria-hidden="true" aria-label="Cart checkout">
+      <div class="cart-panel-grabber" aria-hidden="true"></div>
+      <div class="cart-panel-head">
+        <div>
+          <p class="eyebrow">Cart</p>
+          <h2>Your order</h2>
+        </div>
+        <button class="close-button" id="cartPanelClose" type="button" aria-label="Close cart">×</button>
+      </div>
+
+      <section class="cart-empty-panel cart-panel-empty" id="cartPageEmpty">
+        <h1>Your cart is empty</h1>
+        <p>Add your cookies from the menu and your cart will appear here.</p>
+        <button class="primary-link" type="button" data-nav-menu>Browse menu</button>
+      </section>
+
+      <div id="cartPageContent" class="hidden">
+        <section class="checkout-panel cart-panel-checkout" aria-label="Cart and checkout">
+          <div class="cart-header">
+            <div>
+              <p class="eyebrow">Cart</p>
+              <h2>Your order</h2>
+            </div>
+            <span id="itemCount">0 items</span>
+          </div>
+
+          <div class="cart-items" id="cartItems">
+            <p class="empty">Add cookies from the menu to begin.</p>
+          </div>
+
+          <div class="cart-payment-options">
+            <p class="eyebrow">Payment options</p>
+            <label class="payment-option active">
+              <input type="radio" name="checkoutPaymentOption" value="prepaid" data-payment-option checked />
+              <span>
+                <strong>Razorpay</strong>
+                <small>Fast prepaid checkout</small>
+              </span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="checkoutPaymentOption" value="card" data-payment-option />
+              <span>
+                <strong>Debit / Credit card</strong>
+                <small>Pay securely in Razorpay</small>
+              </span>
+            </label>
+          </div>
+
+          <div class="delivery-card">
+            <div>
+              <p class="eyebrow">Delivery type</p>
+              <strong id="deliveryEtaLabel">Delivery ETA after confirmation</strong>
+              <p id="deliveryEtaHint">Restaurant confirms the delivery time after order acceptance.</p>
+            </div>
+          </div>
+
+          <section class="offers-panel" aria-label="Offers and coupons">
+            <div class="offers-panel-head">
+              <p class="eyebrow">Offers and Coupons</p>
+              <strong>Save more on checkout</strong>
+            </div>
+
+            <article class="coupon-card">
+              <div class="coupon-copy">
+                <strong>Apply coupon code</strong>
+                <p>Enter a valid code to unlock your offer.</p>
+              </div>
+              <div class="coupon-form">
+                <input id="couponCodeInput" type="text" placeholder="Enter coupon code" autocomplete="off" />
+                <button class="secondary-button" id="applyCouponButton" type="button">Apply</button>
+              </div>
+              <p class="coupon-status" id="couponStatus">No coupon applied.</p>
+              <button class="secondary-button small hidden" id="clearCouponButton" type="button">Remove coupon</button>
+            </article>
+
+            <article class="offer-card">
+              <div class="offer-card-copy">
+                <strong>Orders above ₹1599 is free</strong>
+                <p>Keep adding items to unlock free delivery.</p>
+              </div>
+              <div class="offer-progress-meta">
+                <span id="freeDeliveryProgressLabel">₹0 / ₹1599</span>
+                <small id="freeDeliveryProgressRemaining">₹1599 away from free delivery</small>
+              </div>
+              <div class="offer-progress-track" aria-hidden="true">
+                <div class="offer-progress-fill" id="freeDeliveryProgressBar"></div>
+              </div>
+            </article>
+          </section>
+
+          <div class="totals">
+            <div><span>Subtotal</span><strong id="subtotal">₹0</strong></div>
+            <div><span>Delivery</span><strong id="deliveryFee">₹0</strong></div>
+            <div class="discount-row hidden" id="discountRow"><span>Coupon discount</span><strong id="couponDiscount">-₹0</strong></div>
+            <div class="grand-total"><span>To Pay</span><strong id="grandTotal">₹0</strong></div>
+          </div>
+
+          <div class="selected-address" id="selectedAddressSummary">
+            <div class="selected-address-head">
+              <strong>Delivery address</strong>
+              <button class="secondary-button small" id="manageAddressesButton" type="button">Manage</button>
+            </div>
+            <label class="address-picker" id="checkoutAddressPicker">
+              <span class="sr-only">Choose saved address</span>
+              <select id="checkoutAddressSelect" aria-label="Choose saved address"></select>
+            </label>
+            <p id="selectedAddressText">No address saved yet.</p>
+          </div>
+
+          <div class="cart-total-card">
+            <div>
+              <strong>To Pay</strong>
+              <small>Payment is verified before the order reaches the restaurant.</small>
+            </div>
+            <strong id="cartSummaryPayable">₹0</strong>
+          </div>
+
+          <form class="customer-form" id="checkout" autocomplete="on">
+            <input type="hidden" id="customerName" name="name" />
+            <input type="hidden" id="customerPhone" name="phone" />
+            <input type="hidden" id="orderType" name="orderType" value="delivery" />
+            <input type="hidden" id="paymentMethod" name="paymentMethod" value="prepaid" />
+          </form>
+        </section>
+      </div>
+
+      <div class="cart-panel-footer hidden" id="cartPageFooter">
+        <div class="cart-page-payment-copy">
+          <small>PAY USING</small>
+          <strong id="cartPagePaymentMethodText">Razorpay</strong>
+        </div>
+        <button class="pay-button cart-page-pay-button" id="cartPagePayLabel" type="submit" form="checkout">Pay ₹0</button>
+      </div>
+    </section>
+
   </main>
 
   <nav class="bottom-app-nav" aria-label="Primary">
-    <a class="active" href="/" data-route="/">
+    <button class="active" type="button" data-bottom-tab="home" data-nav-home>
       <span>⌂</span>
       <small>Home</small>
-    </a>
-    <a href="#menu">
+    </button>
+    <button type="button" data-bottom-tab="menu" data-nav-menu>
       <span>▦</span>
       <small>Menu</small>
-    </a>
-    <a href="/cart" data-route="/cart">
+    </button>
+    <button type="button" data-bottom-tab="cart" data-open-cart>
       <span>◴</span>
       <small>Cart</small>
-    </a>
-    <button type="button" data-open-account>
+    </button>
+    <button type="button" data-bottom-tab="account" data-open-account>
       <span>◉</span>
       <small>Account</small>
     </button>
-    <button class="search-nav-button" type="button" data-open-search aria-label="Search">
+    <button class="search-nav-button" type="button" data-bottom-tab="search" data-open-search aria-label="Search">
       <span>⌕</span>
       <small>Search</small>
     </button>
@@ -316,7 +452,7 @@
       }, 420);
     });
   </script>
-  <script src="app.js?v=20260531a"></script>
+  <script src="app.js?v=20260531c"></script>
 </body>
 
 </html>

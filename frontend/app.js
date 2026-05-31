@@ -67,6 +67,7 @@ const state = {
   loadingMenu: false,
   checkoutNeedsAccountConfirm: true,
   couponCode: "",
+  searchTerm: "",
 };
 
 const pageMode = document.body?.dataset.page || "home";
@@ -140,6 +141,12 @@ const menuFilters = document.querySelector("#menuFilters");
 const orderShell = document.querySelector("#orderShell");
 const accountButton = document.querySelector("#accountButton");
 const heroAccountButton = document.querySelector("#heroAccountButton");
+const accountOpenButtons = document.querySelectorAll("[data-open-account]");
+const searchOpenButtons = document.querySelectorAll("[data-open-search]");
+const searchDock = document.querySelector("#searchDock");
+const searchBackdrop = document.querySelector("#searchBackdrop");
+const searchCloseButton = document.querySelector("#searchCloseButton");
+const menuSearchInput = document.querySelector("#menuSearchInput");
 const accountOverlay = document.querySelector("#accountOverlay");
 const accountShell = document.querySelector("#accountShell");
 const accountLogoutButton = document.querySelector("#accountLogoutButton");
@@ -231,6 +238,10 @@ const cartPagePayLabel = document.querySelector("#cartPagePayLabel");
 const cartSummaryPayable = document.querySelector("#cartSummaryPayable");
 const cartPagePaymentMethodText = document.querySelector("#cartPagePaymentMethodText");
 const paymentOptionInputs = document.querySelectorAll("[data-payment-option]");
+const cartPanelOverlay = document.querySelector("#cartPanelOverlay");
+const cartPanel = document.querySelector("#cartPanel");
+const cartPanelClose = document.querySelector("#cartPanelClose");
+const bottomTabs = document.querySelectorAll("[data-bottom-tab]");
 
 let trackingMap = null;
 let trackingLayerGroup = null;
@@ -941,6 +952,82 @@ function closeDrawer() {
   renderAccount();
 }
 
+function openSearchDock() {
+  if (!searchDock) {
+    document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+  searchDock.classList.remove("hidden");
+  searchDock.setAttribute("aria-hidden", "false");
+  window.setTimeout(() => menuSearchInput?.focus(), 80);
+}
+
+function closeSearchDock() {
+  if (!searchDock) return;
+  searchDock.classList.add("hidden");
+  searchDock.setAttribute("aria-hidden", "true");
+}
+
+function setBottomTab(tabName) {
+  bottomTabs.forEach((tab) => {
+    const active = tab.dataset.bottomTab === tabName;
+    tab.classList.toggle("active", active);
+    if (active) {
+      tab.setAttribute("aria-current", "page");
+    } else {
+      tab.removeAttribute("aria-current");
+    }
+  });
+}
+
+function openCartPanel() {
+  if (!cartPanel || !cartPanelOverlay) {
+    window.location.href = getRoute("/cart");
+    return;
+  }
+  closeSearchDock();
+  if (state.drawerOpen) closeDrawer();
+  closeFlavorMenu();
+  closeItemPreview();
+  renderCart();
+  cartPanelOverlay.classList.remove("hidden");
+  cartPanelOverlay.classList.add("show");
+  cartPanel.classList.remove("hidden");
+  cartPanel.classList.add("show");
+  cartPanel.setAttribute("aria-hidden", "false");
+  document.body.classList.add("cart-panel-open");
+  setBottomTab("cart");
+}
+
+function closeCartPanel(nextTab = "home") {
+  if (!cartPanel || !cartPanelOverlay) return;
+  cartPanel.classList.remove("show");
+  cartPanelOverlay.classList.remove("show");
+  cartPanel.setAttribute("aria-hidden", "true");
+  document.body.classList.remove("cart-panel-open");
+  window.setTimeout(() => {
+    cartPanel.classList.add("hidden");
+    cartPanelOverlay.classList.add("hidden");
+  }, 180);
+  setBottomTab(nextTab);
+}
+
+function showHomePanel() {
+  closeCartPanel("home");
+  closeSearchDock();
+  if (state.drawerOpen) closeDrawer();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  setBottomTab("home");
+}
+
+function showMenuPanel() {
+  closeCartPanel("menu");
+  closeSearchDock();
+  if (state.drawerOpen) closeDrawer();
+  document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  setBottomTab("menu");
+}
+
 function setActiveTab(tab) {
   state.activeTab = tab;
   renderAccount();
@@ -1055,11 +1142,18 @@ function syncCartToStock() {
 function renderMenu() {
   if (!menuGrid) return;
   const activeCategory = normalizeCategory(state.activeCategory) || "all";
+  const searchTerm = String(state.searchTerm || "").trim().toLowerCase();
   const dishes = state.menu.filter((item) => {
     const category = normalizeCategory(item.category);
-    return activeCategory === "all" || category === activeCategory;
+    const searchable = [item.name, item.description, item.category].join(" ").toLowerCase();
+    return (activeCategory === "all" || category === activeCategory) && (!searchTerm || searchable.includes(searchTerm));
   });
   const flavorGroups = getFlavorGroups(dishes);
+  if (!flavorGroups.length) {
+    menuGrid.innerHTML = `<div class="menu-loading">${searchTerm ? "No cookies match your search." : "No menu items are available right now."}</div>`;
+    renderMenuFabSheet();
+    return;
+  }
   const grouped = new Map();
   for (const group of flavorGroups) {
     const key = formatCategoryLabel(group.category || "Menu");
@@ -2240,16 +2334,22 @@ function openRazorpayCheckout(intent, paymentSessionId) {
         razorpayRetryButton?.classList.add("hidden");
         state.cart.clear();
         persistCart();
-        writeStoredJson(STORAGE_KEYS.recentPlacedOrder, {
-          id: result.order.id,
-          address: result.order.address,
-          createdAt: result.order.createdAt,
-        });
         await loadPreviousOrders();
         await loadOrdersForAccount();
         renderCart();
         paymentDialog?.close();
-        window.location.href = getRoute("/");
+        if (cartPanel) {
+          closeCartPanel("home");
+          showPlacedOrderNotice(result.order);
+          window.scrollTo({ top: 0, behavior: "smooth" });
+        } else {
+          writeStoredJson(STORAGE_KEYS.recentPlacedOrder, {
+            id: result.order.id,
+            address: result.order.address,
+            createdAt: result.order.createdAt,
+          });
+          window.location.href = getRoute("/");
+        }
       } catch (error) {
         paymentSummary.textContent = `Payment response received, but verification failed. ${error.message}`;
         razorpayRetryButton?.classList.remove("hidden");
@@ -2341,13 +2441,46 @@ async function loadOrdersForAccount() {
 }
 
 accountButton.addEventListener("click", () => {
+  closeCartPanel("account");
   state.drawerOpen = true;
   renderAccount();
+  setBottomTab("account");
 });
 
 heroAccountButton?.addEventListener("click", () => {
+  closeCartPanel("account");
   state.drawerOpen = true;
   renderAccount();
+  setBottomTab("account");
+});
+
+accountOpenButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    closeCartPanel("account");
+    state.drawerOpen = true;
+    renderAccount();
+    setBottomTab("account");
+  });
+});
+
+searchOpenButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    closeCartPanel("search");
+    openSearchDock();
+    setBottomTab("search");
+  });
+});
+
+searchCloseButton?.addEventListener("click", closeSearchDock);
+searchBackdrop?.addEventListener("click", closeSearchDock);
+menuSearchInput?.addEventListener("input", (event) => {
+  state.searchTerm = event.target.value || "";
+  renderMenu();
+});
+menuSearchInput?.addEventListener("keydown", (event) => {
+  if (event.key === "Escape") {
+    closeSearchDock();
+  }
 });
 
 manageAddressesButton?.addEventListener("click", async () => {
@@ -2485,6 +2618,31 @@ paymentOptionInputs.forEach((input) => {
     });
   });
 });
+
+document.addEventListener("click", (event) => {
+  const homeButton = event.target.closest("[data-nav-home]");
+  if (homeButton) {
+    event.preventDefault();
+    showHomePanel();
+    return;
+  }
+
+  const menuButton = event.target.closest("[data-nav-menu]");
+  if (menuButton) {
+    event.preventDefault();
+    showMenuPanel();
+    return;
+  }
+
+  const cartButton = event.target.closest("[data-open-cart], a[data-route='/cart']");
+  if (cartButton && cartPanel) {
+    event.preventDefault();
+    openCartPanel();
+  }
+});
+
+cartPanelClose?.addEventListener("click", () => closeCartPanel("home"));
+cartPanelOverlay?.addEventListener("click", () => closeCartPanel("home"));
 
 menuFilters?.addEventListener("click", (event) => {
   const button = event.target.closest("[data-category]");

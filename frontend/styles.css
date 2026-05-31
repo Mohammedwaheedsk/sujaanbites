@@ -2422,6 +2422,123 @@ textarea::placeholder {
   font-weight: 900;
 }
 
+.cart-panel-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 170;
+  background: rgba(0, 0, 0, 0.58);
+  opacity: 0;
+  transition: opacity 0.18s ease;
+}
+
+.cart-panel-backdrop.show {
+  opacity: 1;
+}
+
+.cart-panel {
+  position: fixed;
+  left: 50%;
+  bottom: calc(92px + env(safe-area-inset-bottom));
+  z-index: 205;
+  width: min(640px, calc(100% - 20px));
+  max-height: calc(100dvh - 122px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 32px;
+  background: rgba(17, 17, 17, 0.96);
+  color: #fffaf4;
+  box-shadow: 0 34px 80px rgba(0, 0, 0, 0.62), 0 0 40px rgba(255, 255, 255, 0.08);
+  transform: translate(-50%, 24px);
+  opacity: 0;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+  -webkit-backdrop-filter: blur(20px);
+  backdrop-filter: blur(20px);
+}
+
+.cart-panel.show {
+  transform: translate(-50%, 0);
+  opacity: 1;
+}
+
+.cart-panel-open .cart-toast {
+  display: none !important;
+}
+
+.cart-panel-grabber {
+  width: 52px;
+  height: 5px;
+  margin: 4px auto 12px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.22);
+}
+
+.cart-panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 4px 10px;
+}
+
+.cart-panel-head h2 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.cart-panel-empty {
+  display: grid;
+  gap: 10px;
+  min-height: 220px;
+  place-items: center;
+  text-align: center;
+  padding: 22px 18px;
+}
+
+.cart-panel-empty .primary-link {
+  width: 100%;
+  max-width: 260px;
+  border: 0;
+}
+
+.cart-panel-checkout {
+  position: static !important;
+  padding: 14px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.055);
+  box-shadow: none;
+}
+
+.cart-panel .cart-payment-options,
+.cart-panel .offers-panel,
+.cart-panel .selected-address,
+.cart-panel .cart-total-card,
+.cart-panel .delivery-card {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.cart-panel-footer {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 24px;
+  background: rgba(8, 8, 8, 0.9);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.cart-panel-footer .cart-page-pay-button {
+  min-width: 150px;
+}
+
 .bottom-app-nav {
   position: fixed;
   left: 50%;
