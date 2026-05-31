@@ -2153,7 +2153,7 @@ body::before {
 .order-shell,
 .cart-page {
   width: min(1120px, calc(100% - 24px));
-  margin-top: 22px;
+  margin: 22px auto 24px;
 }
 
 .menu-panel,
