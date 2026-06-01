@@ -2857,19 +2857,19 @@ button:active,
    ══════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg-apple: #FAF6F0;
-  --bg-card-apple: #FFFFFF;
-  --bg-card-active-apple: #F5EFEB;
-  --accent-apple: #C87E34; /* Elegant warm toasted caramel instead of bright pink */
-  --accent-gold-apple: #E29845;
-  --text-primary-apple: #3D2D24;
-  --text-secondary-apple: rgba(61, 45, 36, 0.72);
-  --text-tertiary-apple: rgba(61, 45, 36, 0.42);
-  --border-apple: rgba(93, 62, 45, 0.08);
-  --glass-apple: rgba(255, 255, 255, 0.86);
-  --glass-border-apple: rgba(93, 62, 45, 0.08);
-  --apple-shadow: 0 12px 32px rgba(93, 62, 45, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-  --apple-soft-glow: 0 0 24px rgba(200, 126, 52, 0.15);
+  --bg-apple: var(--bg-primary);
+  --bg-card-apple: rgba(255, 255, 255, 0.03);
+  --bg-card-active-apple: rgba(255, 255, 255, 0.06);
+  --accent-apple: var(--accent);
+  --accent-gold-apple: var(--accent-deep);
+  --text-primary-apple: var(--ink);
+  --text-secondary-apple: rgba(253, 251, 247, 0.72);
+  --text-tertiary-apple: rgba(253, 251, 247, 0.42);
+  --border-apple: var(--glass-border);
+  --glass-apple: rgba(12, 8, 6, 0.86);
+  --glass-border-apple: var(--glass-border);
+  --apple-shadow: var(--shadow-md);
+  --apple-soft-glow: 0 0 24px rgba(212, 160, 84, 0.15);
   --transition-apple: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
