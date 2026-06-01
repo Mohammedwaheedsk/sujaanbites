@@ -5,26 +5,26 @@
 
 /* ── Design Tokens ───────────────────────────────────────────── */
 :root {
-  color-scheme: dark;
-  --bg: #0c0806;
-  --panel: #1a1411;
-  --card: #221a14;
-  --ink: #faf5ef;
-  --muted: #a89585;
-  --line: rgba(255, 215, 150, 0.1);
-  --accent: #d4a054;
-  --accent-deep: #b8862e;
-  --accent-glow: #f0c97a;
-  --accent-2: #4a9e6a;
-  --danger: #e05555;
-  --shadow-lg: 0 32px 64px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(255, 215, 150, 0.04);
-  --shadow-md: 0 18px 40px rgba(0, 0, 0, 0.4);
+  color-scheme: light;
+  --bg: #FAF6F0; /* Soft creamy ivory */
+  --panel: #FFFFFF; /* Pure elegant white for panels */
+  --card: #F5EFEB; /* Soft butter cream beige for cards */
+  --ink: #3D2D24; /* Rich dark espresso brown for primary text */
+  --muted: #8E7D73; /* Sophisticated warm mocha for secondary text */
+  --line: rgba(93, 62, 45, 0.08); /* Warm brown borders */
+  --accent: #C87E34; /* Toasted honey-amber gold */
+  --accent-deep: #A05C1F; /* Rich caramel gold */
+  --accent-glow: rgba(200, 126, 52, 0.08); /* Soft honey glow background */
+  --accent-2: #3E8E5A; /* Forest green */
+  --danger: #D04D4D; /* Warm red */
+  --shadow-lg: 0 16px 36px rgba(93, 62, 45, 0.08), 0 0 0 1px rgba(93, 62, 45, 0.04);
+  --shadow-md: 0 8px 24px rgba(93, 62, 45, 0.06);
   --radius-xl: 28px;
   --radius-lg: 22px;
   --radius-md: 16px;
   --radius-sm: 12px;
-  --glass: rgba(26, 20, 17, 0.82);
-  --glass-border: rgba(255, 215, 150, 0.1);
+  --glass: rgba(255, 255, 255, 0.88); /* Frosted glass */
+  --glass-border: rgba(93, 62, 45, 0.06);
   --glass-blur: blur(24px) saturate(180%);
   --transition-smooth: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -50,7 +50,7 @@ body {
   background:
     radial-gradient(ellipse 900px 400px at 15% -5%, rgba(212, 160, 84, 0.14), transparent),
     radial-gradient(ellipse 700px 300px at 85% 3%, rgba(180, 120, 60, 0.08), transparent),
-    radial-gradient(circle 600px at 50% 50%, rgba(34, 26, 20, 0.6), transparent),
+    radial-gradient(circle 600px at 50% 50%, rgba(255, 255, 255, 0.5), transparent),
     var(--bg);
 }
 
@@ -2289,22 +2289,23 @@ body.modal-open .cart-toast {
 /* ── Bottom App Navigation ───────────────────────────────────── */
 .bottom-app-nav {
   position: fixed;
-  left: 14px;
-  right: 14px;
-  bottom: calc(14px + env(safe-area-inset-bottom));
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  bottom: calc(14px + env(safe-area-inset-bottom, 14px));
   z-index: 180;
   display: grid;
   grid-template-columns: repeat(5, minmax(54px, 1fr));
   gap: 4px;
-  width: min(560px, 100%);
+  width: calc(100% - 28px) !important;
+  max-width: 560px !important;
   min-height: 72px;
   padding: 8px;
-  border: 1px solid rgba(212, 160, 84, 0.08);
+  border: 1px solid rgba(93, 62, 45, 0.08);
   border-radius: 30px;
-  background: rgba(14, 11, 9, 0.92);
+  background: rgba(255, 255, 255, 0.88);
   box-shadow:
-    0 26px 58px rgba(0, 0, 0, 0.5),
-    0 0 0 1px rgba(212, 160, 84, 0.04) inset;
+    0 12px 32px rgba(93, 62, 45, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
   margin: 0 auto;
   -webkit-backdrop-filter: blur(24px) saturate(180%);
   backdrop-filter: blur(24px) saturate(180%);
@@ -2375,7 +2376,7 @@ body.modal-open .cart-toast {
   border: 0;
   border-radius: 24px;
   background: transparent;
-  color: rgba(250, 245, 239, 0.55);
+  color: rgba(61, 45, 36, 0.55);
   text-decoration: none;
   font: inherit;
   font-weight: 800;
@@ -2400,8 +2401,8 @@ body.modal-open .cart-toast {
 
 .bottom-app-nav .search-nav-button {
   color: var(--ink);
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: inset 0 0 0 1px rgba(212, 160, 84, 0.08), 0 10px 24px rgba(0, 0, 0, 0.3);
+  background: rgba(93, 62, 45, 0.04);
+  box-shadow: inset 0 0 0 1px rgba(93, 62, 45, 0.08), 0 4px 12px rgba(93, 62, 45, 0.06);
 }
 
 /* ── Reorder Panel ───────────────────────────────────────────── */
@@ -2817,19 +2818,19 @@ button:active,
    ══════════════════════════════════════════════════════════════ */
 
 :root {
-  --bg-apple: #050505;
-  --bg-card-apple: #1c1c1e;
-  --bg-card-active-apple: #2c2c2e;
-  --accent-apple: #fe2c55; /* Apple Music Pink-Red */
-  --accent-gold-apple: #ff9f0a; /* Apple Amber */
-  --text-primary-apple: #ffffff;
-  --text-secondary-apple: rgba(255, 255, 255, 0.6);
-  --text-tertiary-apple: rgba(255, 255, 255, 0.38);
-  --border-apple: rgba(255, 255, 255, 0.08);
-  --glass-apple: rgba(18, 18, 18, 0.76);
-  --glass-border-apple: rgba(255, 255, 255, 0.06);
-  --apple-shadow: 0 16px 40px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  --apple-soft-glow: 0 0 24px rgba(254, 44, 85, 0.18);
+  --bg-apple: #FAF6F0;
+  --bg-card-apple: #FFFFFF;
+  --bg-card-active-apple: #F5EFEB;
+  --accent-apple: #C87E34; /* Elegant warm toasted caramel instead of bright pink */
+  --accent-gold-apple: #E29845;
+  --text-primary-apple: #3D2D24;
+  --text-secondary-apple: rgba(61, 45, 36, 0.72);
+  --text-tertiary-apple: rgba(61, 45, 36, 0.42);
+  --border-apple: rgba(93, 62, 45, 0.08);
+  --glass-apple: rgba(255, 255, 255, 0.86);
+  --glass-border-apple: rgba(93, 62, 45, 0.08);
+  --apple-shadow: 0 12px 32px rgba(93, 62, 45, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.6) inset;
+  --apple-soft-glow: 0 0 24px rgba(200, 126, 52, 0.15);
   --transition-apple: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -3663,13 +3664,15 @@ button:active,
 
 /* ── Apple Music Frosted Bottom Navigation Bar ────────────────── */
 .bottom-app-nav {
-  background: rgba(10, 10, 10, 0.82) !important;
-  border: 1px solid rgba(255, 255, 255, 0.06) !important;
-  box-shadow: 0 16px 40px rgba(0,0,0,0.65) !important;
+  background: rgba(255, 255, 255, 0.84) !important;
+  border: 1px solid rgba(93, 62, 45, 0.08) !important;
+  box-shadow: 0 8px 32px rgba(93, 62, 45, 0.08) !important;
   backdrop-filter: blur(28px) saturate(200%) !important;
-  left: 20px !important;
-  right: 20px !important;
-  bottom: calc(18px + env(safe-area-inset-bottom)) !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: calc(100% - 40px) !important;
+  max-width: 520px !important;
+  bottom: calc(18px + env(safe-area-inset-bottom, 18px)) !important;
   border-radius: 24px !important;
   height: 64px !important;
   min-height: 64px !important;
@@ -3686,7 +3689,7 @@ button:active,
 }
 .bottom-app-nav button.active {
   color: var(--accent-apple) !important;
-  text-shadow: 0 0 10px rgba(254, 44, 85, 0.15);
+  text-shadow: 0 0 10px rgba(200, 126, 52, 0.15);
 }
 .bottom-app-nav button span {
   font-size: 1.4rem !important;
@@ -3698,8 +3701,8 @@ button:active,
 }
 
 .bottom-app-nav .search-nav-button {
-  background: rgba(255,255,255,0.04) !important;
-  border: 1px solid rgba(255,255,255,0.03) !important;
+  background: rgba(93, 62, 45, 0.04) !important;
+  border: 1px solid rgba(93, 62, 45, 0.06) !important;
   box-shadow: none !important;
 }
 
@@ -4277,33 +4280,33 @@ main {
 }
 
 .slot-circle.empty {
-  background: rgba(255, 255, 255, 0.02);
-  border: 2px dashed rgba(255, 215, 150, 0.15);
+  background: rgba(93, 62, 45, 0.04);
+  border: 2px dashed rgba(93, 62, 45, 0.15);
 }
 
 .tray-slot:hover .slot-circle.empty {
-  border-color: rgba(255, 215, 150, 0.4);
-  background: rgba(255, 215, 150, 0.02);
+  border-color: rgba(200, 126, 52, 0.4);
+  background: rgba(200, 126, 52, 0.04);
   transform: scale(1.02);
 }
 
 .slot-num {
   font-size: 1.15rem;
   font-weight: 700;
-  color: rgba(255, 215, 150, 0.25);
+  color: rgba(93, 62, 45, 0.25);
   transition: color 0.3s ease;
 }
 
 .tray-slot:hover .slot-num {
-  color: rgba(255, 215, 150, 0.5);
+  color: rgba(93, 62, 45, 0.5);
 }
 
 .slot-add-icon {
   position: absolute;
   bottom: 6px;
   right: 6px;
-  background: rgba(255, 215, 150, 0.1);
-  color: #ffd796;
+  background: rgba(200, 126, 52, 0.1);
+  color: var(--accent);
   width: 18px;
   height: 18px;
   border-radius: 50%;
@@ -4315,9 +4318,9 @@ main {
 }
 
 .slot-circle.filled {
-  background: rgba(26, 20, 17, 0.7);
-  border: 2px solid #ffd796;
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 215, 150, 0.1);
+  background: rgba(255, 255, 255, 0.9);
+  border: 2px solid var(--accent);
+  box-shadow: 0 6px 16px rgba(93, 62, 45, 0.1);
 }
 
 .slot-circle.filled img {
