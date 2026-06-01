@@ -3104,7 +3104,8 @@ async function handleAccountClick(event) {
 
 const accountPanelContent = document.querySelector("#accountPanelContent");
 
-accountContent.addEventListener("click", handleAccountClick);
+const accountContentEl = document.querySelector("#accountContent");
+if (accountContentEl) accountContentEl.addEventListener("click", handleAccountClick);
 accountPanelContent?.addEventListener("click", handleAccountClick);
 
 const handleAccountSubmit = async (event) => {
@@ -3120,7 +3121,7 @@ const handleAccountSubmit = async (event) => {
   }
 };
 
-accountContent.addEventListener("submit", handleAccountSubmit);
+if (accountContentEl) accountContentEl.addEventListener("submit", handleAccountSubmit);
 accountPanelContent?.addEventListener("submit", handleAccountSubmit);
 
 accountShell.addEventListener("click", async (event) => {
