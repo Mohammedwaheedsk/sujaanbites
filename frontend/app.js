@@ -1682,6 +1682,25 @@ function renderCart() {
     couponDiscount.textContent = `-${formatPrice(totals.discount)}`;
   }
 
+  const singlePieceWarning = document.getElementById("singlePieceWarning");
+  const cartPagePayLabel = document.getElementById("cartPagePayLabel");
+  const invalidSingleOrder = totals.onlySinglePieceItems && totals.singlePieceCount > 0 && totals.singlePieceCount < 3;
+
+  if (singlePieceWarning) {
+    singlePieceWarning.classList.toggle("hidden", !invalidSingleOrder);
+  }
+
+  if (cartPagePayLabel) {
+    cartPagePayLabel.disabled = invalidSingleOrder;
+    if (invalidSingleOrder) {
+      cartPagePayLabel.textContent = "Minimum 3 pieces required";
+      cartPagePayLabel.style.opacity = "0.5";
+    } else {
+      cartPagePayLabel.textContent = `Pay ${formatPrice(totals.total)}`;
+      cartPagePayLabel.style.opacity = "1";
+    }
+  }
+
   const freeDeliveryThreshold = 1599;
   const progress = Math.max(0, Math.min(1, totals.subtotal / freeDeliveryThreshold));
   if (freeDeliveryProgressBar) {
