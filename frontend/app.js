@@ -1617,6 +1617,17 @@ function renderCart() {
   const totals = getTotals();
   syncCouponUi();
   if (itemCount) itemCount.textContent = `${totals.quantity} ${totals.quantity === 1 ? "item" : "items"}`;
+  
+  const headerCartBadge = document.getElementById("headerCartBadge");
+  if (headerCartBadge) {
+    headerCartBadge.textContent = totals.quantity;
+    if (totals.quantity > 0) {
+      headerCartBadge.classList.remove("hidden");
+    } else {
+      headerCartBadge.classList.add("hidden");
+    }
+  }
+
   if (subtotalEl) subtotalEl.textContent = formatPrice(totals.subtotal);
   if (deliveryFeeEl) {
     const qualifiesFree = totals.subtotal > 1599;
