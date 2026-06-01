@@ -3531,7 +3531,8 @@ async function boot() {
 boot();
 
 // ── Interactive Homepage Widgets (Mood Quiz & Custom Box Builder) ─────────
-let customBoxSlots = [null, null, null, null, null, null];
+let boxSize = 6; // Default size: Big Jumbo (6 Pcs)
+let customBoxSlots = Array(boxSize).fill(null);
 let activeQuizMatch = null;
 
 function initInteractiveWidgets() {
@@ -3647,9 +3648,26 @@ function initBoxBuilder() {
   const builderFlavorGrid = document.querySelector("#builderFlavorGrid");
   const addBoxToCartBtn = document.querySelector("#addBoxToCartBtn");
   const clearTrayBtn = document.querySelector("#clearTrayBtn");
-  const trayGrid = document.querySelector(".tray-grid");
+  const trayGrid = document.querySelector("#trayGrid");
+  const sizeSelector = document.querySelector("#traySizeSelector");
 
   if (!builderFlavorGrid || !state.menu.length) return;
+
+  // Listen to Segmented size switch
+  sizeSelector?.addEventListener("click", (event) => {
+    const tab = event.target.closest("[data-size]");
+    if (!tab) return;
+    const newSize = parseInt(tab.dataset.size, 10);
+    if (newSize === boxSize) return;
+
+    sizeSelector.querySelectorAll(".size-tab").forEach((t) => t.classList.remove("active"));
+    tab.classList.add("active");
+
+    boxSize = newSize;
+    customBoxSlots = Array(boxSize).fill(null);
+    if (typeof vibrateTap === "function") vibrateTap(10);
+    renderBoxSlots();
+  });
 
   // Extract all single-pack cookie items from the menu
   const singleItems = state.menu.filter((item) => 
@@ -3717,7 +3735,8 @@ function initBoxBuilder() {
 function addCookieToBox(item) {
   const emptyIndex = customBoxSlots.indexOf(null);
   if (emptyIndex === -1) {
-    alert("Your Assorted Box is already full! Tap a cookie in the tray to remove it and make room.");
+    const boxName = boxSize === 3 ? "Starter Box" : "Big Jumbo";
+    alert(`Your ${boxName} is already full! Tap a cookie in the tray to remove it and make room.`);
     return;
   }
 
@@ -3740,12 +3759,12 @@ function removeCookieFromSlot(index) {
 }
 
 function clearAllSlots() {
-  customBoxSlots = [null, null, null, null, null, null];
+  customBoxSlots = Array(boxSize).fill(null);
   renderBoxSlots();
 }
 
 function renderBoxSlots() {
-  const trayGrid = document.querySelector(".tray-grid");
+  const trayGrid = document.querySelector("#trayGrid");
   const trayTally = document.querySelector("#trayTally");
   const clearTrayBtn = document.querySelector("#clearTrayBtn");
   const addBoxToCartBtn = document.querySelector("#addBoxToCartBtn");
@@ -3756,70 +3775,77 @@ function renderBoxSlots() {
 
   if (!trayGrid) return;
 
+  // Set correct grid columns class based on size
+  trayGrid.style.gridTemplateColumns = boxSize === 3 ? "repeat(3, 1fr)" : "repeat(3, 1fr)";
+
   let filledCount = 0;
   let totalPrice = 0;
+  let slotsHtml = "";
 
-  customBoxSlots.forEach((slot, index) => {
-    const slotNode = trayGrid.querySelector(`[data-slot="${index}"]`);
-    if (!slotNode) return;
-
+  for (let index = 0; index < boxSize; index++) {
+    const slot = customBoxSlots[index];
     if (slot) {
       filledCount++;
       totalPrice += slot.price;
       
-      slotNode.innerHTML = `
-        <div class="slot-circle filled animate-pop">
-          <img src="${slot.image || "assets/hero-food.png"}" alt="${slot.flavor}" />
-          <span class="slot-remove-badge">×</span>
+      slotsHtml += `
+        <div class="tray-slot" data-slot="${index}" title="Click to remove">
+          <div class="slot-circle filled animate-pop">
+            <img src="${slot.image || "assets/hero-food.png"}" alt="${slot.flavor}" />
+            <span class="slot-remove-badge">×</span>
+          </div>
+          <span class="slot-label filled">${slot.flavor}</span>
         </div>
-        <span class="slot-label filled">${slot.flavor}</span>
       `;
     } else {
-      slotNode.innerHTML = `
-        <div class="slot-circle empty">
-          <span class="slot-num">${index + 1}</span>
-          <span class="slot-add-icon">+</span>
+      slotsHtml += `
+        <div class="tray-slot" data-slot="${index}" title="Click to add">
+          <div class="slot-circle empty">
+            <span class="slot-num">${index + 1}</span>
+            <span class="slot-add-icon">+</span>
+          </div>
+          <span class="slot-label">Empty Slot</span>
         </div>
-        <span class="slot-label">Empty Slot</span>
       `;
     }
-  });
+  }
+
+  trayGrid.innerHTML = slotsHtml;
 
   // Update progress bar
-  const progressPercent = (filledCount / 6) * 100;
+  const progressPercent = (filledCount / boxSize) * 100;
   if (trayProgressFill) trayProgressFill.style.width = `${progressPercent}%`;
 
   // Update tallies
-  if (trayTally) trayTally.textContent = `${filledCount} / 6 cookies selected`;
+  const boxName = boxSize === 3 ? "Starter Box" : "Big Jumbo";
+  if (trayTally) trayTally.textContent = `${filledCount} / ${boxSize} cookies selected`;
   if (clearTrayBtn) {
     clearTrayBtn.classList.toggle("hidden", filledCount === 0);
   }
 
   // Pricing & Buttons
-  if (filledCount === 6) {
+  if (filledCount === boxSize) {
     if (addBoxToCartBtn) {
       addBoxToCartBtn.removeAttribute("disabled");
       addBoxToCartBtn.classList.remove("disabled");
-      addBoxToCartBtn.innerHTML = "Assemble & Add Box to Cart ✨";
+      addBoxToCartBtn.innerHTML = `Assemble & Add ${boxName} to Cart ✨`;
     }
 
     if (builderPriceTally) builderPriceTally.classList.remove("hidden");
     
-    // 10% Bundle Discount
-    const discountedPrice = Math.round(totalPrice * 0.9);
-    const savings = totalPrice - discountedPrice;
-    
+    // Regular price sum calculation (No discount!)
     if (customBoxTotalPrice) {
-      customBoxTotalPrice.textContent = formatPrice(discountedPrice);
+      customBoxTotalPrice.textContent = formatPrice(totalPrice);
     }
     if (customBoxSaving) {
-      customBoxSaving.textContent = `Save ${formatPrice(savings)}! (10% Assorted Discount)`;
+      customBoxSaving.textContent = `Premium Assorted ${boxName}`;
+      customBoxSaving.style.color = "var(--text-secondary-apple)";
     }
   } else {
     if (addBoxToCartBtn) {
       addBoxToCartBtn.setAttribute("disabled", "true");
       addBoxToCartBtn.classList.add("disabled");
-      addBoxToCartBtn.innerHTML = "Assemble & Add Box to Cart";
+      addBoxToCartBtn.innerHTML = `Assemble & Add ${boxName} to Cart`;
     }
     if (builderPriceTally) builderPriceTally.classList.add("hidden");
   }
@@ -3827,7 +3853,7 @@ function renderBoxSlots() {
 
 async function addCustomBoxToCart() {
   const filled = customBoxSlots.filter(Boolean);
-  if (filled.length < 6) return;
+  if (filled.length < boxSize) return;
 
   // Count items of each ID selected
   const itemsToAdd = new Map();
@@ -3851,11 +3877,12 @@ async function addCustomBoxToCart() {
   if (typeof openCartPanel === "function") openCartPanel();
 
   // Reset tray
+  const boxName = boxSize === 3 ? "Starter Box" : "Big Jumbo";
   clearAllSlots();
   if (typeof vibrateTap === "function") vibrateTap(30);
 
   // Success feedback message
   setTimeout(() => {
-    alert("✨ Your custom Dream Box of 6 has been assembled and added to your cart! A 10% assorted discount was applied.");
+    alert(`✨ Your custom ${boxName} has been assembled and added to your cart!`);
   }, 100);
 }

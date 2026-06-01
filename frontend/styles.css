@@ -4647,5 +4647,36 @@ main {
   }
 }
 
+/* iOS style segmented switcher */
+.tray-size-selector {
+  display: flex;
+  background: rgba(93, 62, 45, 0.05);
+  border-radius: 14px;
+  padding: 3px;
+  width: 100%;
+  margin-bottom: 20px;
+  border: 1px solid rgba(93, 62, 45, 0.04);
+}
+
+.size-tab {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-radius: 11px;
+  padding: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-secondary-apple);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  text-align: center;
+}
+
+.size-tab.active {
+  background: var(--panel);
+  color: var(--ink);
+  box-shadow: 0 4px 12px rgba(93, 62, 45, 0.06), 0 0 0 1px rgba(93, 62, 45, 0.02);
+}
+
 
 

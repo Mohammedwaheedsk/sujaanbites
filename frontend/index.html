@@ -206,62 +206,27 @@
         </div>
       </div>
 
-      <!-- Dream Box Builder (Custom Box of 6) -->
+      <!-- Dream Box Builder (Starter Box / Big Jumbo) -->
       <div class="box-builder-section glass-container">
         <div class="section-title-wrapper">
           <p class="eyebrow">Creative Experience</p>
           <h2>Dream Box Builder</h2>
-          <p class="section-subtitle">Craft your own custom Box of 6. Tap flavors below to fill your premium assorted tray!</p>
+          <p class="section-subtitle">Craft your own custom box. Tap cookie flavors below to fill your premium tray!</p>
         </div>
 
         <div class="builder-container">
           <!-- Box Slots visualization -->
           <div class="box-tray-wrapper">
             <div class="box-tray glass-card">
-              <div class="tray-grid">
-                <div class="tray-slot" data-slot="0" title="Click to remove">
-                  <div class="slot-circle empty">
-                    <span class="slot-num">1</span>
-                    <span class="slot-add-icon">+</span>
-                  </div>
-                  <span class="slot-label">Empty Slot</span>
-                </div>
-                <div class="tray-slot" data-slot="1" title="Click to remove">
-                  <div class="slot-circle empty">
-                    <span class="slot-num">2</span>
-                    <span class="slot-add-icon">+</span>
-                  </div>
-                  <span class="slot-label">Empty Slot</span>
-                </div>
-                <div class="tray-slot" data-slot="2" title="Click to remove">
-                  <div class="slot-circle empty">
-                    <span class="slot-num">3</span>
-                    <span class="slot-add-icon">+</span>
-                  </div>
-                  <span class="slot-label">Empty Slot</span>
-                </div>
-                <div class="tray-slot" data-slot="3" title="Click to remove">
-                  <div class="slot-circle empty">
-                    <span class="slot-num">4</span>
-                    <span class="slot-add-icon">+</span>
-                  </div>
-                  <span class="slot-label">Empty Slot</span>
-                </div>
-                <div class="tray-slot" data-slot="4" title="Click to remove">
-                  <div class="slot-circle empty">
-                    <span class="slot-num">5</span>
-                    <span class="slot-add-icon">+</span>
-                  </div>
-                  <span class="slot-label">Empty Slot</span>
-                </div>
-                <div class="tray-slot" data-slot="5" title="Click to remove">
-                  <div class="slot-circle empty">
-                    <span class="slot-num">6</span>
-                    <span class="slot-add-icon">+</span>
-                  </div>
-                  <span class="slot-label">Empty Slot</span>
-                </div>
+              <!-- iOS Style Segmented Size Switcher -->
+              <div class="tray-size-selector" id="traySizeSelector">
+                <button class="size-tab" type="button" data-size="3">Starter Box (3 Pcs)</button>
+                <button class="size-tab active" type="button" data-size="6">Big Jumbo (6 Pcs)</button>
               </div>
+
+              <!-- Slots container dynamically rendered by JS -->
+              <div class="tray-grid" id="trayGrid"></div>
+              
               <div class="tray-progress-container">
                 <div class="tray-progress-bar">
                   <div class="tray-progress-fill" id="trayProgressFill" style="width: 0%"></div>
