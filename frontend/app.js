@@ -1745,61 +1745,63 @@ function renderProfileSetup() {
 
   if (!hasSavedIdentity || state.addressMode === "profile") {
     accountContent.innerHTML = `
-    <form class="auth-form" id="profileSetupForm">
-      <label>
-        Name
-        <input id="profileName" type="text" placeholder="Your name" value="${existing.name || ""}" required />
-      </label>
-      <label>
-        Phone number
-        <input id="profilePhone" type="tel" inputmode="numeric" placeholder="10-digit mobile" value="${existing.phone || ""}" required />
-      </label>
-      <div class="map-picker">
-        <div class="map-actions">
-          <div>
-            <strong>Pin your delivery location</strong>
+    <div class="account-page-view slide-in profile-setup-page">
+      <form class="auth-form ios-form" id="profileSetupForm">
+        <label class="ios-input-group">
+          <span>Name</span>
+          <input id="profileName" type="text" placeholder="Your name" value="${existing.name || ""}" required />
+        </label>
+        <label class="ios-input-group">
+          <span>Phone number</span>
+          <input id="profilePhone" type="tel" inputmode="numeric" placeholder="10-digit mobile" value="${existing.phone || ""}" required />
+        </label>
+        <div class="map-picker ios-map-picker">
+          <div class="map-actions ios-map-actions">
+            <div>
+              <strong>Pin your delivery location</strong>
               <small>Choose the exact pin point anywhere in India.</small>
+            </div>
+            <button class="secondary-button ios-location-btn" id="useLocationButton" type="button">Use current location</button>
           </div>
-          <button class="secondary-button" id="useLocationButton" type="button">Use current location</button>
+          <div class="map-canvas ios-map-canvas" id="locationMap" aria-label="Map for choosing delivery location"></div>
+          <p class="form-note" id="locationStatus">Choose your location on the map before saving.</p>
         </div>
-        <div class="map-canvas" id="locationMap" aria-label="Map for choosing delivery location"></div>
-        <p class="form-note" id="locationStatus">Choose your location on the map before saving.</p>
-      </div>
-      <label>
-        House number
-        <input id="houseNumber" type="text" placeholder="Flat / house / shop number" value="${savedAddress?.houseNumber || ""}" required />
-      </label>
-      <label>
-        Street name
-        <input id="streetName" type="text" placeholder="Street / building / area" value="${savedAddress?.streetName || ""}" required />
-      </label>
-      <label>
-        Address type
-        <select id="addressType" required>
-          <option value="Home" ${savedAddress?.type === "Home" ? "selected" : ""}>Home</option>
-          <option value="Work" ${savedAddress?.type === "Work" ? "selected" : ""}>Work</option>
-          <option value="Other" ${savedAddress?.type === "Other" ? "selected" : ""}>Other</option>
-        </select>
-      </label>
-      <label>
-        Map address
-        <textarea id="savedAddress" rows="3" placeholder="Area from selected pin" required>${savedAddress?.address || ""}</textarea>
-      </label>
-      <label>
-        Nearby landmark
-        <input id="savedLandmark" type="text" placeholder="Optional landmark" value="${savedAddress?.landmark || ""}" />
-      </label>
-      <button class="pay-button" type="submit">${state.profile ? "Save details" : "Save details"}</button>
-      <p class="form-note">Up to 10 addresses can be saved. All-India delivery is supported.</p>
-    </form>
+        <label class="ios-input-group">
+          <span>House number</span>
+          <input id="houseNumber" type="text" placeholder="Flat / house / shop number" value="${savedAddress?.houseNumber || ""}" required />
+        </label>
+        <label class="ios-input-group">
+          <span>Street name</span>
+          <input id="streetName" type="text" placeholder="Street / building / area" value="${savedAddress?.streetName || ""}" required />
+        </label>
+        <label class="ios-input-group">
+          <span>Address type</span>
+          <select id="addressType" required>
+            <option value="Home" ${savedAddress?.type === "Home" ? "selected" : ""}>Home</option>
+            <option value="Work" ${savedAddress?.type === "Work" ? "selected" : ""}>Work</option>
+            <option value="Other" ${savedAddress?.type === "Other" ? "selected" : ""}>Other</option>
+          </select>
+        </label>
+        <label class="ios-input-group">
+          <span>Map address</span>
+          <textarea id="savedAddress" rows="2" placeholder="Area from selected pin" required>${savedAddress?.address || ""}</textarea>
+        </label>
+        <label class="ios-input-group">
+          <span>Nearby landmark</span>
+          <input id="savedLandmark" type="text" placeholder="Optional landmark" value="${savedAddress?.landmark || ""}" />
+        </label>
+        <button class="pay-button ios-submit-btn" type="submit">Save details</button>
+        <p class="form-note">Up to 10 addresses can be saved. All-India delivery is supported.</p>
+      </form>
+    </div>
     `;
   } else {
     accountContent.innerHTML = `
-      <div class="saved-user">
+      <div class="account-page-view slide-in saved-user ios-profile-fallback">
         <strong>${state.profile.name}</strong>
         <p>${state.profile.phone}</p>
         <div class="account-actions">
-          <button class="secondary-button" type="button" data-account-action="logout">Logout</button>
+          <button class="secondary-button ios-logout-btn" type="button" data-account-action="logout">Logout</button>
         </div>
       </div>
     `;
@@ -1827,68 +1829,77 @@ function renderAddresses() {
     : null;
 
   accountContent.innerHTML = `
-    <div class="saved-address">
-      ${state.addresses.length ? state.addresses.map((address) => `
-        <div class="address-item ${address.id === state.selectedAddressId ? "selected" : ""}">
-          <div>
-            <strong>${address.type || "Delivery"} address${address.id === state.selectedAddressId ? " (Selected)" : ""}</strong>
-            <p>${formatMultilineAddress(address).replaceAll("\n", "<br>")}</p>
-          </div>
-          <div class="account-actions">
-            <button class="secondary-button" type="button" data-select-address="${address.id}">Use</button>
-            <button class="secondary-button" type="button" data-edit-address="${address.id}">Edit</button>
-            <button class="secondary-button danger" type="button" data-delete-address="${address.id}">Delete</button>
-          </div>
-        </div>
-      `).join("") : '<p class="empty">No saved addresses yet.</p>'}
-      <button class="secondary-button" type="button" data-account-action="add-address" ${state.addresses.length >= MAX_ADDRESSES ? "disabled" : ""}>
-        Add new address
-      </button>
-      <p class="form-note">Saved addresses stay here until you log out.</p>
-    </div>
-
-    ${addressFormOpen ? `
-      <form class="auth-form" id="addressForm">
-        <h3>${addressToEdit ? "Edit address" : "Add address"}</h3>
-        <label>
-          House number
-          <input id="houseNumber" type="text" placeholder="Flat / house / shop number" value="${addressToEdit?.houseNumber || ""}" required />
-        </label>
-        <label>
-          Street name
-          <input id="streetName" type="text" placeholder="Street / building / area" value="${addressToEdit?.streetName || ""}" required />
-        </label>
-        <label>
-          Address type
-          <select id="addressType" required>
-            <option value="Home" ${addressToEdit?.type === "Home" ? "selected" : ""}>Home</option>
-            <option value="Work" ${addressToEdit?.type === "Work" ? "selected" : ""}>Work</option>
-            <option value="Other" ${addressToEdit?.type === "Other" ? "selected" : ""}>Other</option>
-          </select>
-        </label>
-        <div class="map-picker">
-          <div class="map-actions">
-            <div>
-              <strong>Pin your delivery location</strong>
-              <small>Pick the exact delivery point on the map.</small>
+    <div class="account-page-view slide-in addresses-page">
+      <div class="saved-address ios-grouped-container">
+        ${state.addresses.length ? state.addresses.map((address) => `
+          <div class="address-item ios-address-card ${address.id === state.selectedAddressId ? "selected" : ""}">
+            <div class="ios-address-head">
+              <span class="address-badge-icon">📍</span>
+              <div>
+                <strong>${address.type || "Delivery"} Address${address.id === state.selectedAddressId ? " (Selected)" : ""}</strong>
+                <p class="ios-address-text">${formatMultilineAddress(address).replaceAll("\n", "<br>")}</p>
+              </div>
             </div>
-            <button class="secondary-button" id="useLocationButton" type="button">Use current location</button>
+            <div class="account-actions ios-card-actions">
+              <button class="ios-action-btn select" type="button" data-select-address="${address.id}">Use</button>
+              <button class="ios-action-btn edit" type="button" data-edit-address="${address.id}">Edit</button>
+              <button class="ios-action-btn delete danger" type="button" data-delete-address="${address.id}">Delete</button>
+            </div>
           </div>
-          <div class="map-canvas" id="locationMap" aria-label="Map for choosing delivery location"></div>
-          <p class="form-note" id="locationStatus">Choose your location on the map before saving.</p>
+        `).join("") : '<p class="empty">No saved addresses yet.</p>'}
+        
+        <div class="add-address-btn-container">
+          <button class="ios-add-address-btn" type="button" data-account-action="add-address" ${state.addresses.length >= MAX_ADDRESSES ? "disabled" : ""}>
+            + Add New Address
+          </button>
         </div>
-        <label>
-          Map address
-          <textarea id="savedAddress" rows="3" placeholder="Area from selected pin" required>${addressToEdit?.address || ""}</textarea>
-        </label>
-        <label>
-          Nearby landmark
-          <input id="savedLandmark" type="text" placeholder="Optional landmark" value="${addressToEdit?.landmark || ""}" />
-        </label>
-        <button class="pay-button" type="submit">${addressToEdit ? "Save address" : "Save address"}</button>
-        <p class="form-note">All-India delivery is supported.</p>
-      </form>
-    ` : ""}
+        <p class="form-note">Saved addresses are stored locally on this device.</p>
+      </div>
+
+      ${addressFormOpen ? `
+        <div class="ios-form-container slide-in">
+          <form class="auth-form ios-form" id="addressForm">
+            <h3>${addressToEdit ? "Edit Address Details" : "New Address Details"}</h3>
+            <label class="ios-input-group">
+              <span>House Number</span>
+              <input id="houseNumber" type="text" placeholder="Flat / house / shop number" value="${addressToEdit?.houseNumber || ""}" required />
+            </label>
+            <label class="ios-input-group">
+              <span>Street Name</span>
+              <input id="streetName" type="text" placeholder="Street / building / area" value="${addressToEdit?.streetName || ""}" required />
+            </label>
+            <label class="ios-input-group">
+              <span>Address Type</span>
+              <select id="addressType" required>
+                <option value="Home" ${addressToEdit?.type === "Home" ? "selected" : ""}>Home</option>
+                <option value="Work" ${addressToEdit?.type === "Work" ? "selected" : ""}>Work</option>
+                <option value="Other" ${addressToEdit?.type === "Other" ? "selected" : ""}>Other</option>
+              </select>
+            </label>
+            <div class="map-picker ios-map-picker">
+              <div class="map-actions ios-map-actions">
+                <div>
+                  <strong>Pin your delivery location</strong>
+                  <small>Pick the exact delivery point on the map.</small>
+                </div>
+                <button class="secondary-button ios-location-btn" id="useLocationButton" type="button">Current Location</button>
+              </div>
+              <div class="map-canvas ios-map-canvas" id="locationMap" aria-label="Map for choosing delivery location"></div>
+              <p class="form-note" id="locationStatus">Choose your location on the map before saving.</p>
+            </div>
+            <label class="ios-input-group">
+              <span>Map Address</span>
+              <textarea id="savedAddress" rows="2" placeholder="Area from selected pin" required>${addressToEdit?.address || ""}</textarea>
+            </label>
+            <label class="ios-input-group">
+              <span>Nearby Landmark</span>
+              <input id="savedLandmark" type="text" placeholder="Optional landmark" value="${addressToEdit?.landmark || ""}" />
+            </label>
+            <button class="pay-button ios-submit-btn" type="submit">${addressToEdit ? "Save Address" : "Add Address"}</button>
+          </form>
+        </div>
+      ` : ""}
+    </div>
   `;
 
   if (addressToEdit?.location) {
@@ -1907,37 +1918,56 @@ function renderAddresses() {
 function renderOrdersTab() {
   accountShellTitle.textContent = "Previous orders";
   if (!state.previousOrders.length) {
-    accountContent.innerHTML = '<p class="empty">No previous orders yet.</p>';
+    accountContent.innerHTML = `
+      <div class="account-page-view slide-in empty-orders-page">
+        <p class="empty">No previous orders yet. Start adding treats to your cart!</p>
+      </div>
+    `;
     return;
   }
 
   accountContent.innerHTML = `
-    <div class="order-history">
-      ${state.previousOrders
-        .map(
-          (order) => {
-            const deliveryLine =
-              order.status === "cancelled"
-                ? "Order cannot be delivered."
-                : order?.deliveryMeta?.isLongDistance === true || order?.deliveryWindow === "3-7 days"
-                  ? "Delivery in 3-7 days"
-                : order.etaMinutes
-                  ? `${order.etaMinutes} minutes to reach your location`
-                  : "";
-            return `
-            <article class="history-card">
-              <strong>${order.id} - ${formatPrice(order.totals.total)}</strong>
-              <span>${new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(order.createdAt))}</span>
-              <span>Status: ${String(order.status || "").replaceAll("_", " ")}</span>
-              <span>Payment: ${String(order.paymentStatus || "").replaceAll("_", " ")}</span>
-              ${deliveryLine ? `<span>${deliveryLine}</span>` : ""}
-              <span>${order.items.map((item) => `${item.name} x ${item.quantity}`).join(", ")}</span>
-            </article>
-          `;
+    <div class="account-page-view slide-in order-history-page">
+      <div class="order-history">
+        ${state.previousOrders
+          .map(
+            (order) => {
+              const deliveryLine =
+                order.status === "cancelled"
+                  ? "Order cannot be delivered."
+                  : order?.deliveryMeta?.isLongDistance === true || order?.deliveryWindow === "3-7 days"
+                    ? "Delivery in 3-7 days"
+                  : order.etaMinutes
+                    ? `${order.etaMinutes} minutes to reach your location`
+                    : "";
+              
+              let statusClass = "pending";
+              if (order.status === "delivered") statusClass = "success";
+              if (order.status === "cancelled") statusClass = "danger";
+              
+              return `
+              <article class="history-card ios-card">
+                <div class="ios-card-header">
+                  <strong>Order #${order.id.slice(-6).toUpperCase()}</strong>
+                  <span class="status-pill ${statusClass}">${String(order.status || "").replaceAll("_", " ")}</span>
+                </div>
+                <div class="ios-card-body">
+                  <span>${new Intl.DateTimeFormat("en-IN", { dateStyle: "medium", timeStyle: "short" }).format(new Date(order.createdAt))}</span>
+                  <span>Payment: <strong>${String(order.paymentStatus || "").replaceAll("_", " ")}</strong></span>
+                  ${deliveryLine ? `<span class="delivery-time">${deliveryLine}</span>` : ""}
+                  <p class="order-items">${order.items.map((item) => `${item.name} x ${item.quantity}`).join(", ")}</p>
+                </div>
+                <div class="ios-card-footer">
+                  <span>Total Amount</span>
+                  <strong>${formatPrice(order.totals.total)}</strong>
+                </div>
+              </article>
+            `;
           },
         )
         .join("")}
     </div>
+  </div>
   `;
 }
 
@@ -2030,21 +2060,88 @@ function renderSpendsTab() {
   accountShellTitle.textContent = "Past spends";
   const spends = calculateSpends(state.previousOrders);
   const totalOrders = state.previousOrders.filter((order) => order?.status !== "cancelled").length;
+  const activeOrders = state.previousOrders.filter(isVisibleCustomerOrder);
+  const avgOrder = totalOrders > 0 ? spends.total / totalOrders : 0;
+
+  const ordersForChart = [...activeOrders].slice(0, 5).reverse();
+  let chartHtml = "";
+  if (ordersForChart.length) {
+    const maxTotal = Math.max(...ordersForChart.map(o => Number(o?.totals?.total || 0)), 1);
+    chartHtml = ordersForChart.map(order => {
+      const amt = Number(order?.totals?.total || 0);
+      const pct = Math.max(12, Math.round((amt / maxTotal) * 100));
+      const dateLabel = new Intl.DateTimeFormat("en-IN", { day: "numeric", month: "short" }).format(new Date(order.createdAt));
+      return `
+        <div class="chart-bar-container">
+          <div class="chart-bar-value">${formatPrice(amt)}</div>
+          <div class="chart-bar" style="height: ${pct}%">
+            <div class="chart-bar-fill"></div>
+          </div>
+          <div class="chart-bar-label">${dateLabel}</div>
+        </div>
+      `;
+    }).join("");
+  } else {
+    chartHtml = `
+      <div class="chart-bar-container placeholder">
+        <div class="chart-bar" style="height: 40%"><div class="chart-bar-fill"></div></div>
+        <div class="chart-bar-label">Mon</div>
+      </div>
+      <div class="chart-bar-container placeholder">
+        <div class="chart-bar" style="height: 70%"><div class="chart-bar-fill"></div></div>
+        <div class="chart-bar-label">Tue</div>
+      </div>
+      <div class="chart-bar-container placeholder">
+        <div class="chart-bar" style="height: 50%"><div class="chart-bar-fill"></div></div>
+        <div class="chart-bar-label">Wed</div>
+      </div>
+      <div class="chart-bar-container placeholder">
+        <div class="chart-bar" style="height: 85%"><div class="chart-bar-fill"></div></div>
+        <div class="chart-bar-label">Thu</div>
+      </div>
+      <div class="chart-bar-container placeholder">
+        <div class="chart-bar" style="height: 60%"><div class="chart-bar-fill"></div></div>
+        <div class="chart-bar-label">Fri</div>
+      </div>
+    `;
+  }
 
   accountContent.innerHTML = `
-    <div class="spend-summary">
-      <article class="spend-card total">
-        <strong>${formatPrice(spends.total)}</strong>
-        <small>Total spend</small>
-      </article>
-      <article class="spend-card">
-        <strong>${formatPrice(spends.upi)}</strong>
-        <small>Prepaid spend</small>
-      </article>
-      <article class="spend-card total">
-        <strong>${totalOrders}</strong>
-        <small>Completed/active orders counted</small>
-      </article>
+    <div class="account-page-view slide-in spend-analytics-page">
+      <div class="apple-card-mockup">
+        <div class="apple-card-chip"></div>
+        <div class="apple-card-balance">
+          <small>CURRENT STATEMENT</small>
+          <h2>${formatPrice(spends.total)}</h2>
+        </div>
+        <div class="apple-card-footer">
+          <strong>Sujaan Platinum Cookie Card</strong>
+          <span>Visa Platinum</span>
+        </div>
+      </div>
+
+      <div class="analytics-metrics-grid">
+        <div class="metric-card">
+          <small>TOTAL SPENT</small>
+          <strong>${formatPrice(spends.total)}</strong>
+        </div>
+        <div class="metric-card">
+          <small>AVG ORDER COST</small>
+          <strong>${formatPrice(avgOrder)}</strong>
+        </div>
+        <div class="metric-card">
+          <small>ORDERS PLACED</small>
+          <strong>${totalOrders}</strong>
+        </div>
+      </div>
+
+      <div class="apple-card-chart-section">
+        <h3>Statement Activity</h3>
+        <div class="apple-card-chart">
+          ${chartHtml}
+        </div>
+        ${!activeOrders.length ? '<p class="chart-hint">Mock activity shown. Start ordering to unlock your real statement graphs!</p>' : ""}
+      </div>
     </div>
   `;
 }
@@ -2052,13 +2149,28 @@ function renderSpendsTab() {
 function renderCareTab() {
   accountShellTitle.textContent = "Customer care";
   accountContent.innerHTML = `
-    <div class="saved-user">
-      <strong>Need help?</strong>
-      <p>Call ${BUSINESS.whatsappNumber} or email ${BUSINESS.customerCareEmail}. Share your order ID for faster help.</p>
-      <div class="customer-care-actions">
-        <a class="secondary-link" href="tel:${BUSINESS.whatsappNumber}">Call now</a>
-        <a class="secondary-link" href="https://wa.me/91${BUSINESS.whatsappNumber}?text=${encodeURIComponent("Hi Sujaan Bites, I need help with my order.")}" target="_blank" rel="noreferrer">WhatsApp</a>
-        <a class="secondary-link" href="mailto:${BUSINESS.customerCareEmail}">Email us</a>
+    <div class="account-page-view slide-in customer-care-page">
+      <div class="ios-support-card">
+        <div class="ios-support-icon">🎧</div>
+        <h3>Need Help with an Order?</h3>
+        <p>We're here for you 24/7. Have your Order ID ready for lightning-fast support.</p>
+      </div>
+      <div class="customer-care-grid">
+        <a class="support-action-card call" href="tel:${BUSINESS.whatsappNumber}">
+          <span class="support-icon">📞</span>
+          <strong>Call Hotline</strong>
+          <small>Direct voice support</small>
+        </a>
+        <a class="support-action-card whatsapp" href="https://wa.me/91${BUSINESS.whatsappNumber}?text=${encodeURIComponent("Hi Sujaan Bites, I need help with my order.")}" target="_blank" rel="noreferrer">
+          <span class="support-icon">💬</span>
+          <strong>WhatsApp</strong>
+          <small>Instant text chat</small>
+        </a>
+        <a class="support-action-card email" href="mailto:${BUSINESS.customerCareEmail}">
+          <span class="support-icon">✉️</span>
+          <strong>Email Support</strong>
+          <small>Send us an email</small>
+        </a>
       </div>
     </div>
   `;
@@ -2068,13 +2180,57 @@ function renderAccount() {
   if (!accountShell || !accountOverlay || !accountContent) return;
   accountShell.classList.toggle("open", state.drawerOpen);
   accountOverlay.classList.toggle("open", state.drawerOpen);
-  accountLogoutButton?.classList.toggle("hidden", !getResolvedCustomerProfile());
+  
+  accountLogoutButton?.classList.add("hidden");
+
+  const hasProfile = getResolvedCustomerProfile() || state.profile;
+  const isDashboardView = hasProfile && state.activeTab === "profile" && state.addressMode !== "profile";
+
+  const backBtn = document.querySelector("#accountBackButton");
+  const eyebrow = document.querySelector("#accountShellEyebrow");
+  const title = document.querySelector("#accountShellTitle");
+
+  if (backBtn) {
+    if (isDashboardView || !hasProfile) {
+      backBtn.classList.add("hidden");
+    } else {
+      backBtn.classList.remove("hidden");
+    }
+  }
+
+  if (eyebrow) {
+    eyebrow.textContent = hasProfile ? "Settings" : "Onboarding";
+  }
+
+  if (title) {
+    if (!hasProfile) {
+      title.textContent = "Complete your details";
+    } else if (isDashboardView) {
+      title.textContent = "Account";
+    } else if (state.activeTab === "profile") {
+      title.textContent = "Edit Profile";
+    } else if (state.activeTab === "addresses") {
+      title.textContent = "Saved Addresses";
+    } else if (state.activeTab === "orders") {
+      title.textContent = "Order History";
+    } else if (state.activeTab === "spends") {
+      title.textContent = "Spend Analytics";
+    } else if (state.activeTab === "care") {
+      title.textContent = "Customer Care";
+    }
+  }
 
   accountTabs.forEach((tab) => {
     tab.classList.toggle("active", tab.dataset.accountTab === state.activeTab);
   });
 
-  if (state.activeTab === "profile") {
+  if (!hasProfile) {
+    state.activeTab = "profile";
+    state.addressMode = "profile";
+    renderProfileSetup();
+  } else if (isDashboardView) {
+    renderAccountDashboard();
+  } else if (state.activeTab === "profile") {
     renderProfileSetup();
   } else if (state.activeTab === "addresses") {
     renderAddresses();
@@ -2089,6 +2245,69 @@ function renderAccount() {
   renderCart();
   syncCheckoutFields();
   renderReorderPanel();
+}
+
+function renderAccountDashboard() {
+  const profile = getResolvedCustomerProfile() || state.profile || {};
+  accountContent.innerHTML = `
+    <div class="account-dashboard-page slide-active">
+      <div class="ios-profile-header">
+        <div class="ios-avatar-circle">
+          <span>${(profile.name || "S")[0].toUpperCase()}</span>
+        </div>
+        <div class="ios-profile-meta">
+          <h3>${profile.name || "Valued Customer"}</h3>
+          <p>${profile.phone || ""}</p>
+        </div>
+        <button class="ios-profile-edit-btn" id="iosEditProfileBtn" type="button">Edit</button>
+      </div>
+      
+      <div class="ios-list-group">
+        <button class="ios-list-row" type="button" data-nav-subpage="addresses">
+          <div class="ios-row-left">
+            <span class="ios-row-icon address-icon">📍</span>
+            <span class="ios-row-label">Saved Addresses</span>
+          </div>
+          <div class="ios-row-right">
+            <span class="ios-row-badge">${state.addresses?.length || 0}</span>
+            <span class="ios-row-chevron">›</span>
+          </div>
+        </button>
+        <button class="ios-list-row" type="button" data-nav-subpage="orders">
+          <div class="ios-row-left">
+            <span class="ios-row-icon orders-icon">📦</span>
+            <span class="ios-row-label">Previous Orders</span>
+          </div>
+          <div class="ios-row-right">
+            <span class="ios-row-badge">${state.previousOrders?.length || 0}</span>
+            <span class="ios-row-chevron">›</span>
+          </div>
+        </button>
+        <button class="ios-list-row" type="button" data-nav-subpage="spends">
+          <div class="ios-row-left">
+            <span class="ios-row-icon spends-icon">💳</span>
+            <span class="ios-row-label">Past Spends</span>
+          </div>
+          <div class="ios-row-right">
+            <span class="ios-row-chevron">›</span>
+          </div>
+        </button>
+        <button class="ios-list-row" type="button" data-nav-subpage="care">
+          <div class="ios-row-left">
+            <span class="ios-row-icon care-icon">💬</span>
+            <span class="ios-row-label">Customer Care</span>
+          </div>
+          <div class="ios-row-right">
+            <span class="ios-row-chevron">›</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="ios-logout-container">
+        <button class="ios-logout-btn" type="button" id="iosLogoutBtn">Log Out</button>
+      </div>
+    </div>
+  `;
 }
 
 async function logoutCustomer() {
@@ -2730,6 +2949,15 @@ couponCodeInput?.addEventListener("keydown", (event) => {
 closeSidebarBtn.addEventListener("click", closeDrawer);
 accountOverlay.addEventListener("click", closeDrawer);
 
+const accountBackButton = document.querySelector("#accountBackButton");
+if (accountBackButton) {
+  accountBackButton.addEventListener("click", () => {
+    state.activeTab = "profile";
+    state.addressMode = null;
+    renderAccount();
+  });
+}
+
 accountTabs.forEach((tab) => {
   tab.addEventListener("click", async () => {
     state.activeTab = tab.dataset.accountTab;
@@ -2739,6 +2967,30 @@ accountTabs.forEach((tab) => {
     }
     renderAccount();
   });
+});
+
+accountContent.addEventListener("click", async (event) => {
+  const subpage = event.target.closest("[data-nav-subpage]")?.dataset.navSubpage;
+  if (subpage) {
+    state.activeTab = subpage;
+    if (subpage === "orders" || subpage === "spends") {
+      await loadOrdersForAccount();
+    }
+    renderAccount();
+    return;
+  }
+
+  if (event.target.closest("#iosEditProfileBtn")) {
+    state.activeTab = "profile";
+    state.addressMode = "profile";
+    renderAccount();
+    return;
+  }
+
+  if (event.target.closest("#iosLogoutBtn")) {
+    await logoutCustomer();
+    return;
+  }
 });
 
 accountContent.addEventListener("submit", async (event) => {
