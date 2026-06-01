@@ -7,6 +7,7 @@
 :root {
   color-scheme: light;
   --bg: #FAF6F0; /* Soft creamy ivory */
+  --bg-primary: #FAF6F0;
   --panel: #FFFFFF; /* Pure elegant white for panels */
   --card: #F5EFEB; /* Soft butter cream beige for cards */
   --ink: #3D2D24; /* Rich dark espresso brown for primary text */
@@ -2858,18 +2859,18 @@ button:active,
 
 :root {
   --bg-apple: var(--bg-primary);
-  --bg-card-apple: rgba(255, 255, 255, 0.03);
-  --bg-card-active-apple: rgba(255, 255, 255, 0.06);
+  --bg-card-apple: rgba(255, 251, 245, 0.96);
+  --bg-card-active-apple: rgba(217, 119, 6, 0.08);
   --accent-apple: var(--accent);
   --accent-gold-apple: var(--accent-deep);
   --text-primary-apple: var(--ink);
-  --text-secondary-apple: rgba(253, 251, 247, 0.72);
-  --text-tertiary-apple: rgba(253, 251, 247, 0.42);
-  --border-apple: var(--glass-border);
-  --glass-apple: rgba(12, 8, 6, 0.86);
-  --glass-border-apple: var(--glass-border);
-  --apple-shadow: var(--shadow-md);
-  --apple-soft-glow: 0 0 24px rgba(212, 160, 84, 0.15);
+  --text-secondary-apple: var(--muted);
+  --text-tertiary-apple: rgba(107, 87, 73, 0.62);
+  --border-apple: rgba(93, 62, 45, 0.1);
+  --glass-apple: rgba(255, 251, 245, 0.9);
+  --glass-border-apple: rgba(93, 62, 45, 0.08);
+  --apple-shadow: 0 12px 32px rgba(93, 62, 45, 0.08);
+  --apple-soft-glow: 0 0 24px rgba(217, 119, 6, 0.12);
   --transition-apple: cubic-bezier(0.16, 1, 0.3, 1);
 }
 
@@ -4679,6 +4680,5 @@ main {
   color: var(--ink);
   box-shadow: 0 4px 12px rgba(93, 62, 45, 0.06), 0 0 0 1px rgba(93, 62, 45, 0.02);
 }
-
 
 
