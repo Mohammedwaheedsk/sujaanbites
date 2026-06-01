@@ -1234,7 +1234,7 @@ textarea {
   left: 10px;
   right: 10px;
   bottom: calc(14px + env(safe-area-inset-bottom));
-  width: min(640px, 100%);
+  width: min(640px, calc(100% - 20px));
   max-height: calc(100dvh - 44px);
   z-index: 205;
   margin: 0 auto;
@@ -2199,7 +2199,7 @@ textarea {
   right: 10px;
   bottom: calc(14px + env(safe-area-inset-bottom));
   z-index: 205;
-  width: min(640px, 100%);
+  width: min(640px, calc(100% - 20px));
   max-height: calc(100dvh - 44px);
   overflow-y: auto;
   overscroll-behavior: contain;
@@ -2901,10 +2901,14 @@ button:active,
 @media (max-width: 500px) {
   .account-shell {
     top: 8% !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
     border-top-left-radius: 32px !important;
     border-top-right-radius: 32px !important;
     border-bottom-left-radius: 0 !important;
-    width: 100vw !important;
+    border-bottom-right-radius: 0 !important;
+    width: 100% !important;
     transform: translateY(100%) !important;
     transition: transform 0.4s var(--transition-apple), visibility 0s 0.4s;
     box-shadow: 0 -12px 36px rgba(0, 0, 0, 0.7);
