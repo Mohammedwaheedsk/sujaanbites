@@ -12,11 +12,11 @@
   --ink: #3D2D24; /* Rich dark espresso brown for primary text */
   --muted: #8E7D73; /* Sophisticated warm mocha for secondary text */
   --line: rgba(93, 62, 45, 0.08); /* Warm brown borders */
-  --accent: #C87E34; /* Toasted honey-amber gold */
-  --accent-deep: #A05C1F; /* Rich caramel gold */
-  --accent-glow: rgba(200, 126, 52, 0.08); /* Soft honey glow background */
-  --accent-2: #3E8E5A; /* Forest green */
-  --danger: #D04D4D; /* Warm red */
+  --accent: #D97706; /* Vibrant amber gold */
+  --accent-deep: #B45309; /* Deep rust orange */
+  --accent-glow: rgba(217, 119, 6, 0.12); /* Slightly stronger soft honey glow background */
+  --accent-2: #16A34A; /* Vibrant emerald green */
+  --danger: #DC2626; /* Bright crimson red */
   --shadow-lg: 0 16px 36px rgba(93, 62, 45, 0.08), 0 0 0 1px rgba(93, 62, 45, 0.04);
   --shadow-md: 0 8px 24px rgba(93, 62, 45, 0.06);
   --radius-xl: 28px;
@@ -448,9 +448,9 @@ body[data-page="home"] .topbar {
   min-height: 34px;
   padding: 0 14px;
   border-radius: 999px;
-  background: rgba(212, 160, 84, 0.1);
-  border: 1px solid rgba(212, 160, 84, 0.15);
-  color: var(--accent-glow);
+  background: rgba(212, 160, 84, 0.15);
+  border: 1px solid rgba(212, 160, 84, 0.25);
+  color: var(--accent-deep);
   font-size: 0.78rem;
   font-weight: 700;
   backdrop-filter: blur(12px);
@@ -529,7 +529,7 @@ h2 {
 
 .filter:hover {
   background: rgba(212, 160, 84, 0.08);
-  color: var(--accent-glow);
+  color: var(--accent);
   border-color: rgba(212, 160, 84, 0.18);
 }
 
@@ -649,7 +649,7 @@ h2 {
 }
 
 .price-line {
-  color: var(--accent-glow);
+  color: var(--accent);
   line-height: 1;
 }
 
@@ -672,7 +672,7 @@ h2 {
 
 .availability.on {
   background: rgba(212, 160, 84, 0.12);
-  color: var(--accent-glow);
+  color: var(--accent);
 }
 
 .availability.off {
@@ -686,7 +686,7 @@ h2 {
   border: 1px solid rgba(212, 160, 84, 0.3);
   border-radius: 999px;
   background: rgba(212, 160, 84, 0.1);
-  color: var(--accent-glow);
+  color: var(--accent);
   font-weight: 800;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -720,7 +720,7 @@ h2 {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: var(--accent-glow);
+  color: var(--accent);
   font-size: 1.25rem;
   line-height: 1;
   cursor: pointer;
@@ -816,7 +816,7 @@ h2 {
   padding: 6px 10px;
   border-radius: 999px;
   background: rgba(212, 160, 84, 0.12);
-  color: var(--accent-glow);
+  color: var(--accent);
   font-weight: 900;
   font-size: 0.82rem;
   border: 1px solid rgba(212, 160, 84, 0.18);
@@ -1310,7 +1310,7 @@ textarea {
 
 .account-tab:hover {
   background: rgba(212, 160, 84, 0.06);
-  color: var(--accent-glow);
+  color: var(--accent);
 }
 
 .account-tab.active {
@@ -1634,7 +1634,7 @@ textarea {
 }
 
 .star-button.active {
-  color: var(--accent-glow);
+  color: var(--accent);
   border-color: var(--accent);
   background: rgba(212, 160, 84, 0.12);
   box-shadow: 0 0 12px rgba(212, 160, 84, 0.15);
@@ -1760,7 +1760,7 @@ textarea {
 }
 
 .menu-fab-sheet button:hover {
-  color: var(--accent-glow);
+  color: var(--accent);
 }
 
 .menu-fab-backdrop {
@@ -1850,7 +1850,7 @@ textarea {
   min-width: 150px;
   border-color: rgba(212, 160, 84, 0.25);
   background: rgba(212, 160, 84, 0.08);
-  color: var(--accent-glow);
+  color: var(--accent);
 }
 
 .item-preview-moreinfo:hover {
@@ -2068,7 +2068,7 @@ textarea {
   min-height: 48px;
   border-color: rgba(212, 160, 84, 0.25);
   background: rgba(212, 160, 84, 0.08);
-  color: var(--accent-glow);
+  color: var(--accent);
 }
 
 .flavor-sheet-actions .secondary-link:active {
@@ -2819,7 +2819,7 @@ button:active,
 
   .nav a:hover {
     background: rgba(212, 160, 84, 0.1);
-    color: var(--accent-glow);
+    color: var(--accent);
   }
 
   .order-shell {
@@ -4325,7 +4325,7 @@ main {
 .slot-num {
   font-size: 1.15rem;
   font-weight: 700;
-  color: rgba(93, 62, 45, 0.25);
+  color: rgba(93, 62, 45, 0.45);
   transition: color 0.3s ease;
 }
 
@@ -4440,7 +4440,7 @@ main {
 .tray-tally {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #ffd796;
+  color: var(--accent-deep);
 }
 
 .clear-tray-btn {
@@ -4535,13 +4535,13 @@ main {
 
 .choice-meta span {
   font-size: 0.76rem;
-  color: #ffd796;
+  color: var(--accent-deep);
   font-weight: 700;
 }
 
 .choice-add-badge {
-  background: rgba(255, 215, 150, 0.1);
-  color: #ffd796;
+  background: rgba(212, 160, 84, 0.15);
+  color: var(--accent-deep);
   width: 24px;
   height: 24px;
   border-radius: 50%;
@@ -4554,8 +4554,8 @@ main {
 }
 
 .flavor-choice-card:hover .choice-add-badge {
-  background: #ffd796;
-  color: #1a1411;
+  background: var(--accent);
+  color: white;
   transform: scale(1.08);
 }
 
