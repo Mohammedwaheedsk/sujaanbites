@@ -980,19 +980,12 @@ function closeDrawer() {
 }
 
 function openSearchDock() {
-  if (!searchDock) {
-    document.querySelector("#menu")?.scrollIntoView({ behavior: "smooth", block: "start" });
-    return;
-  }
-  searchDock.classList.remove("hidden");
-  searchDock.setAttribute("aria-hidden", "false");
+  if (!searchDock) return;
   window.setTimeout(() => menuSearchInput?.focus(), 80);
 }
 
 function closeSearchDock() {
   if (!searchDock) return;
-  searchDock.classList.add("hidden");
-  searchDock.setAttribute("aria-hidden", "true");
 }
 
 function setBottomTab(tabName, animate = true) {
@@ -1058,67 +1051,80 @@ function closeCartPanel(nextTab = "home") {
 }
 
 function showMainPanels(tabName) {
-  const showHome = tabName === "home";
-  const showMenu = tabName === "menu" || tabName === "search";
-  const showReorder = tabName === "reorder";
-  const showAccount = tabName === "account";
-  homePanel?.classList.toggle("hidden", !showHome);
-  orderShell?.classList.toggle("hidden", !showMenu);
-  reorderPanel?.classList.toggle("hidden", !showReorder);
+  const pages = {
+    home: document.getElementById("page-home"),
+    menu: document.getElementById("page-menu"),
+    account: document.getElementById("page-account"),
+    search: document.getElementById("page-search"),
+  };
   
-  const accountPanel = document.querySelector("#accountPanel");
-  accountPanel?.classList.toggle("hidden", !showAccount);
+  Object.values(pages).forEach(page => {
+    if (page) page.classList.remove("active");
+  });
+
+  if (tabName === "search" && pages.search) {
+    pages.search.classList.add("active");
+  } else if (tabName === "menu" && pages.menu) {
+    pages.menu.classList.add("active");
+  } else if (tabName === "account" && pages.account) {
+    pages.account.classList.add("active");
+  } else if (pages.home) {
+    pages.home.classList.add("active");
+  }
 }
 
 function showHomePanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
   closeCartPanel("home");
-  closeSearchDock();
   if (state.drawerOpen) closeDrawer();
   showMainPanels("home");
-  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+  if (scrollToTop) {
+    const page = document.getElementById("page-home");
+    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+  }
   setBottomTab("home", animate);
 }
 
 function showMenuPanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
   closeCartPanel("menu");
-  closeSearchDock();
   if (state.drawerOpen) closeDrawer();
   showMainPanels("menu");
-  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+  if (scrollToTop) {
+    const page = document.getElementById("page-menu");
+    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+  }
   setBottomTab("menu", animate);
 }
 
 function showReorderPanel(options = {}) {
-  const { scrollToTop = true, animate = true } = options;
-  closeCartPanel("reorder");
-  closeSearchDock();
-  if (state.drawerOpen) closeDrawer();
-  showMainPanels("reorder");
-  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
-  renderReorderPanel();
-  setBottomTab("reorder", animate);
+  // Reorder is now merged or can just show home for now if it doesn't have a page
+  showHomePanel(options);
 }
 
 function showAccountPanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
   closeCartPanel("account");
-  closeSearchDock();
   if (state.drawerOpen) closeDrawer();
   showMainPanels("account");
   renderAccount();
-  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+  if (scrollToTop) {
+    const page = document.getElementById("page-account");
+    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+  }
   setBottomTab("account", animate);
 }
 
 function showSearchPanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
   closeCartPanel("search");
-  showMainPanels("menu");
-  openSearchDock();
+  showMainPanels("search");
   renderSearchResults();
-  if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
+  if (scrollToTop) {
+    const page = document.getElementById("page-search");
+    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  window.setTimeout(() => document.getElementById("menuSearchInput")?.focus(), 80);
   setBottomTab("search", animate);
 }
 
@@ -2227,9 +2233,7 @@ function renderCareTab() {
 }
 
 function renderAccount() {
-  if (!accountShell || !accountOverlay || !accountContent) return;
-  accountShell.classList.toggle("open", state.drawerOpen);
-  accountOverlay.classList.toggle("open", state.drawerOpen);
+  if (!accountShell || !accountContent) return;
   
   accountLogoutButton?.classList.add("hidden");
 
@@ -3916,3 +3920,11 @@ async function addCustomBoxToCart() {
     alert(`✨ Your custom ${boxName} has been assembled and added to your cart!`);
   }, 100);
 }
+
+// Initialize App Navigation
+window.addEventListener("DOMContentLoaded", () => {
+  if (isCartPage) return;
+  // Make sure the bottom tab matches the default active page
+  const defaultTab = pageMode || "home";
+  setBottomTab(defaultTab, false);
+});

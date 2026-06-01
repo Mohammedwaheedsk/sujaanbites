@@ -63,9 +63,11 @@
     </nav>
   </header>
 
-  <main>
-    <section class="hero" id="homePanel" aria-labelledby="hero-title">
-      <img src="assets/hero-food.png" alt="A tray of baked cookies with a warm cookie shop feel" />
+  <main class="app-wrapper">
+    <!-- Home Tab -->
+    <div id="page-home" class="app-page active">
+      <section class="hero" aria-labelledby="hero-title">
+        <img src="assets/hero-food.png" alt="A tray of baked cookies with a warm cookie shop feel" />
       <div class="hero-copy">
         <p class="eyebrow">Order today</p>
         <h1 id="hero-title">Sujaan Bites</h1>
@@ -79,7 +81,8 @@
           <span class="hero-pill">Fast checkout</span>
           <span class="hero-pill">Support available</span>
         </div>
-      </div>
+        </div>
+      </section>
 
       <!-- Video Experience (Crusant Style) -->
       <div class="home-experience-section">
@@ -263,12 +266,16 @@
             </div>
           </div>
         </div>
+        </div>
       </div>
-    </section>
+    </div> <!-- End page-home -->
 
     <div class="account-shell-overlay" id="accountOverlay"></div>
-    <aside class="account-shell" id="accountShell" aria-label="Customer account">
-      <div class="account-shell-head">
+    
+    <!-- Account Tab -->
+    <div id="page-account" class="app-page">
+      <aside class="account-shell" id="accountShell" aria-label="Customer account">
+        <div class="account-shell-head">
         <button class="account-back-button hidden" id="accountBackButton" type="button" aria-label="Back to account">‹ Account</button>
         <div>
           <p class="eyebrow" id="accountShellEyebrow">Account</p>
@@ -287,10 +294,13 @@
         <button class="account-tab" type="button" data-account-tab="care">Customer care</button>
       </div>
       <div class="account-section" id="accountContent"></div>
-    </aside>
+      </aside>
+    </div> <!-- End page-account -->
 
-    <section class="order-shell hidden" id="orderShell" aria-label="Food ordering app">
-      <div class="menu-panel">
+    <!-- Menu Tab -->
+    <div id="page-menu" class="app-page">
+      <section class="order-shell" id="orderShell" aria-label="Food ordering app">
+        <div class="menu-panel">
         <div class="section-head">
           <div>
             <p class="eyebrow">Menu</p>
@@ -368,19 +378,23 @@
       </span>
       <a class="cart-toast-action" href="/cart" data-route="/cart" data-open-cart id="cartToastAction">View Cart ›</a>
     </div>
+    </div> <!-- End page-menu -->
 
-    <div class="search-backdrop hidden" id="searchBackdrop"></div>
-    <section class="search-dock hidden" id="searchDock" aria-hidden="true" aria-label="Search menu">
-      <div class="search-dock-head">
-        <div>
-          <p class="eyebrow">Search</p>
-          <h2>Find your cookies</h2>
+    <!-- Search Tab -->
+    <div id="page-search" class="app-page">
+      <section class="search-dock" id="searchDock" aria-hidden="true" aria-label="Search menu">
+        <div class="search-dock-head">
+          <div>
+            <p class="eyebrow">Search</p>
+            <h2>Find your cookies</h2>
+          </div>
+          <button class="close-button" id="searchCloseButton" type="button" aria-label="Close search">×</button>
         </div>
-        <button class="close-button" id="searchCloseButton" type="button" aria-label="Close search">×</button>
-      </div>
-      <input id="menuSearchInput" type="search" placeholder="Search Chocolate, Biscoff, combos..." autocomplete="off" />
-      <div class="search-results" id="searchResults"></div>
-    </section>
+        <input id="menuSearchInput" type="search" placeholder="Search Chocolate, Biscoff, combos..." autocomplete="off" />
+        <div class="search-results hidden" id="searchResults" role="region" aria-live="polite"></div>
+      </section>
+      <div class="search-backdrop hidden" id="searchBackdrop"></div>
+    </div> <!-- End page-search -->
 
     <div class="cart-panel-backdrop hidden" id="cartPanelOverlay"></div>
     <section class="cart-panel hidden" id="cartPanel" aria-hidden="true" aria-label="Cart checkout">

@@ -34,17 +34,25 @@
   box-sizing: border-box;
 }
 
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
 html {
-  scroll-behavior: smooth;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
 }
 
 body {
-  margin: 0;
-  min-height: 100vh;
-  overflow-x: hidden;
-  padding-bottom: 104px;
+
   font-family: "DM Sans", "Inter", -apple-system, "Segoe UI", sans-serif;
   color: var(--ink);
   background:
@@ -58,13 +66,55 @@ body::before {
   content: "";
   position: fixed;
   inset: 0;
+  z-index: -1;
   pointer-events: none;
   background:
     linear-gradient(180deg, rgba(212, 160, 84, 0.04), transparent 20%),
     radial-gradient(circle at 30% 10%, rgba(240, 201, 122, 0.05), transparent 30%);
   opacity: 0.8;
-  z-index: 0;
 }
+
+/* ── App Shell / Pages ──────────────────────────────────────── */
+.app-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+}
+
+.app-page {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: calc(72px + env(safe-area-inset-bottom, 14px));
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+  transform: scale(0.98);
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s 0.35s;
+  padding-bottom: 24px;
+}
+
+.app-page.active {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transform: scale(1);
+  transition: opacity 0.3s ease, transform 0.35s cubic-bezier(0.32, 0.72, 0, 1), visibility 0s 0s;
+}
+
+/* Hide scrollbars completely for a native feel */
+::-webkit-scrollbar {
+  display: none;
+}
+* {
+  scrollbar-width: none;
+}
+
 
 button,
 input,
@@ -1230,14 +1280,10 @@ textarea {
 
 /* ── Account Shell ───────────────────────────────────────────── */
 .account-shell {
-  position: fixed;
-  left: 10px;
-  right: 10px;
-  bottom: calc(14px + env(safe-area-inset-bottom));
-  width: min(640px, calc(100% - 20px));
-  max-height: calc(100dvh - 44px);
-  z-index: 205;
-  margin: 0 auto;
+  position: relative;
+  width: min(640px, calc(100% - 24px));
+  z-index: 10;
+  margin: 24px auto 0;
   padding: 20px 16px 22px;
   display: flex;
   flex-direction: column;
@@ -1246,35 +1292,12 @@ textarea {
   border-radius: 32px;
   background: var(--glass);
   color: var(--ink);
-  box-shadow: var(--shadow-lg);
-  transform: translateY(120%);
-  visibility: hidden;
-  transition: transform 0.32s var(--transition-smooth), visibility 0s 0.32s;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-}
-
-.account-shell.open {
-  transform: translateY(0);
-  visibility: visible;
-  transition: transform 0.32s var(--transition-smooth), visibility 0s;
+  box-shadow: var(--shadow-sm);
+  overflow-y: visible;
 }
 
 .account-shell-overlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.6);
-  z-index: 99;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s ease;
-}
-
-.account-shell-overlay.open {
-  opacity: 1;
-  pointer-events: auto;
+  display: none;
 }
 
 .account-shell-head {
@@ -2091,9 +2114,9 @@ textarea {
   position: fixed;
   left: 14px;
   right: 14px;
-  bottom: calc(90px + env(safe-area-inset-bottom));
+  bottom: calc(72px + env(safe-area-inset-bottom, 14px) + 16px);
   z-index: 190;
-  width: min(560px, 100%);
+  width: min(560px, calc(100% - 28px));
   min-height: 70px;
   display: flex;
   justify-content: flex-start;
@@ -2316,19 +2339,19 @@ body.modal-open .cart-toast {
 /* ── Bottom App Navigation ───────────────────────────────────── */
 .bottom-app-nav {
   position: fixed;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  bottom: calc(14px + env(safe-area-inset-bottom, 14px));
+  left: 0 !important;
+  transform: none !important;
+  bottom: 0;
   z-index: 180;
   display: grid;
   grid-template-columns: repeat(5, minmax(54px, 1fr));
   gap: 4px;
-  width: calc(100% - 28px) !important;
-  max-width: 560px !important;
-  min-height: 72px;
-  padding: 8px;
-  border: 1px solid rgba(93, 62, 45, 0.08);
-  border-radius: 30px;
+  width: 100% !important;
+  max-width: none !important;
+  min-height: calc(72px + env(safe-area-inset-bottom, 14px));
+  padding: 8px 12px env(safe-area-inset-bottom, 14px);
+  border-top: 1px solid rgba(93, 62, 45, 0.08);
+  border-radius: 0;
   background: rgba(255, 255, 255, 0.88);
   box-shadow:
     0 12px 32px rgba(93, 62, 45, 0.08),
@@ -2480,37 +2503,21 @@ body.modal-open .cart-toast {
 
 /* ── Search Dock ─────────────────────────────────────────────── */
 .search-backdrop {
-  position: fixed;
-  inset: 0;
-  z-index: 210;
-  background: rgba(0, 0, 0, 0.6);
-  -webkit-backdrop-filter: blur(8px);
-  backdrop-filter: blur(8px);
+  display: none;
 }
 
 .search-dock {
-  position: fixed;
-  left: 14px;
-  right: 14px;
-  bottom: calc(102px + env(safe-area-inset-bottom));
-  z-index: 220;
+  position: relative;
+  margin: 24px auto 0;
   display: grid;
   gap: 14px;
-  width: min(560px, 100%);
+  width: min(560px, calc(100% - 24px));
   padding: 20px;
   border: 1px solid var(--glass-border);
   border-radius: var(--radius-xl);
   color: var(--ink);
   background: var(--glass);
-  box-shadow: var(--shadow-lg);
-  margin: 0 auto;
-  transform: translateY(120%);
-  transition: transform 0.32s var(--transition-smooth);
-  -webkit-backdrop-filter: var(--glass-blur);
-  backdrop-filter: var(--glass-blur);
-}
-.search-dock:not(.hidden) {
-  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
 }
 
 .search-dock-head {
@@ -3704,15 +3711,18 @@ button:active,
   border: 1px solid rgba(93, 62, 45, 0.08) !important;
   box-shadow: 0 8px 32px rgba(93, 62, 45, 0.08) !important;
   backdrop-filter: blur(28px) saturate(200%) !important;
-  left: 50% !important;
-  transform: translateX(-50%) !important;
-  width: calc(100% - 40px) !important;
-  max-width: 520px !important;
-  bottom: calc(18px + env(safe-area-inset-bottom, 18px)) !important;
-  border-radius: 24px !important;
-  height: 64px !important;
-  min-height: 64px !important;
-  padding: 4px !important;
+  left: 0 !important;
+  transform: none !important;
+  width: 100% !important;
+  max-width: none !important;
+  bottom: 0 !important;
+  border-radius: 0 !important;
+  border-left: none !important;
+  border-right: none !important;
+  border-bottom: none !important;
+  height: calc(64px + env(safe-area-inset-bottom, 14px)) !important;
+  min-height: calc(64px + env(safe-area-inset-bottom, 14px)) !important;
+  padding: 4px 12px env(safe-area-inset-bottom, 14px) !important;
 }
 .bottom-nav-indicator {
   display: none !important;
@@ -3747,7 +3757,7 @@ button:active,
   position: fixed !important;
   left: 50% !important;
   right: auto !important;
-  bottom: calc(84px + env(safe-area-inset-bottom)) !important;
+  bottom: calc(64px + env(safe-area-inset-bottom, 14px) + 12px) !important;
   transform: translateX(-50%) translateY(24px) !important;
   opacity: 0 !important;
   visibility: hidden !important;
@@ -3873,7 +3883,7 @@ main {
 
 /* ── Crusant Stuffed Gourmet Experience (Video Hero) ────────── */
 .home-experience-section {
-  width: 100%;
+  width: min(1120px, calc(100% - 24px));
   margin: 24px auto 0;
   border-radius: 24px;
   overflow: hidden;
@@ -3931,8 +3941,8 @@ main {
 
 /* ── Gourmet Cooking Process (Craft Pillars Grid) ─────────────── */
 .craft-section {
-  width: 100%;
-  margin-top: 36px;
+  width: min(1120px, calc(100% - 24px));
+  margin: 36px auto 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -4073,7 +4083,8 @@ main {
 /* ── Gourmet Cookie Mood Quiz & Box Builder Styles ──────────────────────── */
 .glass-container {
   margin-top: 48px;
-  width: 100%;
+  width: min(1120px, calc(100% - 24px));
+  margin: 48px auto 0;
   display: flex;
   flex-direction: column;
   gap: 16px;
