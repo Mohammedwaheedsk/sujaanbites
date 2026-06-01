@@ -296,7 +296,7 @@ body[data-page="home"] .topbar {
   height: 100%;
   object-fit: cover;
   z-index: -2;
-  filter: brightness(0.85) saturate(1.1);
+  filter: brightness(1.05) saturate(1.05) opacity(0.12);
 }
 
 .hero::after {
@@ -305,15 +305,15 @@ body[data-page="home"] .topbar {
   inset: 0;
   z-index: -1;
   background:
-    linear-gradient(90deg, rgba(12, 8, 6, 0.82), rgba(12, 8, 6, 0.3) 50%, rgba(12, 8, 6, 0.78)),
-    linear-gradient(180deg, rgba(12, 8, 6, 0.15) 0%, rgba(12, 8, 6, 0.55) 50%, #0c0806 100%);
+    linear-gradient(90deg, rgba(250, 246, 240, 0.95), rgba(250, 246, 240, 0.6) 50%, rgba(250, 246, 240, 0.92)),
+    linear-gradient(180deg, rgba(250, 246, 240, 0.2) 0%, rgba(250, 246, 240, 0.8) 50%, #FAF6F0 100%);
 }
 
 .hero-copy {
   width: min(880px, calc(100% - 32px));
   margin: 0 auto;
   padding: clamp(70px, 13vh, 150px) 0 clamp(72px, 10vh, 110px);
-  color: #fff;
+  color: var(--ink);
   animation: float-in 0.7s var(--transition-smooth) both;
 }
 
@@ -342,7 +342,7 @@ body[data-page="home"] .topbar {
   letter-spacing: -0.03em;
   line-height: 0.92;
   max-width: 8ch;
-  background: linear-gradient(180deg, #fff, rgba(250, 245, 239, 0.85));
+  background: linear-gradient(180deg, var(--ink), rgba(61, 45, 36, 0.72));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -353,7 +353,7 @@ body[data-page="home"] .topbar {
   max-width: 34rem;
   font-size: clamp(1rem, 2vw, 1.18rem);
   line-height: 1.55;
-  color: rgba(250, 245, 239, 0.72);
+  color: rgba(61, 45, 36, 0.8);
   font-weight: 400;
 }
 
