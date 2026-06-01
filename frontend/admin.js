@@ -1,4 +1,4 @@
-const ADMIN_STORAGE_KEY = "spiceTableAdminPin";
+const ADMIN_STORAGE_KEY = "sujaanBitesAdminPin";
 const API_BASE = String(window.__API_BASE || window.__API_BASE__ || "").trim().replace(/\/+$/, "");
 
 const loginPanel = document.querySelector("#loginPanel");

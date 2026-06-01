@@ -3,38 +3,50 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="theme-color" content="#050505" />
+  <meta name="theme-color" content="#0c0806" />
   <title>Sujaan Bites | Product Info</title>
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@100..900&display=swap" rel="stylesheet" />
   <style>
     :root {
       color-scheme: dark;
-      --bg: #050505;
-      --panel: rgba(17, 17, 17, 0.92);
-      --card: #171717;
-      --ink: #fffaf4;
-      --muted: #b6a99d;
-      --line: rgba(255, 255, 255, 0.11);
-      --accent: #ff7a1a;
-      --accent-2: #f9c56f;
-      --shadow: 0 28px 60px rgba(0, 0, 0, 0.48);
-      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.34);
+      --bg: #0c0806;
+      --panel: rgba(26, 20, 17, 0.92);
+      --card: #221a14;
+      --ink: #faf5ef;
+      --muted: #a89585;
+      --line: rgba(255, 215, 150, 0.1);
+      --accent: #d4a054;
+      --accent-2: #f0c97a;
+      --shadow: 0 28px 60px rgba(0, 0, 0, 0.55);
+      --shadow-soft: 0 18px 40px rgba(0, 0, 0, 0.38);
     }
     * { box-sizing: border-box; }
     html { scroll-behavior: smooth; }
     body {
       margin: 0;
       color: var(--ink);
-      font-family: "Poppins", "Segoe UI", sans-serif;
+      font-family: "DM Sans", "Inter", -apple-system, sans-serif;
       padding-bottom: 104px;
       background:
-        radial-gradient(circle at 18% 0%, rgba(255, 122, 26, 0.18), transparent 30%),
-        radial-gradient(circle at 92% 8%, rgba(249, 197, 111, 0.1), transparent 28%),
-        linear-gradient(180deg, #080808 0%, #050505 60%, #090604 100%);
+        radial-gradient(circle at 18% 0%, rgba(212, 160, 84, 0.16), transparent 30%),
+        radial-gradient(circle at 92% 8%, rgba(240, 201, 122, 0.09), transparent 28%),
+        radial-gradient(circle at 50% 100%, rgba(140, 80, 20, 0.08), transparent 40%),
+        linear-gradient(180deg, #0e0906 0%, #0c0806 60%, #0a0704 100%);
+    }
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: radial-gradient(ellipse at 60% 0%, rgba(212, 160, 84, 0.04), transparent 55%);
+      pointer-events: none;
     }
     button, input, textarea { font: inherit; }
     a { color: inherit; }
@@ -53,7 +65,7 @@
       top: 0;
       z-index: 5;
       backdrop-filter: blur(14px);
-      background: linear-gradient(180deg, rgba(5, 5, 5, 0.96), rgba(5, 5, 5, 0.82));
+      background: linear-gradient(180deg, rgba(12, 8, 6, 0.96), rgba(12, 8, 6, 0.82));
     }
     .brand {
       display: inline-flex;
@@ -99,35 +111,47 @@
       color: var(--ink);
       text-decoration: none;
       font-weight: 800;
-      box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset;
+      box-shadow: 0 1px 0 rgba(255, 215, 150, 0.06) inset;
+      backdrop-filter: blur(10px);
+      transition: background 0.22s ease, border-color 0.22s ease, box-shadow 0.22s ease;
+    }
+    .btn:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(212, 160, 84, 0.22);
     }
     .btn.primary {
-      background: var(--accent);
+      background: linear-gradient(135deg, #d4a054, #b8862e);
       border-color: transparent;
-      color: #fff;
+      color: #0c0806;
+      box-shadow: 0 6px 22px rgba(212, 160, 84, 0.3), 0 1px 0 rgba(240, 201, 122, 0.3) inset;
+    }
+    .btn.primary:hover {
+      box-shadow: 0 8px 28px rgba(212, 160, 84, 0.4), 0 1px 0 rgba(240, 201, 122, 0.4) inset;
     }
     .hero-card,
     .section-card,
     .menu-card {
-      border: 1px solid var(--line);
-      border-radius: 24px;
+      border: 1px solid rgba(212, 160, 84, 0.12);
+      border-radius: 28px;
       background: var(--panel);
       box-shadow: var(--shadow);
       overflow: hidden;
+      backdrop-filter: blur(24px);
     }
     .hero-card {
       display: grid;
       gap: 14px;
       padding: 18px;
       margin-bottom: 16px;
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.055)), #171717;
+      background: linear-gradient(180deg, rgba(212, 160, 84, 0.08), rgba(255, 255, 255, 0.03)), var(--card);
+      border: 1px solid rgba(212, 160, 84, 0.15);
     }
     .hero-image {
       width: 100%;
       aspect-ratio: 1.12;
       border-radius: 20px;
       object-fit: cover;
-      background: #f6e5d7;
+      background: #2a1f16;
       box-shadow: var(--shadow-soft);
     }
     .hero-copy {
@@ -138,7 +162,7 @@
       margin: 0;
       text-transform: uppercase;
       letter-spacing: 0.14em;
-      color: #ffd08f;
+      color: #d4a054;
       font-size: 0.78rem;
       font-weight: 900;
     }
@@ -164,8 +188,8 @@
       min-height: 34px;
       padding: 0 12px;
       border-radius: 999px;
-      background: rgba(252, 128, 25, 0.12);
-      color: #ffc28d;
+      background: rgba(212, 160, 84, 0.12);
+      color: #f0c97a;
       font-weight: 800;
       font-size: 0.86rem;
     }
@@ -187,8 +211,9 @@
       min-height: 48px;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.08);
-      box-shadow: 0 1px 0 rgba(255,255,255,0.8) inset;
+      background: rgba(255, 255, 255, 0.06);
+      box-shadow: 0 1px 0 rgba(255, 215, 150, 0.06) inset;
+      backdrop-filter: blur(12px);
       padding: 0 10px;
       gap: 10px;
     }
@@ -196,12 +221,17 @@
       width: 44px;
       height: 40px;
       border-radius: 999px;
-      border: 1px solid rgba(147, 91, 43, 0.22);
-      background: rgba(255, 122, 26, 0.12);
-      color: #ffbd88;
+      border: 1px solid rgba(212, 160, 84, 0.2);
+      background: rgba(212, 160, 84, 0.12);
+      color: #f0c97a;
       font-size: 1.25rem;
       font-weight: 900;
       cursor: pointer;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .qty-stepper button:hover {
+      background: rgba(212, 160, 84, 0.2);
+      border-color: rgba(212, 160, 84, 0.35);
     }
     .qty-stepper button:disabled {
       opacity: 0.4;
@@ -243,14 +273,16 @@
       gap: 10px;
       padding: 12px;
       cursor: pointer;
-      transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
-    }
-    .menu-card.active {
-      border-color: rgba(252, 128, 25, 0.6);
-      box-shadow: 0 12px 28px rgba(252, 128, 25, 0.12);
-      transform: translateY(-1px);
+      transition: transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease;
     }
     .menu-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 36px rgba(212, 160, 84, 0.08);
+      border-color: rgba(212, 160, 84, 0.2);
+    }
+    .menu-card.active {
+      border-color: rgba(212, 160, 84, 0.55);
+      box-shadow: 0 12px 28px rgba(212, 160, 84, 0.12);
       transform: translateY(-1px);
     }
     .menu-card-top {
@@ -263,7 +295,7 @@
       height: 82px;
       border-radius: 18px;
       object-fit: cover;
-      background: #f6e5d7;
+      background: #2a1f16;
       flex: 0 0 auto;
     }
     .menu-card-copy {
@@ -288,7 +320,7 @@
     }
     .price {
       font-weight: 900;
-      color: #ffb36d;
+      color: #f0c97a;
     }
     .menu-card button {
       display: inline-flex;
@@ -298,21 +330,27 @@
       padding: 0 14px;
       border-radius: 999px;
       border: 1px solid var(--line);
-      background: rgba(255, 122, 26, 0.12);
-      color: #ffbd88;
+      background: rgba(212, 160, 84, 0.1);
+      color: #f0c97a;
       font-weight: 800;
+      transition: background 0.2s ease, border-color 0.2s ease;
+    }
+    .menu-card button:hover {
+      background: rgba(212, 160, 84, 0.18);
+      border-color: rgba(212, 160, 84, 0.3);
     }
     .menu-card.active button {
-      background: rgba(252, 128, 25, 0.12);
-      border-color: rgba(252, 128, 25, 0.3);
+      background: rgba(212, 160, 84, 0.14);
+      border-color: rgba(212, 160, 84, 0.35);
     }
     .card {
       border: 1px solid var(--line);
-      border-radius: 24px;
-      background: rgba(255, 255, 255, 0.065);
+      border-radius: 28px;
+      background: rgba(255, 255, 255, 0.04);
       box-shadow: var(--shadow-soft);
       padding: 16px;
       margin-top: 14px;
+      backdrop-filter: blur(16px);
     }
     .card h3 {
       margin: 0 0 10px;
@@ -336,13 +374,13 @@
     .tag {
       padding: 8px 12px;
       border-radius: 999px;
-      background: rgba(252, 128, 25, 0.1);
-      color: #ffc28d;
+      background: rgba(212, 160, 84, 0.1);
+      color: #f0c97a;
       font-weight: 800;
     }
     .footer {
       padding: 20px 0 4px;
-      color: var(--muted);
+      color: rgba(250, 245, 239, 0.4);
       text-align: center;
       font-size: 0.9rem;
     }
@@ -357,15 +395,16 @@
       align-items: center;
       gap: 12px;
       padding: 10px 12px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(212, 160, 84, 0.15);
       border-radius: 28px;
-      color: #fffaf4;
-      background: rgba(17, 17, 17, 0.92);
-      box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55), 0 0 34px rgba(255, 255, 255, 0.1);
+      color: #faf5ef;
+      background: rgba(26, 20, 17, 0.92);
+      box-shadow: 0 26px 60px rgba(0, 0, 0, 0.55), 0 0 34px rgba(212, 160, 84, 0.06);
       font-weight: 800;
       transform: translate(-50%, 18px);
       -webkit-backdrop-filter: blur(18px);
       backdrop-filter: blur(18px);
+      transition: transform 0.3s ease, opacity 0.3s ease;
     }
     .toast-thumb {
       width: 48px;
@@ -389,7 +428,7 @@
       line-height: 1.15;
     }
     .toast-copy small {
-      color: rgba(255, 250, 244, 0.68);
+      color: rgba(250, 245, 239, 0.55);
       font-size: 0.78rem;
       font-weight: 750;
     }
@@ -400,13 +439,17 @@
       min-height: 44px;
       padding: 0 14px;
       border-radius: 999px;
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(212, 160, 84, 0.15);
       border: 0;
-      color: #fff;
+      color: #f0c97a;
       text-decoration: none;
       white-space: nowrap;
       font-weight: 900;
       font-size: 0.92rem;
+      transition: background 0.2s ease;
+    }
+    .toast-action:hover {
+      background: rgba(212, 160, 84, 0.25);
     }
     .toast.show {
       display: flex;
@@ -423,10 +466,10 @@
       width: min(460px, calc(100% - 28px));
       min-height: 72px;
       padding: 8px;
-      border: 1px solid rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(212, 160, 84, 0.1);
       border-radius: 30px;
-      background: rgba(19, 19, 19, 0.9);
-      box-shadow: 0 26px 58px rgba(0, 0, 0, 0.5);
+      background: rgba(18, 13, 10, 0.92);
+      box-shadow: 0 26px 58px rgba(0, 0, 0, 0.55);
       transform: translateX(-50%);
       backdrop-filter: blur(18px);
     }
@@ -436,9 +479,13 @@
       gap: 2px;
       min-height: 56px;
       border-radius: 24px;
-      color: rgba(255, 250, 244, 0.72);
+      color: rgba(250, 245, 239, 0.6);
       text-decoration: none;
       font-weight: 850;
+      transition: color 0.2s ease, background 0.2s ease;
+    }
+    .bottom-app-nav a:hover {
+      color: rgba(250, 245, 239, 0.85);
     }
     .bottom-app-nav span {
       font-size: 1.55rem;
@@ -448,8 +495,8 @@
       font-size: 0.68rem;
     }
     .bottom-app-nav .active {
-      color: #ff7a1a;
-      background: rgba(255, 255, 255, 0.1);
+      color: #d4a054;
+      background: rgba(212, 160, 84, 0.1);
     }
     @media (min-width: 760px) {
       .hero-card {
@@ -599,7 +646,7 @@
       return "";
     })();
 
-    const CART_KEY = "spiceTableCart";
+    const CART_KEY = "sujaanBitesCart";
     const menuList = document.getElementById("menuList");
     const featuredItemImage = document.getElementById("featuredItemImage");
     const featuredItemTitle = document.getElementById("featuredItemTitle");

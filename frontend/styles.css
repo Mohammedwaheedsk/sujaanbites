@@ -3790,4 +3790,859 @@ button:active,
   opacity: 0.9 !important;
 }
 
+/* ── Apple Music & App Store - Inline SVGs styling for bottom nav ── */
+.ios-svg-icon {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 24px !important;
+  height: 24px !important;
+  color: inherit !important;
+  transition: transform 0.2s ease !important;
+}
+.bottom-app-nav button:active .ios-svg-icon {
+  transform: scale(0.88) !important;
+}
+
+/* ── Organic Panel Slide-up/in Animation ────────────────────── */
+@keyframes mainPanelSlideIn {
+  from { transform: translateY(18px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+#homePanel:not(.hidden),
+#orderShell:not(.hidden),
+#reorderPanel:not(.hidden),
+#accountPanel:not(.hidden) {
+  animation: mainPanelSlideIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards !important;
+}
+
+/* Ensure accountPanel has identical container layout to reorder-panel */
+#accountPanel {
+  width: min(560px, calc(100% - 24px));
+  margin: 14px auto 130px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Ensure main containers don't have hard black background to keep glass blur visible on scroll */
+main {
+  background: transparent !important;
+  min-height: 100vh;
+}
+
+/* ── Crusant Stuffed Gourmet Experience (Video Hero) ────────── */
+.home-experience-section {
+  width: 100%;
+  margin: 24px auto 0;
+  border-radius: 24px;
+  overflow: hidden;
+  box-shadow: 0 16px 36px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.06);
+  position: relative;
+}
+
+.video-container-wrapper {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  position: relative;
+  background: #000;
+  display: flex;
+}
+
+.experience-video {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.video-gradient-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(0,0,0,0.2) 0%, rgba(0,0,0,0.85) 100%);
+  pointer-events: none;
+}
+
+.video-copy-overlay {
+  position: absolute;
+  inset: auto 0 0;
+  padding: 20px;
+  color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(10, 10, 10, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+.video-copy-overlay h2 {
+  font-size: 1.35rem;
+  font-weight: 800;
+  margin: 0;
+  letter-spacing: -0.4px;
+  color: var(--text-primary-apple);
+}
+.video-copy-overlay p {
+  font-size: 0.88rem;
+  color: var(--text-secondary-apple);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── Gourmet Cooking Process (Craft Pillars Grid) ─────────────── */
+.craft-section {
+  width: 100%;
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-title-wrapper {
+  text-align: left;
+  padding-left: 4px;
+}
+.section-title-wrapper h2 {
+  font-size: 1.55rem;
+  font-weight: 800;
+  margin: 4px 0 0;
+  letter-spacing: -0.5px;
+}
+
+.craft-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 768px) {
+  .craft-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.craft-card {
+  background: var(--bg-card-apple);
+  border: 1px solid var(--border-apple);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  transition: transform 0.25s ease, border-color 0.25s ease;
+}
+.craft-card:hover {
+  transform: translateY(-4px);
+  border-color: var(--accent-apple);
+}
+
+.craft-icon-badge {
+  font-size: 1.5rem;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+
+.craft-card h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 4px 0 0;
+}
+.craft-card p {
+  font-size: 0.85rem;
+  color: var(--text-secondary-apple);
+  line-height: 1.4;
+  margin: 0;
+}
+
+/* ── App Store Review testomonial shelf ───────────────────────── */
+.reviews-section {
+  width: 100%;
+  margin-top: 36px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.reviews-slider-container {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.reviews-slider-container::-webkit-scrollbar {
+  display: none;
+}
+
+.reviews-track {
+  display: flex;
+  gap: 12px;
+  width: max-content;
+}
+
+.review-item-card {
+  width: 290px;
+  background: var(--bg-card-apple);
+  border: 1px solid var(--border-apple);
+  border-radius: 20px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+}
+
+.review-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.review-header strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+.review-stars {
+  color: #ffcc00;
+  font-size: 0.8rem;
+  letter-spacing: 0.5px;
+}
+
+.review-text {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: var(--text-secondary-apple);
+  margin: 0;
+  font-style: italic;
+  flex: 1;
+}
+
+.review-date {
+  font-size: 0.72rem;
+  color: var(--text-tertiary-apple);
+  align-self: flex-end;
+}
+
+/* ── Gourmet Cookie Mood Quiz & Box Builder Styles ──────────────────────── */
+.glass-container {
+  margin-top: 48px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.section-subtitle {
+  font-size: 0.9rem;
+  color: var(--text-secondary-apple);
+  margin-top: -8px;
+  line-height: 1.4;
+  font-weight: 400;
+}
+
+/* Quiz Style */
+.quiz-container {
+  background: var(--bg-card-apple);
+  border: 1px solid var(--border-apple);
+  border-radius: 24px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.mood-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+.mood-btn {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 215, 150, 0.08);
+  border-radius: 18px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-primary-apple);
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.mood-btn:hover {
+  background: rgba(255, 215, 150, 0.05);
+  border-color: rgba(255, 215, 150, 0.2);
+  transform: translateY(-2px);
+}
+
+.mood-btn.active {
+  background: rgba(255, 215, 150, 0.1);
+  border-color: #ffd796;
+  box-shadow: 0 0 16px rgba(255, 215, 150, 0.2);
+  transform: scale(1.02);
+}
+
+.mood-emoji {
+  font-size: 2rem;
+  transition: transform 0.3s ease;
+}
+
+.mood-btn:hover .mood-emoji {
+  transform: scale(1.15) rotate(5deg);
+}
+
+.mood-label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+/* Quiz Result Spotlight */
+.quiz-result-container {
+  width: 100%;
+}
+
+.quiz-result-card {
+  background: rgba(255, 215, 150, 0.03);
+  border: 1px solid rgba(255, 215, 150, 0.15);
+  border-radius: 20px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: inset 0 0 20px rgba(255, 215, 150, 0.05);
+}
+
+.result-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: linear-gradient(135deg, #ffd796 0%, #e6a73c 100%);
+  color: #1a1411;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.result-body {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+.result-image {
+  width: 100px;
+  height: 100px;
+  border-radius: 16px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+}
+
+.result-details {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.result-details h3 {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary-apple);
+}
+
+.result-price {
+  font-size: 0.95rem;
+  color: #ffd796;
+  font-weight: 700;
+}
+
+.result-details p {
+  font-size: 0.8rem;
+  line-height: 1.4;
+  color: var(--text-secondary-apple);
+  margin: 6px 0 12px 0;
+}
+
+.quiz-cta-row {
+  display: flex;
+  gap: 10px;
+}
+
+.quiz-cta-row button {
+  padding: 10px 16px;
+  font-size: 0.8rem;
+  border-radius: 12px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.add-quiz-match-btn {
+  flex: 1.5;
+  background: linear-gradient(135deg, #ffd796 0%, #d89c37 100%);
+  color: #1a1411;
+  border: none;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(216, 156, 55, 0.2);
+}
+
+.add-quiz-match-btn:hover {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(216, 156, 55, 0.3);
+}
+
+.add-quiz-match-btn.added-success {
+  background: #34c759 !important;
+  color: white !important;
+  box-shadow: 0 4px 12px rgba(52, 199, 89, 0.2);
+}
+
+.reset-quiz-btn {
+  flex: 1;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: var(--text-primary-apple);
+  transition: background 0.3s ease;
+}
+
+.reset-quiz-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Dream Box Customizer Layout */
+.builder-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.box-tray-wrapper {
+  width: 100%;
+}
+
+.box-tray {
+  background: var(--bg-card-apple);
+  border: 1px solid var(--border-apple);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+}
+
+.tray-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  padding: 4px;
+}
+
+.tray-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+
+.slot-circle {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.slot-circle.empty {
+  background: rgba(255, 255, 255, 0.02);
+  border: 2px dashed rgba(255, 215, 150, 0.15);
+}
+
+.tray-slot:hover .slot-circle.empty {
+  border-color: rgba(255, 215, 150, 0.4);
+  background: rgba(255, 215, 150, 0.02);
+  transform: scale(1.02);
+}
+
+.slot-num {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: rgba(255, 215, 150, 0.25);
+  transition: color 0.3s ease;
+}
+
+.tray-slot:hover .slot-num {
+  color: rgba(255, 215, 150, 0.5);
+}
+
+.slot-add-icon {
+  position: absolute;
+  bottom: 6px;
+  right: 6px;
+  background: rgba(255, 215, 150, 0.1);
+  color: #ffd796;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.slot-circle.filled {
+  background: rgba(26, 20, 17, 0.7);
+  border: 2px solid #ffd796;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 215, 150, 0.1);
+}
+
+.slot-circle.filled img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  transition: transform 0.3s ease;
+}
+
+.tray-slot:hover .slot-circle.filled img {
+  transform: scale(1.08) rotate(3deg);
+}
+
+.slot-remove-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  background: #ff3b30;
+  color: white;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  font-size: 0.85rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  opacity: 0;
+  transform: scale(0.8);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tray-slot:hover .slot-remove-badge {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.slot-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-tertiary-apple);
+  text-align: center;
+  max-width: 80px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.slot-label.filled {
+  color: var(--text-primary-apple);
+  font-weight: 600;
+}
+
+/* Box Customizer Progress */
+.tray-progress-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.tray-progress-bar {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.tray-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #d89c37 0%, #ffd796 100%);
+  border-radius: 10px;
+  transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.tray-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tray-tally {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #ffd796;
+}
+
+.clear-tray-btn {
+  padding: 6px 12px !important;
+  font-size: 0.72rem !important;
+  border-radius: 10px !important;
+  background: rgba(255, 59, 48, 0.08) !important;
+  border: 1px solid rgba(255, 59, 48, 0.2) !important;
+  color: #ff453a !important;
+  transition: all 0.2s ease !important;
+}
+
+.clear-tray-btn:hover {
+  background: rgba(255, 59, 48, 0.15) !important;
+  border-color: rgba(255, 59, 48, 0.3) !important;
+}
+
+/* Flavor Selector Panel */
+.flavor-selector-panel {
+  background: var(--bg-card-apple);
+  border: 1px solid var(--border-apple);
+  border-radius: 24px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.2);
+}
+
+.flavor-selector-panel h3 {
+  font-size: 1.05rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary-apple);
+}
+
+.selector-note {
+  font-size: 0.78rem;
+  color: var(--text-secondary-apple);
+  margin: -8px 0 4px 0;
+}
+
+.flavor-choices-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+  max-height: 280px;
+  overflow-y: auto;
+  padding-right: 4px;
+  scrollbar-width: thin;
+}
+
+.flavor-choice-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 16px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-align: left;
+  color: var(--text-primary-apple);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.flavor-choice-card:hover {
+  background: rgba(255, 215, 150, 0.04);
+  border-color: rgba(255, 215, 150, 0.15);
+  transform: translateX(2px);
+}
+
+.flavor-choice-card img {
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
+  object-fit: cover;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.choice-meta {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.choice-meta strong {
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+.choice-meta span {
+  font-size: 0.76rem;
+  color: #ffd796;
+  font-weight: 700;
+}
+
+.choice-add-badge {
+  background: rgba(255, 215, 150, 0.1);
+  color: #ffd796;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  font-size: 1rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.flavor-choice-card:hover .choice-add-badge {
+  background: #ffd796;
+  color: #1a1411;
+  transform: scale(1.08);
+}
+
+/* Builder Action Button & Prices */
+.builder-action-area {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.builder-price-tally {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tally-label {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--text-secondary-apple);
+}
+
+.tally-prices {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.tally-value {
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: #ffd796;
+}
+
+.tally-saving {
+  font-size: 0.68rem;
+  color: #30d158;
+  font-weight: 700;
+}
+
+.add-box-to-cart-btn {
+  background: linear-gradient(135deg, #ffd796 0%, #d89c37 100%);
+  color: #1a1411;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 14px;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 12px rgba(216, 156, 55, 0.25);
+}
+
+.add-box-to-cart-btn:hover:not(.disabled) {
+  opacity: 0.95;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(216, 156, 55, 0.35);
+}
+
+.add-box-to-cart-btn.disabled {
+  background: rgba(255, 255, 255, 0.05) !important;
+  color: rgba(255, 255, 255, 0.2) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  box-shadow: none !important;
+  cursor: not-allowed;
+}
+
+/* Animations */
+.animate-pop {
+  animation: popIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes popIn {
+  0% {
+    transform: scale(0.6);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.flavor-choice-skeleton {
+  font-size: 0.8rem;
+  color: var(--text-tertiary-apple);
+  text-align: center;
+  padding: 20px 0;
+}
+
+/* Slider Glass Panel Glow Fix */
+.reorder-panel, .order-shell {
+  background: var(--glass) !important;
+  -webkit-backdrop-filter: var(--glass-blur) !important;
+  backdrop-filter: var(--glass-blur) !important;
+  border-left: 1px solid var(--glass-border) !important;
+  border-right: 1px solid var(--glass-border) !important;
+  box-shadow: 0 0 40px rgba(0,0,0,0.4) !important;
+}
+
+/* Responsiveness */
+@media (min-width: 600px) {
+  .builder-container {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: 20px;
+  }
+  
+  .tray-grid {
+    gap: 20px;
+    padding: 10px;
+  }
+  
+  .slot-circle {
+    width: 84px;
+    height: 84px;
+  }
+}
+
+
 

@@ -28,20 +28,20 @@ const currency = new Intl.NumberFormat("en-IN", {
 });
 
 const STORAGE_KEYS = {
-  profile: "spiceTableProfile",
-  addresses: "spiceTableAddresses",
-  selectedAddressId: "spiceTableSelectedAddressId",
-  cart: "spiceTableCart",
-  recentPlacedOrder: "spiceTableRecentPlacedOrder",
-  lastAcceptedOrderShown: "spiceTableLastAcceptedOrderShown",
-  lastCustomerMessageShown: "spiceTableLastCustomerMessageShown",
-  lastCancelledOrderShown: "spiceTableLastCancelledOrderShown",
-  lastCompletedOrderShown: "spiceTableLastCompletedOrderShown",
-  lastDeliveryRatingShown: "spiceTableLastDeliveryRatingShown",
-  lastProductRatingShown: "spiceTableLastProductRatingShown",
-  couponCode: "spiceTableCouponCode",
-  sessionToken: "spiceTableSessionToken",
-  deviceId: "spiceTableDeviceId",
+  profile: "sujaanBitesProfile",
+  addresses: "sujaanBitesAddresses",
+  selectedAddressId: "sujaanBitesSelectedAddressId",
+  cart: "sujaanBitesCart",
+  recentPlacedOrder: "sujaanBitesRecentPlacedOrder",
+  lastAcceptedOrderShown: "sujaanBitesLastAcceptedOrderShown",
+  lastCustomerMessageShown: "sujaanBitesLastCustomerMessageShown",
+  lastCancelledOrderShown: "sujaanBitesLastCancelledOrderShown",
+  lastCompletedOrderShown: "sujaanBitesLastCompletedOrderShown",
+  lastDeliveryRatingShown: "sujaanBitesLastDeliveryRatingShown",
+  lastProductRatingShown: "sujaanBitesLastProductRatingShown",
+  couponCode: "sujaanBitesCouponCode",
+  sessionToken: "sujaanBitesSessionToken",
+  deviceId: "sujaanBitesDeviceId",
 };
 
 const state = {
@@ -153,7 +153,23 @@ const accountShell = document.querySelector("#accountShell");
 const accountLogoutButton = document.querySelector("#accountLogoutButton");
 const closeSidebarBtn = document.querySelector("#closeSidebarBtn");
 const accountShellTitle = document.querySelector("#accountShellTitle");
-const accountContent = document.querySelector("#accountContent");
+const accountContent = {
+  get innerHTML() {
+    return document.querySelector("#accountContent")?.innerHTML || "";
+  },
+  set innerHTML(html) {
+    const primary = document.querySelector("#accountContent");
+    const secondary = document.querySelector("#accountPanelContent");
+    if (primary) primary.innerHTML = html;
+    if (secondary) secondary.innerHTML = html;
+  },
+  addEventListener(event, handler, options) {
+    const primary = document.querySelector("#accountContent");
+    const secondary = document.querySelector("#accountPanelContent");
+    primary?.addEventListener(event, handler, options);
+    secondary?.addEventListener(event, handler, options);
+  }
+};
 const accountTabs = document.querySelectorAll(".account-tab");
 const cartItems = document.querySelector("#cartItems");
 const itemCount = document.querySelector("#itemCount");
@@ -1045,9 +1061,13 @@ function showMainPanels(tabName) {
   const showHome = tabName === "home";
   const showMenu = tabName === "menu" || tabName === "search";
   const showReorder = tabName === "reorder";
+  const showAccount = tabName === "account";
   homePanel?.classList.toggle("hidden", !showHome);
   orderShell?.classList.toggle("hidden", !showMenu);
   reorderPanel?.classList.toggle("hidden", !showReorder);
+  
+  const accountPanel = document.querySelector("#accountPanel");
+  accountPanel?.classList.toggle("hidden", !showAccount);
 }
 
 function showHomePanel(options = {}) {
@@ -1085,8 +1105,8 @@ function showAccountPanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
   closeCartPanel("account");
   closeSearchDock();
-  showMainPanels("home");
-  state.drawerOpen = true;
+  if (state.drawerOpen) closeDrawer();
+  showMainPanels("account");
   renderAccount();
   if (scrollToTop) window.scrollTo({ top: 0, behavior: "smooth" });
   setBottomTab("account", animate);
@@ -2394,6 +2414,7 @@ async function loadMenu() {
     syncCartToStock();
     renderMenu();
     renderCart();
+    initInteractiveWidgets();
   } catch (error) {
     console.error(error);
     if (menuGrid) {
@@ -2958,6 +2979,15 @@ if (accountBackButton) {
   });
 }
 
+const accountPanelBackButton = document.querySelector("#accountPanelBackButton");
+if (accountPanelBackButton) {
+  accountPanelBackButton.addEventListener("click", () => {
+    state.activeTab = "profile";
+    state.addressMode = null;
+    renderAccount();
+  });
+}
+
 accountTabs.forEach((tab) => {
   tab.addEventListener("click", async () => {
     state.activeTab = tab.dataset.accountTab;
@@ -2969,7 +2999,7 @@ accountTabs.forEach((tab) => {
   });
 });
 
-accountContent.addEventListener("click", async (event) => {
+async function handleAccountClick(event) {
   const subpage = event.target.closest("[data-nav-subpage]")?.dataset.navSubpage;
   if (subpage) {
     state.activeTab = subpage;
@@ -2991,22 +3021,7 @@ accountContent.addEventListener("click", async (event) => {
     await logoutCustomer();
     return;
   }
-});
 
-accountContent.addEventListener("submit", async (event) => {
-  const form = event.target.closest("form");
-  if (!form) return;
-  if (form.id === "profileSetupForm") {
-    event.preventDefault();
-    await saveProfileAndFirstAddress(form);
-  }
-  if (form.id === "addressForm") {
-    event.preventDefault();
-    await saveAddress(form);
-  }
-});
-
-accountContent.addEventListener("click", async (event) => {
   const action = event.target.closest("[data-account-action]")?.dataset.accountAction;
   if (action === "logout") {
     await logoutCustomer();
@@ -3051,7 +3066,28 @@ accountContent.addEventListener("click", async (event) => {
       await deleteAddress(deleteAddressBtn.dataset.deleteAddress);
     }
   }
-});
+}
+
+const accountPanelContent = document.querySelector("#accountPanelContent");
+
+accountContent.addEventListener("click", handleAccountClick);
+accountPanelContent?.addEventListener("click", handleAccountClick);
+
+const handleAccountSubmit = async (event) => {
+  const form = event.target.closest("form");
+  if (!form) return;
+  if (form.id === "profileSetupForm") {
+    event.preventDefault();
+    await saveProfileAndFirstAddress(form);
+  }
+  if (form.id === "addressForm") {
+    event.preventDefault();
+    await saveAddress(form);
+  }
+};
+
+accountContent.addEventListener("submit", handleAccountSubmit);
+accountPanelContent?.addEventListener("submit", handleAccountSubmit);
 
 accountShell.addEventListener("click", async (event) => {
   const action = event.target.closest("[data-account-action]")?.dataset.accountAction;
@@ -3493,3 +3529,333 @@ async function boot() {
 }
 
 boot();
+
+// ── Interactive Homepage Widgets (Mood Quiz & Custom Box Builder) ─────────
+let customBoxSlots = [null, null, null, null, null, null];
+let activeQuizMatch = null;
+
+function initInteractiveWidgets() {
+  initMoodQuiz();
+  initBoxBuilder();
+}
+
+function initMoodQuiz() {
+  const moodGrid = document.querySelector("#moodGrid");
+  const quizResetBtn = document.querySelector("#quizResetBtn");
+  const quizAddBtn = document.querySelector("#quizAddBtn");
+
+  if (!moodGrid) return;
+
+  // Mood selection click handler
+  moodGrid.addEventListener("click", (event) => {
+    const btn = event.target.closest("[data-mood]");
+    if (!btn) return;
+
+    // Toggle active state
+    moodGrid.querySelectorAll(".mood-btn").forEach((b) => b.classList.remove("active"));
+    btn.classList.add("active");
+
+    const mood = btn.dataset.mood;
+    if (typeof vibrateTap === "function") vibrateTap(12);
+    selectCookieMood(mood);
+  });
+
+  quizResetBtn?.addEventListener("click", () => {
+    if (typeof vibrateTap === "function") vibrateTap(8);
+    resetCookieQuiz();
+  });
+
+  quizAddBtn?.addEventListener("click", () => {
+    if (!activeQuizMatch) return;
+    if (typeof vibrateTap === "function") vibrateTap(15);
+    
+    // Add to cart
+    updateQuantity(activeQuizMatch.id, 1);
+    
+    // Animate button success state
+    const originalText = quizAddBtn.innerHTML;
+    quizAddBtn.classList.add("added-success");
+    quizAddBtn.innerHTML = "Matched & Added! 🍪✨";
+    
+    setTimeout(() => {
+      quizAddBtn.classList.remove("added-success");
+      quizAddBtn.innerHTML = originalText;
+    }, 2000);
+  });
+}
+
+function selectCookieMood(mood) {
+  const quizResultCard = document.querySelector("#quizResultCard");
+  const quizMatchTitle = document.querySelector("#quizMatchTitle");
+  const quizMatchPrice = document.querySelector("#quizMatchPrice");
+  const quizMatchDescription = document.querySelector("#quizMatchDescription");
+  const quizMatchImage = document.querySelector("#quizMatchImage");
+  const quizBtnPrice = document.querySelector("#quizBtnPrice");
+
+  if (!quizResultCard || !state.menu.length) return;
+
+  // Decide recommendation based on mood and state.menu availability
+  let match = null;
+
+  if (mood === "intense") {
+    // Look for Double Chocolate single, fallback to Chocolate single
+    match = state.menu.find((item) => item.id === "classic-doublechocolate-single" && item.available) 
+         || state.menu.find((item) => item.id === "classic-chocolate-single");
+  } else if (mood === "biscoff") {
+    // Look for Biscoff single
+    match = state.menu.find((item) => item.id === "premium-biscoff-single" && item.available);
+  } else if (mood === "nutty") {
+    // Look for Dry Fruit single
+    match = state.menu.find((item) => item.id === "premium-dryfruit-single" && item.available);
+  } else {
+    // Classic - look for Oreo or Chocolate
+    match = state.menu.find((item) => item.id === "classic-oreo-single" && item.available)
+         || state.menu.find((item) => item.id === "classic-chocolate-single");
+  }
+
+  if (!match) return;
+  activeQuizMatch = match;
+
+  // Populate recommended card
+  const cleanName = match.name.split(" - ")[0]; // Strip the "- Single" suffix
+  quizMatchTitle.textContent = cleanName;
+  quizMatchPrice.textContent = formatPrice(match.price);
+  quizBtnPrice.textContent = formatPrice(match.price);
+  quizMatchDescription.textContent = match.description || "Freshly rolled gourmet cookie stuffed with our signature warm molten core.";
+  quizMatchImage.src = match.image || "assets/hero-food.png";
+
+  // Show container with fade-in effect
+  quizResultCard.classList.remove("hidden");
+  quizResultCard.style.opacity = "0";
+  requestAnimationFrame(() => {
+    quizResultCard.style.transition = "opacity 0.4s cubic-bezier(0.4, 0, 0.2, 1)";
+    quizResultCard.style.opacity = "1";
+  });
+}
+
+function resetCookieQuiz() {
+  const quizResultCard = document.querySelector("#quizResultCard");
+  const moodGrid = document.querySelector("#moodGrid");
+  if (quizResultCard) quizResultCard.classList.add("hidden");
+  if (moodGrid) {
+    moodGrid.querySelectorAll(".mood-btn").forEach((b) => b.classList.remove("active"));
+  }
+  activeQuizMatch = null;
+}
+
+function initBoxBuilder() {
+  const builderFlavorGrid = document.querySelector("#builderFlavorGrid");
+  const addBoxToCartBtn = document.querySelector("#addBoxToCartBtn");
+  const clearTrayBtn = document.querySelector("#clearTrayBtn");
+  const trayGrid = document.querySelector(".tray-grid");
+
+  if (!builderFlavorGrid || !state.menu.length) return;
+
+  // Extract all single-pack cookie items from the menu
+  const singleItems = state.menu.filter((item) => 
+    item.name.toLowerCase().includes("single") || 
+    item.id.endsWith("-single")
+  );
+
+  if (!singleItems.length) {
+    builderFlavorGrid.innerHTML = '<p class="empty-builder-notes">No single cookie flavors are currently available in the menu to construct a box.</p>';
+    return;
+  }
+
+  // Render flavors inside the flavor choices grid
+  builderFlavorGrid.innerHTML = singleItems
+    .map((item) => {
+      const parsed = parseMenuVariantName(item.name);
+      const soldOut = item.available === false || getMenuStock(item) <= 0;
+      return `
+        <button class="flavor-choice-card ${soldOut ? "sold-out" : ""}" type="button" data-flavor-id="${item.id}" ${soldOut ? "disabled" : ""}>
+          <img src="${item.image || "assets/hero-food.png"}" alt="${parsed.flavor}" />
+          <div class="choice-meta">
+            <strong>${parsed.flavor}</strong>
+            <span>${formatPrice(item.price)}</span>
+          </div>
+          <span class="choice-add-badge">+</span>
+        </button>
+      `;
+    })
+    .join("");
+
+  // Handle tapping a flavor in the grid
+  builderFlavorGrid.addEventListener("click", (event) => {
+    const card = event.target.closest("[data-flavor-id]");
+    if (!card) return;
+    const item = state.menu.find((entry) => entry.id === card.dataset.flavorId);
+    if (!item) return;
+
+    addCookieToBox(item);
+  });
+
+  // Handle removing flavor from slot on slot click
+  trayGrid?.addEventListener("click", (event) => {
+    const slotNode = event.target.closest("[data-slot]");
+    if (!slotNode) return;
+    const index = parseInt(slotNode.dataset.slot, 10);
+    if (customBoxSlots[index]) {
+      if (typeof vibrateTap === "function") vibrateTap(8);
+      removeCookieFromSlot(index);
+    }
+  });
+
+  clearTrayBtn?.addEventListener("click", () => {
+    if (typeof vibrateTap === "function") vibrateTap(10);
+    clearAllSlots();
+  });
+
+  addBoxToCartBtn?.addEventListener("click", () => {
+    if (typeof vibrateTap === "function") vibrateTap(20);
+    addCustomBoxToCart();
+  });
+
+  renderBoxSlots();
+}
+
+function addCookieToBox(item) {
+  const emptyIndex = customBoxSlots.indexOf(null);
+  if (emptyIndex === -1) {
+    alert("Your Assorted Box is already full! Tap a cookie in the tray to remove it and make room.");
+    return;
+  }
+
+  const parsed = parseMenuVariantName(item.name);
+  customBoxSlots[emptyIndex] = {
+    id: item.id,
+    name: item.name,
+    price: item.price,
+    image: item.image,
+    flavor: parsed.flavor
+  };
+
+  if (typeof vibrateTap === "function") vibrateTap(12);
+  renderBoxSlots();
+}
+
+function removeCookieFromSlot(index) {
+  customBoxSlots[index] = null;
+  renderBoxSlots();
+}
+
+function clearAllSlots() {
+  customBoxSlots = [null, null, null, null, null, null];
+  renderBoxSlots();
+}
+
+function renderBoxSlots() {
+  const trayGrid = document.querySelector(".tray-grid");
+  const trayTally = document.querySelector("#trayTally");
+  const clearTrayBtn = document.querySelector("#clearTrayBtn");
+  const addBoxToCartBtn = document.querySelector("#addBoxToCartBtn");
+  const trayProgressFill = document.querySelector("#trayProgressFill");
+  const builderPriceTally = document.querySelector("#builderPriceTally");
+  const customBoxTotalPrice = document.querySelector("#customBoxTotalPrice");
+  const customBoxSaving = document.querySelector("#customBoxSaving");
+
+  if (!trayGrid) return;
+
+  let filledCount = 0;
+  let totalPrice = 0;
+
+  customBoxSlots.forEach((slot, index) => {
+    const slotNode = trayGrid.querySelector(`[data-slot="${index}"]`);
+    if (!slotNode) return;
+
+    if (slot) {
+      filledCount++;
+      totalPrice += slot.price;
+      
+      slotNode.innerHTML = `
+        <div class="slot-circle filled animate-pop">
+          <img src="${slot.image || "assets/hero-food.png"}" alt="${slot.flavor}" />
+          <span class="slot-remove-badge">×</span>
+        </div>
+        <span class="slot-label filled">${slot.flavor}</span>
+      `;
+    } else {
+      slotNode.innerHTML = `
+        <div class="slot-circle empty">
+          <span class="slot-num">${index + 1}</span>
+          <span class="slot-add-icon">+</span>
+        </div>
+        <span class="slot-label">Empty Slot</span>
+      `;
+    }
+  });
+
+  // Update progress bar
+  const progressPercent = (filledCount / 6) * 100;
+  if (trayProgressFill) trayProgressFill.style.width = `${progressPercent}%`;
+
+  // Update tallies
+  if (trayTally) trayTally.textContent = `${filledCount} / 6 cookies selected`;
+  if (clearTrayBtn) {
+    clearTrayBtn.classList.toggle("hidden", filledCount === 0);
+  }
+
+  // Pricing & Buttons
+  if (filledCount === 6) {
+    if (addBoxToCartBtn) {
+      addBoxToCartBtn.removeAttribute("disabled");
+      addBoxToCartBtn.classList.remove("disabled");
+      addBoxToCartBtn.innerHTML = "Assemble & Add Box to Cart ✨";
+    }
+
+    if (builderPriceTally) builderPriceTally.classList.remove("hidden");
+    
+    // 10% Bundle Discount
+    const discountedPrice = Math.round(totalPrice * 0.9);
+    const savings = totalPrice - discountedPrice;
+    
+    if (customBoxTotalPrice) {
+      customBoxTotalPrice.textContent = formatPrice(discountedPrice);
+    }
+    if (customBoxSaving) {
+      customBoxSaving.textContent = `Save ${formatPrice(savings)}! (10% Assorted Discount)`;
+    }
+  } else {
+    if (addBoxToCartBtn) {
+      addBoxToCartBtn.setAttribute("disabled", "true");
+      addBoxToCartBtn.classList.add("disabled");
+      addBoxToCartBtn.innerHTML = "Assemble & Add Box to Cart";
+    }
+    if (builderPriceTally) builderPriceTally.classList.add("hidden");
+  }
+}
+
+async function addCustomBoxToCart() {
+  const filled = customBoxSlots.filter(Boolean);
+  if (filled.length < 6) return;
+
+  // Count items of each ID selected
+  const itemsToAdd = new Map();
+  filled.forEach((slot) => {
+    itemsToAdd.set(slot.id, (itemsToAdd.get(slot.id) || 0) + 1);
+  });
+
+  // Add them by modifying state.cart directly
+  for (const [id, qty] of itemsToAdd.entries()) {
+    const current = state.cart.get(id) || 0;
+    state.cart.set(id, current + qty);
+  }
+
+  // Persist and render
+  persistCart();
+  state.checkoutNeedsAccountConfirm = true;
+  renderCart();
+  renderMenu();
+
+  // Highlight cart panel to make it feel premium
+  if (typeof openCartPanel === "function") openCartPanel();
+
+  // Reset tray
+  clearAllSlots();
+  if (typeof vibrateTap === "function") vibrateTap(30);
+
+  // Success feedback message
+  setTimeout(() => {
+    alert("✨ Your custom Dream Box of 6 has been assembled and added to your cart! A 10% assorted discount was applied.");
+  }, 100);
+}

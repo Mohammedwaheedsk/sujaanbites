@@ -77,6 +77,225 @@
           <span class="hero-pill">Support available</span>
         </div>
       </div>
+
+      <!-- Video Experience (Crusant Style) -->
+      <div class="home-experience-section">
+        <div class="video-container-wrapper">
+          <video class="experience-video" autoplay loop muted playsinline poster="assets/hero-food.png">
+            <source src="https://player.vimeo.com/external/435674703.sd.mp4?s=782806127bcfc00a6e60b29a2c3a5d89851411f5&profile_id=164" type="video/mp4">
+          </video>
+          <div class="video-gradient-overlay"></div>
+          <div class="video-copy-overlay">
+            <p class="eyebrow">Watch us melt</p>
+            <h2>Gourmet Cookie Craft</h2>
+            <p>Our cookie cores are stuffed with premium fillings that ooze under heat. Pure, fresh-baked luxury in every single bite.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Our Baking Craft Grid -->
+      <div class="craft-section">
+        <div class="section-title-wrapper">
+          <p class="eyebrow">Our Philosophy</p>
+          <h2>The Baking Process</h2>
+        </div>
+        <div class="craft-grid">
+          <article class="craft-card">
+            <div class="craft-icon-badge">🍫</div>
+            <h3>Premium Ingredients</h3>
+            <p>We source single-origin Belgian chocolate, French brown butter, and gourmet vanilla beans for the ultimate luxury flavor profile.</p>
+          </article>
+          <article class="craft-card">
+            <div class="craft-icon-badge">⚖️</div>
+            <h3>Hand-Weighed dough</h3>
+            <p>Every single cookie is weighed to exactly 120 grams, filled with rich stuffing, hand-rolled, and chilled for 24 hours.</p>
+          </article>
+          <article class="craft-card">
+            <div class="craft-icon-badge">🔥</div>
+            <h3>Baked Fresh Daily</h3>
+            <p>Baked in small batches throughout the morning. Delivered with a perfect crispy outer shell and a rich, warm molten core.</p>
+          </article>
+        </div>
+      </div>
+
+      <!-- App Store Style Reviews Slider -->
+      <div class="reviews-section">
+        <div class="section-title-wrapper">
+          <p class="eyebrow">LOVED BY HUNDREDS</p>
+          <h2>Cookie Lovers Say</h2>
+        </div>
+        <div class="reviews-slider-container">
+          <div class="reviews-track">
+            <article class="review-item-card">
+              <div class="review-header">
+                <strong>Aarav K.</strong>
+                <span class="review-stars">★★★★★</span>
+              </div>
+              <p class="review-text">"The Belgian chocolate melt is out of this world. Soft, warm, and highly addictive. The delivery was incredibly fast!"</p>
+              <small class="review-date">Today</small>
+            </article>
+            <article class="review-item-card">
+              <div class="review-header">
+                <strong>Riya S.</strong>
+                <span class="review-stars">★★★★★</span>
+              </div>
+              <p class="review-text">"Hands down the best stuffed Biscoff cookie in India. Liquid gold core with crispy, caramelized edges. Speechless."</p>
+              <small class="review-date">Yesterday</small>
+            </article>
+            <article class="review-item-card">
+              <div class="review-header">
+                <strong>Dev M.</strong>
+                <span class="review-stars">★★★★★</span>
+              </div>
+              <p class="review-text">"Lush molten core with premium brown butter notes. The cookie box is a masterpiece of packaging and flavor."</p>
+              <small class="review-date">3 days ago</small>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gourmet Cookie Mood Quiz (Molten Matcher) -->
+      <div class="interactive-quiz-section glass-container">
+        <div class="section-title-wrapper">
+          <p class="eyebrow">Interactive Matcher</p>
+          <h2>The Molten Matcher</h2>
+          <p class="section-subtitle">Tell us your mood, we'll match you with the perfect warm stuffed cookie core.</p>
+        </div>
+
+        <div class="quiz-container glass-card">
+          <div class="mood-selector-grid" id="moodGrid">
+            <button class="mood-btn" type="button" data-mood="intense">
+              <span class="mood-emoji">🍫</span>
+              <span class="mood-label">Intense Cocoa</span>
+            </button>
+            <button class="mood-btn" type="button" data-mood="biscoff">
+              <span class="mood-emoji">🍯</span>
+              <span class="mood-label">Warm Caramel</span>
+            </button>
+            <button class="mood-btn" type="button" data-mood="nutty">
+              <span class="mood-emoji">🥜</span>
+              <span class="mood-label">Wild Crunchy</span>
+            </button>
+            <button class="mood-btn" type="button" data-mood="classic">
+              <span class="mood-emoji">🍪</span>
+              <span class="mood-label">Sweet & Salty</span>
+            </button>
+          </div>
+
+          <div class="quiz-result-container hidden" id="quizResultCard">
+            <div class="quiz-result-card">
+              <div class="result-badge">✨ YOUR PERFECT MATCH ✨</div>
+              <div class="result-body">
+                <img id="quizMatchImage" src="assets/hero-food.png" alt="Recommended Cookie" class="result-image" />
+                <div class="result-details">
+                  <h3 id="quizMatchTitle">Belgian Triple Chocolate</h3>
+                  <span class="result-price" id="quizMatchPrice">₹119</span>
+                  <p id="quizMatchDescription">Our signature double chocolate cookie stuffed with a premium flowing core of rich dark chocolate.</p>
+                  <div class="quiz-cta-row">
+                    <button class="primary-button add-quiz-match-btn" type="button" id="quizAddBtn">
+                      Add Perfect Match • <span id="quizBtnPrice">₹119</span>
+                    </button>
+                    <button class="secondary-button reset-quiz-btn" type="button" id="quizResetBtn">
+                      Try Another Mood
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dream Box Builder (Custom Box of 6) -->
+      <div class="box-builder-section glass-container">
+        <div class="section-title-wrapper">
+          <p class="eyebrow">Creative Experience</p>
+          <h2>Dream Box Builder</h2>
+          <p class="section-subtitle">Craft your own custom Box of 6. Tap flavors below to fill your premium assorted tray!</p>
+        </div>
+
+        <div class="builder-container">
+          <!-- Box Slots visualization -->
+          <div class="box-tray-wrapper">
+            <div class="box-tray glass-card">
+              <div class="tray-grid">
+                <div class="tray-slot" data-slot="0" title="Click to remove">
+                  <div class="slot-circle empty">
+                    <span class="slot-num">1</span>
+                    <span class="slot-add-icon">+</span>
+                  </div>
+                  <span class="slot-label">Empty Slot</span>
+                </div>
+                <div class="tray-slot" data-slot="1" title="Click to remove">
+                  <div class="slot-circle empty">
+                    <span class="slot-num">2</span>
+                    <span class="slot-add-icon">+</span>
+                  </div>
+                  <span class="slot-label">Empty Slot</span>
+                </div>
+                <div class="tray-slot" data-slot="2" title="Click to remove">
+                  <div class="slot-circle empty">
+                    <span class="slot-num">3</span>
+                    <span class="slot-add-icon">+</span>
+                  </div>
+                  <span class="slot-label">Empty Slot</span>
+                </div>
+                <div class="tray-slot" data-slot="3" title="Click to remove">
+                  <div class="slot-circle empty">
+                    <span class="slot-num">4</span>
+                    <span class="slot-add-icon">+</span>
+                  </div>
+                  <span class="slot-label">Empty Slot</span>
+                </div>
+                <div class="tray-slot" data-slot="4" title="Click to remove">
+                  <div class="slot-circle empty">
+                    <span class="slot-num">5</span>
+                    <span class="slot-add-icon">+</span>
+                  </div>
+                  <span class="slot-label">Empty Slot</span>
+                </div>
+                <div class="tray-slot" data-slot="5" title="Click to remove">
+                  <div class="slot-circle empty">
+                    <span class="slot-num">6</span>
+                    <span class="slot-add-icon">+</span>
+                  </div>
+                  <span class="slot-label">Empty Slot</span>
+                </div>
+              </div>
+              <div class="tray-progress-container">
+                <div class="tray-progress-bar">
+                  <div class="tray-progress-fill" id="trayProgressFill" style="width: 0%"></div>
+                </div>
+                <div class="tray-footer">
+                  <span class="tray-tally" id="trayTally">0 / 6 cookies selected</span>
+                  <button class="secondary-button clear-tray-btn hidden" id="clearTrayBtn" type="button">Reset Box</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flavor selections -->
+          <div class="flavor-selector-panel glass-card">
+            <h3>Choose Flavors</h3>
+            <p class="selector-note">Tap cookie flavors below to add them to your box:</p>
+            <div class="flavor-choices-grid" id="builderFlavorGrid">
+              <div class="flavor-choice-skeleton">Loading premium flavors...</div>
+            </div>
+            <div class="builder-action-area">
+              <div class="builder-price-tally hidden" id="builderPriceTally">
+                <span class="tally-label">Dream Box Total:</span>
+                <div class="tally-prices">
+                  <span class="tally-value" id="customBoxTotalPrice">₹0</span>
+                  <span class="tally-saving" id="customBoxSaving"></span>
+                </div>
+              </div>
+              <button class="primary-button add-box-to-cart-btn disabled" id="addBoxToCartBtn" disabled type="button">
+                Assemble & Add Box to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
     </section>
 
     <div class="account-shell-overlay" id="accountOverlay"></div>
@@ -127,6 +346,17 @@
       <div class="reorder-list" id="reorderList">
         <p class="menu-loading">No previous orders yet.</p>
       </div>
+    </section>
+
+    <section class="reorder-panel hidden" id="accountPanel" aria-label="Customer account">
+      <div class="account-shell-head">
+        <button class="account-back-button hidden" id="accountPanelBackButton" type="button" aria-label="Back to account">‹ Account</button>
+        <div>
+          <p class="eyebrow" id="accountPanelEyebrow">Account</p>
+          <h2 id="accountPanelTitle">Your details</h2>
+        </div>
+      </div>
+      <div class="account-section" id="accountPanelContent"></div>
     </section>
 
     <button class="menu-fab" id="menuFab" type="button" aria-expanded="false" aria-controls="menuFabSheet">
@@ -325,23 +555,33 @@
   <nav class="bottom-app-nav" aria-label="Primary">
     <span class="bottom-nav-indicator" id="bottomNavIndicator" aria-hidden="true"></span>
     <button class="active" type="button" data-bottom-tab="home" data-nav-home>
-      <span>⌂</span>
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </span>
       <small>Home</small>
     </button>
     <button type="button" data-bottom-tab="menu" data-nav-menu>
-      <span>▦</span>
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      </span>
       <small>Menu</small>
     </button>
     <button type="button" data-bottom-tab="reorder" data-nav-reorder>
-      <span>◴</span>
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </span>
       <small>Reorder</small>
     </button>
     <button type="button" data-bottom-tab="account" data-open-account>
-      <span>◉</span>
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </span>
       <small>Account</small>
     </button>
     <button class="search-nav-button" type="button" data-bottom-tab="search" data-open-search aria-label="Search">
-      <span>⌕</span>
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </span>
       <small>Search</small>
     </button>
   </nav>
