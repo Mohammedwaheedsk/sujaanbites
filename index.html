@@ -1,0 +1,701 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#0c0806" />
+  <meta name="description" content="Sujaan Bites — Premium freshly baked cookies delivered to your door. Order chocolate, biscoff, red velvet and more." />
+  <title>Sujaan Bites | Order Food Online</title>
+  <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,400&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="preconnect" href="https://api.qrserver.com" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css?v=20260601b" />
+</head>
+
+<body data-page="home">
+  <div class="splash" id="splash" aria-hidden="true">
+    <div class="splash-card">
+      <img class="splash-logo" src="assets/sujaan-logo.png" alt="" />
+      <div class="splash-text">Sujaan Bites</div>
+    </div>
+  </div>
+
+  <div class="announcement-bar" aria-label="Store announcement">
+    <div class="announcement-track" aria-hidden="true">
+      <span>Free shipping on all orders above ₹1599</span>
+      <span class="announcement-sep">•</span>
+      <span>Free shipping on all orders above ₹1599</span>
+      <span class="announcement-sep">•</span>
+      <span>Free shipping on all orders above ₹1599</span>
+      <span class="announcement-sep">•</span>
+      <span>Free shipping on all orders above ₹1599</span>
+    </div>
+    <div class="announcement-static">Free shipping on all orders above ₹1599</div>
+  </div>
+
+  <header class="topbar">
+    <a class="brand" href="#menu" aria-label="Sujaan Bites home">
+      <span class="brand-mark">
+        <img src="assets/sujaan-logo.png" alt="Sujaan Bites logo" />
+      </span>
+      <span>
+        <strong>Sujaan Bites</strong>
+        <small>This never disappoints you bro</small>
+      </span>
+    </a>
+    <nav class="nav">
+      <button class="icon-nav-button" type="button" data-open-search aria-label="Search menu">⌕</button>
+      <button class="icon-nav-button cart-icon-btn" type="button" data-open-cart aria-label="Open Cart">
+        🛒 <span class="cart-badge hidden" id="headerCartBadge">0</span>
+      </button>
+      <button class="profile-button" id="accountButton" type="button" aria-label="Account and support">
+        <img src="assets/sujaan-logo.png" alt="" />
+      </button>
+      <a href="#menu" data-nav-menu>Menu</a>
+    </nav>
+  </header>
+
+  <main class="app-wrapper">
+    <div id="page-home" class="app-page active">
+      <section class="hero" aria-labelledby="hero-title">
+        <img src="assets/hero-food.png" alt="Warm assorted Sujaan Bites cookies arranged on a bakery tray" />
+      <div class="hero-copy">
+        <p class="eyebrow">Order today</p>
+        <h1 id="hero-title">Sujaan Bites</h1>
+        <p>Fresh baked cookies, signature boxes, and a smooth checkout built for mobile.</p>
+        <div class="hero-cta-row">
+          <a class="primary-link" href="#menu" data-nav-menu>Start order</a>
+          <button class="secondary-link" id="heroAccountButton" type="button">Account / Support</button>
+        </div>
+        <div class="hero-pills" aria-label="Service highlights">
+          <span class="hero-pill">Freshly baked</span>
+          <span class="hero-pill">Fast checkout</span>
+          <span class="hero-pill">Support available</span>
+        </div>
+        </div>
+      </section>
+
+      <!-- Video Experience (Crusant Style) -->
+      <div class="home-experience-section">
+        <div class="video-container-wrapper">
+          <video class="experience-video" autoplay loop muted playsinline poster="assets/hero-food.png">
+            <source src="https://player.vimeo.com/external/435674703.sd.mp4?s=782806127bcfc00a6e60b29a2c3a5d89851411f5&profile_id=164" type="video/mp4">
+          </video>
+          <div class="video-gradient-overlay"></div>
+          <div class="video-copy-overlay">
+            <p class="eyebrow">Watch us melt</p>
+            <h2>Gourmet Cookie Craft</h2>
+            <p>Our cookie cores are stuffed with premium fillings that ooze under heat. Pure, fresh-baked luxury in every single bite.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Our Baking Craft Grid -->
+      <div class="craft-section">
+        <div class="section-title-wrapper">
+          <p class="eyebrow">Our Philosophy</p>
+          <h2>The Baking Process</h2>
+        </div>
+        <div class="craft-grid">
+          <article class="craft-card">
+            <div class="craft-icon-badge">🍫</div>
+            <h3>Premium Ingredients</h3>
+            <p>We source single-origin Belgian chocolate, French brown butter, and gourmet vanilla beans for the ultimate luxury flavor profile.</p>
+          </article>
+          <article class="craft-card">
+            <div class="craft-icon-badge">⚖️</div>
+            <h3>Hand-Weighed dough</h3>
+            <p>Every single cookie is weighed to exactly 120 grams, filled with rich stuffing, hand-rolled, and chilled for 24 hours.</p>
+          </article>
+          <article class="craft-card">
+            <div class="craft-icon-badge">🔥</div>
+            <h3>Baked Fresh Daily</h3>
+            <p>Baked in small batches throughout the morning. Delivered with a perfect crispy outer shell and a rich, warm molten core.</p>
+          </article>
+        </div>
+      </div>
+
+      <!-- App Store Style Reviews Slider -->
+      <div class="reviews-section">
+        <div class="section-title-wrapper">
+          <p class="eyebrow">LOVED BY HUNDREDS</p>
+          <h2>Cookie Lovers Say</h2>
+        </div>
+        <div class="reviews-slider-container">
+          <div class="reviews-track">
+            <article class="review-item-card">
+              <div class="review-header">
+                <strong>Aarav K.</strong>
+                <span class="review-stars">★★★★★</span>
+              </div>
+              <p class="review-text">"The Belgian chocolate melt is out of this world. Soft, warm, and highly addictive. The delivery was incredibly fast!"</p>
+              <small class="review-date">Today</small>
+            </article>
+            <article class="review-item-card">
+              <div class="review-header">
+                <strong>Riya S.</strong>
+                <span class="review-stars">★★★★★</span>
+              </div>
+              <p class="review-text">"Hands down the best stuffed Biscoff cookie in India. Liquid gold core with crispy, caramelized edges. Speechless."</p>
+              <small class="review-date">Yesterday</small>
+            </article>
+            <article class="review-item-card">
+              <div class="review-header">
+                <strong>Dev M.</strong>
+                <span class="review-stars">★★★★★</span>
+              </div>
+              <p class="review-text">"Lush molten core with premium brown butter notes. The cookie box is a masterpiece of packaging and flavor."</p>
+              <small class="review-date">3 days ago</small>
+            </article>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gourmet Cookie Mood Quiz (Molten Matcher) -->
+      <div class="interactive-quiz-section glass-container">
+        <div class="section-title-wrapper">
+          <p class="eyebrow">Interactive Matcher</p>
+          <h2>The Molten Matcher</h2>
+          <p class="section-subtitle">Tell us your mood, we'll match you with the perfect warm stuffed cookie core.</p>
+        </div>
+
+        <div class="quiz-container glass-card">
+          <div class="mood-selector-grid" id="moodGrid">
+            <button class="mood-btn" type="button" data-mood="intense">
+              <span class="mood-emoji">🍫</span>
+              <span class="mood-label">Intense Cocoa</span>
+            </button>
+            <button class="mood-btn" type="button" data-mood="biscoff">
+              <span class="mood-emoji">🍯</span>
+              <span class="mood-label">Warm Caramel</span>
+            </button>
+            <button class="mood-btn" type="button" data-mood="nutty">
+              <span class="mood-emoji">🥜</span>
+              <span class="mood-label">Wild Crunchy</span>
+            </button>
+            <button class="mood-btn" type="button" data-mood="classic">
+              <span class="mood-emoji">🍪</span>
+              <span class="mood-label">Sweet & Salty</span>
+            </button>
+          </div>
+
+          <div class="quiz-result-container hidden" id="quizResultCard">
+            <div class="quiz-result-card">
+              <div class="result-badge">✨ YOUR PERFECT MATCH ✨</div>
+              <div class="result-body">
+                <img id="quizMatchImage" src="assets/hero-food.png" alt="Recommended Cookie" class="result-image" />
+                <div class="result-details">
+                  <h3 id="quizMatchTitle">Belgian Triple Chocolate</h3>
+                  <span class="result-price" id="quizMatchPrice">₹119</span>
+                  <p id="quizMatchDescription">Our signature double chocolate cookie stuffed with a premium flowing core of rich dark chocolate.</p>
+                  <div class="quiz-cta-row">
+                    <button class="primary-button add-quiz-match-btn" type="button" id="quizAddBtn">
+                      Add Perfect Match • <span id="quizBtnPrice">₹119</span>
+                    </button>
+                    <button class="secondary-button reset-quiz-btn" type="button" id="quizResetBtn">
+                      Try Another Mood
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dream Box Builder (Starter Box / Big Jumbo) -->
+      <div class="box-builder-section glass-container">
+        <div class="section-title-wrapper">
+          <p class="eyebrow">Creative Experience</p>
+          <h2>Dream Box Builder</h2>
+          <p class="section-subtitle">Craft your own custom box. Tap cookie flavors below to fill your premium tray!</p>
+        </div>
+
+        <div class="builder-container">
+          <!-- Box Slots visualization -->
+          <div class="box-tray-wrapper">
+            <div class="box-tray glass-card">
+              <!-- iOS Style Segmented Size Switcher -->
+              <div class="tray-size-selector" id="traySizeSelector">
+                <button class="size-tab" type="button" data-size="3">Starter Box (3 Pcs)</button>
+                <button class="size-tab active" type="button" data-size="6">Big Jumbo (6 Pcs)</button>
+              </div>
+
+              <!-- Slots container dynamically rendered by JS -->
+              <div class="tray-grid" id="trayGrid"></div>
+              
+              <div class="tray-progress-container">
+                <div class="tray-progress-bar">
+                  <div class="tray-progress-fill" id="trayProgressFill" style="width: 0%"></div>
+                </div>
+                <div class="tray-footer">
+                  <span class="tray-tally" id="trayTally">0 / 6 cookies selected</span>
+                  <button class="secondary-button clear-tray-btn hidden" id="clearTrayBtn" type="button">Reset Box</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Flavor selections -->
+          <div class="flavor-selector-panel glass-card">
+            <h3>Choose Flavors</h3>
+            <p class="selector-note">Tap cookie flavors below to add them to your box:</p>
+            <div class="flavor-choices-grid" id="builderFlavorGrid">
+              <div class="flavor-choice-skeleton">Loading premium flavors...</div>
+            </div>
+            <div class="builder-action-area">
+              <div class="builder-price-tally hidden" id="builderPriceTally">
+                <span class="tally-label">Dream Box Total:</span>
+                <div class="tally-prices">
+                  <span class="tally-value" id="customBoxTotalPrice">₹0</span>
+                  <span class="tally-saving" id="customBoxSaving"></span>
+                </div>
+              </div>
+              <button class="primary-button add-box-to-cart-btn disabled" id="addBoxToCartBtn" disabled type="button">
+                Assemble & Add Box to Cart
+              </button>
+            </div>
+          </div>
+        </div>
+        </div>
+      </div>
+    </div> <!-- End page-home -->
+
+    <div class="account-shell-overlay" id="accountOverlay"></div>
+    
+    <!-- Account Tab -->
+    <div id="page-account" class="app-page">
+      <aside class="account-shell" id="accountShell" aria-label="Customer account">
+        <div class="account-shell-head">
+        <button class="account-back-button hidden" id="accountBackButton" type="button" aria-label="Back to account">‹ Account</button>
+        <div>
+          <p class="eyebrow" id="accountShellEyebrow">Account</p>
+          <h2 id="accountShellTitle">Your details</h2>
+        </div>
+        <div class="account-shell-actions">
+          <button class="secondary-button account-logout hidden" id="accountLogoutButton" type="button" data-account-action="logout">Logout</button>
+        </div>
+      </div>
+      <div class="account-tabs" role="tablist" aria-label="Account sections">
+        <button class="account-tab active" type="button" data-account-tab="profile">User name</button>
+        <button class="account-tab" type="button" data-account-tab="addresses">Saved addresses</button>
+        <button class="account-tab" type="button" data-account-tab="orders">Previous orders</button>
+        <button class="account-tab" type="button" data-account-tab="spends">Past spends</button>
+        <button class="account-tab" type="button" data-account-tab="care">Customer care</button>
+      </div>
+      <div class="account-section" id="accountContent"></div>
+      </aside>
+    </div> <!-- End page-account -->
+
+    <!-- Menu Tab -->
+    <div id="page-menu" class="app-page">
+      <section class="order-shell" id="orderShell" aria-label="Food ordering app">
+        <div class="menu-panel">
+        <div class="section-head">
+          <div>
+            <p class="eyebrow">Menu</p>
+            <h2 id="menu">Choose your cookies</h2>
+          </div>
+          <div class="filters" id="menuFilters" role="tablist" aria-label="Menu categories"></div>
+        </div>
+        <div class="menu-grid" id="menuGrid">
+          <div class="menu-loading">Loading fresh bakes...</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="reorder-panel hidden" id="reorderPanel" aria-label="Reorder from previous orders">
+      <div class="section-head">
+        <div>
+          <p class="eyebrow">Reorder</p>
+          <h2>Order again</h2>
+        </div>
+      </div>
+      <div class="reorder-list" id="reorderList">
+        <p class="menu-loading">No previous orders yet.</p>
+      </div>
+    </section>
+
+    <section class="reorder-panel hidden" id="accountPanel" aria-label="Customer account">
+      <div class="account-shell-head">
+        <button class="account-back-button hidden" id="accountPanelBackButton" type="button" aria-label="Back to account">‹ Account</button>
+        <div>
+          <p class="eyebrow" id="accountPanelEyebrow">Account</p>
+          <h2 id="accountPanelTitle">Your details</h2>
+        </div>
+      </div>
+      <div class="account-section" id="accountPanelContent"></div>
+    </section>
+
+    <button class="menu-fab" id="menuFab" type="button" aria-expanded="false" aria-controls="menuFabSheet">
+      <span class="menu-fab-icon">◫</span>
+      <span>MENU</span>
+    </button>
+    <div class="menu-fab-backdrop hidden" id="menuFabBackdrop"></div>
+    <section class="menu-fab-sheet hidden" id="menuFabSheet" aria-label="Menu categories"></section>
+
+    <div class="item-preview hidden" id="itemPreviewOverlay" aria-hidden="true">
+      <article class="item-preview-card">
+        <button class="item-preview-close" id="itemPreviewClose" type="button" aria-label="Close preview">×</button>
+        <img id="itemPreviewImage" alt="" />
+        <div class="item-preview-meta">
+          <h3 id="itemPreviewName"></h3>
+          <p id="itemPreviewPrice"></p>
+          <p id="itemPreviewDescription" class="item-preview-description" aria-label="Item description"></p>
+          <a class="secondary-link item-preview-moreinfo" id="itemPreviewMoreInfo" href="/product-info" data-route="/product-info">More info</a>
+        </div>
+      </article>
+    </div>
+
+    <div class="flavor-overlay hidden" id="flavorOverlay" aria-hidden="true">
+      <article class="flavor-sheet">
+        <div class="flavor-sheet-head">
+          <div>
+            <p class="eyebrow" id="flavorSubtitle">Collection</p>
+            <h3 id="flavorTitle">Chocolate</h3>
+          </div>
+          <button class="item-preview-close flavor-close" id="flavorClose" type="button" aria-label="Close flavour menu">×</button>
+        </div>
+        <div class="flavor-options" id="flavorOptions"></div>
+      </article>
+    </div>
+
+    <div class="cart-toast hidden" id="cartToast" aria-live="polite">
+      <img class="cart-toast-thumb" src="assets/sujaan-logo.png" alt="" />
+      <span class="cart-toast-copy">
+        <strong id="cartToastText">1 Item added</strong>
+        <small>Ready in your cart</small>
+      </span>
+      <a class="cart-toast-action" href="/cart" data-route="/cart" data-open-cart id="cartToastAction">View Cart ›</a>
+    </div>
+    </div> <!-- End page-menu -->
+
+    <!-- Search Tab -->
+    <div id="page-search" class="app-page">
+      <section class="search-dock" id="searchDock" aria-hidden="true" aria-label="Search menu">
+        <div class="search-dock-head">
+          <div>
+            <p class="eyebrow">Search</p>
+            <h2>Find your cookies</h2>
+          </div>
+          <button class="close-button" id="searchCloseButton" type="button" aria-label="Close search">×</button>
+        </div>
+        <input id="menuSearchInput" type="search" placeholder="Search Chocolate, Biscoff, combos..." autocomplete="off" />
+        <div class="search-results hidden" id="searchResults" role="region" aria-live="polite"></div>
+      </section>
+      <div class="search-backdrop hidden" id="searchBackdrop"></div>
+    </div> <!-- End page-search -->
+
+    <div class="cart-panel-backdrop hidden" id="cartPanelOverlay"></div>
+    <section class="cart-panel hidden" id="cartPanel" aria-hidden="true" aria-label="Cart checkout">
+      <div class="cart-panel-grabber" aria-hidden="true"></div>
+      <div class="cart-panel-head">
+        <div>
+          <p class="eyebrow">Cart</p>
+          <h2>Your order</h2>
+        </div>
+        <button class="close-button" id="cartPanelClose" type="button" aria-label="Close cart">×</button>
+      </div>
+
+      <section class="cart-empty-panel cart-panel-empty" id="cartPageEmpty">
+        <h1>Your cart is empty</h1>
+        <p>Add your cookies from the menu and your cart will appear here.</p>
+        <button class="primary-link" type="button" data-nav-menu>Browse menu</button>
+      </section>
+
+      <div id="cartPageContent" class="hidden">
+        <section class="checkout-panel cart-panel-checkout" aria-label="Cart and checkout">
+          <div class="cart-header">
+            <div>
+              <p class="eyebrow">Cart</p>
+              <h2>Your order</h2>
+            </div>
+            <span id="itemCount">0 items</span>
+          </div>
+
+          <div class="cart-items" id="cartItems">
+            <p class="empty">Add cookies from the menu to begin.</p>
+          </div>
+
+          <div class="cart-payment-options">
+            <p class="eyebrow">Payment options</p>
+            <label class="payment-option active">
+              <input type="radio" name="checkoutPaymentOption" value="prepaid" data-payment-option checked />
+              <span>
+                <strong>Razorpay</strong>
+                <small>Fast prepaid checkout</small>
+              </span>
+            </label>
+            <label class="payment-option">
+              <input type="radio" name="checkoutPaymentOption" value="card" data-payment-option />
+              <span>
+                <strong>Debit / Credit card</strong>
+                <small>Pay securely in Razorpay</small>
+              </span>
+            </label>
+          </div>
+
+          <div class="delivery-card">
+            <div>
+              <p class="eyebrow">Delivery type</p>
+              <strong id="deliveryEtaLabel">Delivery ETA after confirmation</strong>
+              <p id="deliveryEtaHint">Restaurant confirms the delivery time after order acceptance.</p>
+            </div>
+          </div>
+
+          <section class="offers-panel" aria-label="Offers and coupons">
+            <div class="offers-panel-head">
+              <p class="eyebrow">Offers and Coupons</p>
+              <strong>Save more on checkout</strong>
+            </div>
+
+            <article class="coupon-card">
+              <div class="coupon-copy">
+                <strong>Apply coupon code</strong>
+                <p>Enter a valid code to unlock your offer.</p>
+              </div>
+              <div class="coupon-form">
+                <input id="couponCodeInput" type="text" placeholder="Enter coupon code" autocomplete="off" />
+                <button class="secondary-button" id="applyCouponButton" type="button">Apply</button>
+              </div>
+              <p class="coupon-status" id="couponStatus">No coupon applied.</p>
+              <button class="secondary-button small hidden" id="clearCouponButton" type="button">Remove coupon</button>
+            </article>
+
+            <article class="offer-card">
+              <div class="offer-card-copy">
+                <strong>Orders above ₹1599 is free</strong>
+                <p>Keep adding items to unlock free delivery.</p>
+              </div>
+              <div class="offer-progress-meta">
+                <span id="freeDeliveryProgressLabel">₹0 / ₹1599</span>
+                <small id="freeDeliveryProgressRemaining">₹1599 away from free delivery</small>
+              </div>
+              <div class="offer-progress-track" aria-hidden="true">
+                <div class="offer-progress-fill" id="freeDeliveryProgressBar"></div>
+              </div>
+            </article>
+          </section>
+
+          <div class="totals">
+            <div><span>Subtotal</span><strong id="subtotal">₹0</strong></div>
+            <div><span>Delivery</span><strong id="deliveryFee">₹0</strong></div>
+            <div class="discount-row hidden" id="discountRow"><span>Coupon discount</span><strong id="couponDiscount">-₹0</strong></div>
+            <div class="grand-total"><span>To Pay</span><strong id="grandTotal">₹0</strong></div>
+          </div>
+
+          <div class="selected-address" id="selectedAddressSummary">
+            <div class="selected-address-head">
+              <strong>Delivery address</strong>
+              <button class="secondary-button small" id="manageAddressesButton" type="button">Manage</button>
+            </div>
+            <label class="address-picker" id="checkoutAddressPicker">
+              <span class="sr-only">Choose saved address</span>
+              <select id="checkoutAddressSelect" aria-label="Choose saved address"></select>
+            </label>
+            <p id="selectedAddressText">No address saved yet.</p>
+          </div>
+
+          <div id="singlePieceWarning" class="hidden" style="color: var(--danger); font-size: 0.85rem; font-weight: 600; padding: 12px; margin-bottom: 12px; text-align: center; background: rgba(208, 77, 77, 0.08); border: 1px solid rgba(208, 77, 77, 0.15); border-radius: var(--radius-md);">
+            Minimum 3 single pieces required to order.
+          </div>
+
+          <div class="cart-total-card">
+            <div>
+              <strong>To Pay</strong>
+              <small>Payment is verified before the order reaches the restaurant.</small>
+            </div>
+            <strong id="cartSummaryPayable">₹0</strong>
+          </div>
+
+          <form class="customer-form" id="checkout" autocomplete="on">
+            <input type="hidden" id="customerName" name="name" />
+            <input type="hidden" id="customerPhone" name="phone" />
+            <input type="hidden" id="orderType" name="orderType" value="delivery" />
+            <input type="hidden" id="paymentMethod" name="paymentMethod" value="prepaid" />
+          </form>
+        </section>
+      </div>
+
+      <div class="cart-panel-footer hidden" id="cartPageFooter">
+        <div class="cart-page-payment-copy">
+          <small>PAY USING</small>
+          <strong id="cartPagePaymentMethodText">Razorpay</strong>
+        </div>
+        <button class="pay-button cart-page-pay-button" id="cartPagePayLabel" type="submit" form="checkout">Pay ₹0</button>
+      </div>
+    </section>
+
+  </main>
+
+  <nav class="bottom-app-nav" aria-label="Primary">
+    <span class="bottom-nav-indicator" id="bottomNavIndicator" aria-hidden="true"></span>
+    <button class="active" type="button" data-bottom-tab="home" data-nav-home>
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </span>
+      <small>Home</small>
+    </button>
+    <button type="button" data-bottom-tab="menu" data-nav-menu>
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      </span>
+      <small>Menu</small>
+    </button>
+    <button type="button" data-bottom-tab="reorder" data-nav-reorder>
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </span>
+      <small>Reorder</small>
+    </button>
+    <button type="button" data-bottom-tab="account" data-open-account>
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </span>
+      <small>Account</small>
+    </button>
+    <button class="search-nav-button" type="button" data-bottom-tab="search" data-open-search aria-label="Search">
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      </span>
+      <small>Search</small>
+    </button>
+  </nav>
+
+  <section class="tracking-dock hidden" id="trackingDock" aria-label="Order tracking panel">
+    <button class="tracking-toggle" id="trackingToggle" type="button" aria-expanded="false">
+      <span class="tracking-toggle-left">
+        <strong id="trackingBarTitle">Order confirmed</strong>
+        <small id="trackingBarEta">Estimated delivery time will appear here.</small>
+      </span>
+      <span class="tracking-toggle-right" id="trackingStatusPill">Accepted</span>
+    </button>
+    <div class="tracking-sheet hidden" id="trackingSheet">
+      <p class="tracking-note" id="trackingEta">Your order is being prepared.</p>
+      <div class="tracking-mini-map map-canvas" id="trackingMap"></div>
+      <div class="tracking-grid">
+        <article class="tracking-card">
+          <h3>Receipt</h3>
+          <p id="trackingReceiptId"></p>
+          <ul id="trackingItems"></ul>
+          <strong id="trackingTotal"></strong>
+        </article>
+        <article class="tracking-card">
+          <h3>Delivery address</h3>
+          <p id="trackingAddress"></p>
+        </article>
+      </div>
+    </div>
+  </section>
+
+  <dialog class="payment-dialog" id="paymentDialog">
+    <form method="dialog">
+      <button class="close-button" aria-label="Close payment window">×</button>
+    </form>
+    <div class="payment-content">
+      <p class="eyebrow">Payment</p>
+      <h2>Complete your payment</h2>
+      <p id="paymentSummary"></p>
+      <button class="pay-button hidden" id="razorpayRetryButton" type="button">Open Razorpay payment</button>
+      <small id="adminNotice">Payment will be verified by the server before the order is sent to the restaurant.</small>
+    </div>
+  </dialog>
+
+  <section class="order-received-overlay hidden" id="orderReceivedOverlay" aria-live="polite">
+    <div class="order-received-card">
+      <div class="order-received-icon" aria-hidden="true">
+        <span id="orderReceivedSymbol">✓</span>
+      </div>
+      <h2 id="orderReceivedTitle">Yay! Order Received</h2>
+      <p class="order-received-address" id="orderReceivedAddress"></p>
+      <p class="order-received-eta" id="orderReceivedEta"></p>
+      <button class="secondary-button" id="closeOrderReceivedOverlay" type="button">Close</button>
+    </div>
+  </section>
+
+  <dialog class="payment-dialog" id="deliveryRatingDialog">
+    <form method="dialog">
+      <button class="close-button" aria-label="Close delivery rating">×</button>
+    </form>
+    <div class="payment-content">
+      <p class="eyebrow">Rate delivery</p>
+      <h2>How was your delivery?</h2>
+      <form id="deliveryRatingForm" class="auth-form">
+        <input id="deliveryRatingInput" type="hidden" value="0" />
+        <div>
+          <p class="form-note">Tap to rate</p>
+          <div class="star-rating" id="deliveryRatingStars" data-rating-target="deliveryRatingInput" role="radiogroup" aria-label="Delivery rating">
+            <button type="button" class="star-button" data-star-value="1" aria-label="1 star">★</button>
+            <button type="button" class="star-button" data-star-value="2" aria-label="2 stars">★</button>
+            <button type="button" class="star-button" data-star-value="3" aria-label="3 stars">★</button>
+            <button type="button" class="star-button" data-star-value="4" aria-label="4 stars">★</button>
+            <button type="button" class="star-button" data-star-value="5" aria-label="5 stars">★</button>
+          </div>
+        </div>
+        <label>Comment (optional)
+          <textarea id="deliveryRatingComment" rows="3" placeholder="Share your feedback"></textarea>
+        </label>
+        <button class="pay-button" type="submit">Submit delivery rating</button>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog class="payment-dialog" id="productRatingDialog">
+    <form method="dialog">
+      <button class="close-button" aria-label="Close product rating">×</button>
+    </form>
+    <div class="payment-content">
+      <p class="eyebrow">Order Ratings</p>
+      <h2>How was the taste of cookies?</h2>
+      <form id="productRatingForm" class="auth-form">
+        <p class="form-note" id="productRatingSummary"></p>
+        <div id="productRatingItems"></div>
+        <label>Comment (optional)
+          <textarea id="productRatingComment" rows="3" placeholder="Tell us what you liked"></textarea>
+        </label>
+        <button class="pay-button" type="submit">Submit product ratings</button>
+      </form>
+    </div>
+  </dialog>
+
+  <dialog class="payment-dialog" id="customerMessageDialog">
+    <form method="dialog">
+      <button class="close-button" aria-label="Close update">×</button>
+    </form>
+    <div class="payment-content">
+      <p class="eyebrow">Delivery update</p>
+      <h2>Message from Sujaan Bites</h2>
+      <p id="customerMessageText"></p>
+      <button class="secondary-button" id="closeCustomerMessageDialog" type="button">Okay</button>
+    </div>
+  </dialog>
+
+  <footer>
+    <p>Sujaan Bites • Fresh cookies made daily</p>
+  </footer>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+  <script>
+    window.__API_BASE = "";
+    window.addEventListener("load", () => {
+      const splash = document.getElementById("splash");
+      if (!splash) return;
+      setTimeout(() => {
+        splash.classList.add("hide");
+        setTimeout(() => splash.remove(), 180);
+      }, 420);
+    });
+  </script>
+  <script src="app.js?v=20260531c"></script>
+</body>
+
+</html>
