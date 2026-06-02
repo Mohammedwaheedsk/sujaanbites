@@ -2591,7 +2591,43 @@ function initLocationMap() {
   const useLocationButton = document.querySelector("#useLocationButton");
   const savedAddress = document.querySelector("#savedAddress");
 
-  if (!locationMap || !window.L) return;
+  if (!locationMap) return;
+
+  function setFallbackLocationMessage(message) {
+    if (locationStatus) locationStatus.textContent = message;
+  }
+
+  function requestFallbackLocation() {
+    if (!navigator.geolocation) {
+      setFallbackLocationMessage("Your browser does not support location access. Please open the page in a mobile browser with location enabled.");
+      return;
+    }
+
+    useLocationButton.disabled = true;
+    setFallbackLocationMessage("Requesting location permission...");
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        useLocationButton.disabled = false;
+        state.selectedLocation = {
+          lat: position.coords.latitude,
+          lng: position.coords.longitude,
+        };
+        setFallbackLocationMessage(`Location saved at ${state.selectedLocation.lat.toFixed(5)}, ${state.selectedLocation.lng.toFixed(5)}. Fetching address...`);
+        reverseGeocode(state.selectedLocation.lat, state.selectedLocation.lng, setFallbackLocationMessage, savedAddress);
+      },
+      () => {
+        useLocationButton.disabled = false;
+        setFallbackLocationMessage("Location permission was not allowed. Please allow location access and try again.");
+      },
+      { enableHighAccuracy: true, timeout: 12000, maximumAge: 0 },
+    );
+  }
+
+  if (!window.L) {
+    setFallbackLocationMessage("Map is still loading. Press Use current location to save your exact delivery pin.");
+    useLocationButton?.addEventListener("click", requestFallbackLocation);
+    return;
+  }
 
   const existing = state.selectedLocation || getActiveAddress()?.location || { lat: 20.5937, lng: 78.9629 };
   if (!state.map) {
@@ -3119,7 +3155,7 @@ accountOverlay?.addEventListener("click", closeDrawer);
 const accountBackButton = document.querySelector("#accountBackButton");
 if (accountBackButton) {
   accountBackButton.addEventListener("click", () => {
-    state.activeTab = "profile";
+    state.activeTab = "dashboard";
     state.addressMode = null;
     renderAccount();
   });

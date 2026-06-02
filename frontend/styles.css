@@ -4866,3 +4866,291 @@ main {
   box-shadow: 0 4px 12px rgba(93, 62, 45, 0.06), 0 0 0 1px rgba(93, 62, 45, 0.02);
 }
 
+/* ── Mobile Repair Layer: account, tabs, menu, and themes ───── */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  background: var(--bg);
+}
+
+body {
+  min-width: 0;
+  overflow-x: hidden;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "DM Sans", "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.app-page {
+  display: none;
+  width: 100%;
+  min-height: calc(100svh - 84px);
+  padding-bottom: calc(94px + env(safe-area-inset-bottom, 0px));
+}
+
+.app-page.active {
+  display: block;
+}
+
+.bottom-app-nav {
+  pointer-events: auto !important;
+  touch-action: pan-x !important;
+  grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  height: calc(66px + env(safe-area-inset-bottom, 10px)) !important;
+  min-height: calc(66px + env(safe-area-inset-bottom, 10px)) !important;
+  padding: 5px 8px calc(7px + env(safe-area-inset-bottom, 10px)) !important;
+  background: color-mix(in srgb, var(--panel) 88%, transparent) !important;
+  color: var(--ink) !important;
+}
+
+.bottom-app-nav button,
+.bottom-app-nav a {
+  pointer-events: auto !important;
+  min-width: 0 !important;
+  min-height: 48px !important;
+  height: 48px !important;
+  padding: 4px 2px !important;
+  border-radius: 16px !important;
+  color: var(--muted) !important;
+}
+
+.bottom-app-nav button.active,
+.bottom-app-nav a.active {
+  color: var(--accent) !important;
+  background: var(--accent-glow) !important;
+}
+
+.bottom-app-nav span {
+  font-size: 1.15rem !important;
+}
+
+.bottom-app-nav small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.58rem !important;
+  line-height: 1.05;
+}
+
+.topbar,
+.announcement-bar,
+.order-shell,
+.reorder-panel,
+.account-shell,
+.search-page,
+.menu-panel {
+  max-width: 100%;
+}
+
+.order-shell,
+.reorder-panel,
+.account-shell {
+  width: min(100% - 18px, 560px) !important;
+  margin-inline: auto !important;
+}
+
+.account-shell {
+  min-height: auto;
+  padding: 14px !important;
+  border-radius: 22px !important;
+  overflow: visible;
+}
+
+.account-shell-head {
+  gap: 10px !important;
+}
+
+.account-shell-head h2 {
+  font-size: clamp(1.25rem, 6vw, 1.7rem) !important;
+  line-height: 1.05;
+}
+
+.account-tabs {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px !important;
+}
+
+.account-tab {
+  min-height: 38px;
+  padding: 8px 10px !important;
+  border-radius: 999px !important;
+  font-size: 0.78rem !important;
+  white-space: normal;
+}
+
+.ios-form,
+.auth-form {
+  gap: 10px !important;
+}
+
+.ios-input-group,
+.auth-form label {
+  gap: 5px !important;
+  font-size: 0.82rem !important;
+}
+
+.ios-input-group input,
+.ios-input-group select,
+.ios-input-group textarea,
+.auth-form input,
+.auth-form select,
+.auth-form textarea {
+  min-height: 42px;
+  padding: 10px 12px !important;
+  border-radius: 14px !important;
+  font-size: 0.95rem !important;
+}
+
+.ios-map-canvas,
+.map-canvas {
+  height: clamp(210px, 42svh, 320px) !important;
+  min-height: 210px !important;
+  border-radius: 18px !important;
+}
+
+.menu-panel {
+  width: 100% !important;
+  padding: 14px 12px !important;
+  border-radius: 22px !important;
+}
+
+.section-head {
+  align-items: flex-start !important;
+  gap: 12px !important;
+}
+
+.filters {
+  width: 100%;
+  overflow-x: auto;
+  flex-wrap: nowrap !important;
+  justify-content: flex-start !important;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.filters::-webkit-scrollbar {
+  display: none;
+}
+
+.filter {
+  flex: 0 0 auto;
+  min-height: 36px;
+  padding: 8px 13px !important;
+  font-size: 0.82rem !important;
+}
+
+.menu-section {
+  width: 100%;
+  margin-top: 18px;
+}
+
+.menu-section h3 {
+  font-size: clamp(1.25rem, 7vw, 1.7rem) !important;
+  line-height: 1.02 !important;
+}
+
+.menu-section-grid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 10px !important;
+  align-items: stretch;
+}
+
+.dish-card.flavor-card {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 9px !important;
+  border-radius: 18px !important;
+  gap: 8px !important;
+}
+
+.dish-image {
+  width: 100% !important;
+  aspect-ratio: 1.08 !important;
+  height: auto !important;
+  min-height: 0 !important;
+  border-radius: 14px !important;
+  object-fit: cover !important;
+}
+
+.dish-card h3 {
+  font-size: 0.95rem !important;
+  line-height: 1.05 !important;
+}
+
+.price-line,
+.price {
+  font-size: 0.86rem !important;
+}
+
+.availability {
+  max-width: 100%;
+  font-size: 0.7rem !important;
+  line-height: 1.05 !important;
+}
+
+.add-button {
+  width: 100%;
+  min-height: 38px !important;
+  padding: 8px 10px !important;
+  border-radius: 999px !important;
+  font-size: 0.82rem !important;
+}
+
+[data-theme="dark"] body,
+[data-theme="dark"] .app-page {
+  background: var(--bg);
+  color: var(--ink);
+}
+
+[data-theme="dark"] .bottom-app-nav {
+  background: rgba(20, 13, 10, 0.86) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+@media (max-width: 430px) {
+  .topbar {
+    padding-inline: 10px !important;
+  }
+
+  .brand strong {
+    font-size: 0.94rem !important;
+  }
+
+  .brand small {
+    font-size: 0.66rem !important;
+  }
+
+  .nav a,
+  .icon-nav-button {
+    display: none !important;
+  }
+
+  .hero {
+    min-height: 410px !important;
+  }
+
+  .hero-copy {
+    width: min(100% - 22px, 420px) !important;
+    padding: 54px 0 44px !important;
+  }
+
+  .hero h1 {
+    font-size: clamp(2.25rem, 15vw, 3.5rem) !important;
+    line-height: 0.95 !important;
+  }
+
+  .hero p:not(.eyebrow) {
+    font-size: 0.95rem !important;
+    line-height: 1.35 !important;
+  }
+
+  .order-shell,
+  .reorder-panel,
+  .account-shell {
+    width: calc(100% - 14px) !important;
+  }
+}
