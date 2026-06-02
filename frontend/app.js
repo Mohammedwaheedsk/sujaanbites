@@ -1076,6 +1076,15 @@ function closeCartPanel(nextTab = null) {
   if (nextTab) setBottomTab(nextTab);
 }
 
+function scrollPanelToTop(page) {
+  if (!page) return;
+  if (typeof page.scrollTo === "function") {
+    page.scrollTo({ top: 0, behavior: "smooth" });
+    return;
+  }
+  page.scrollTop = 0;
+}
+
 function showMainPanels(tabName) {
   const pages = {
     home: document.getElementById("page-home"),
@@ -1110,7 +1119,7 @@ function showHomePanel(options = {}) {
   showMainPanels("home");
   if (scrollToTop) {
     const page = document.getElementById("page-home");
-    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+    scrollPanelToTop(page);
   }
   setBottomTab("home", animate);
 }
@@ -1122,7 +1131,7 @@ function showMenuPanel(options = {}) {
   showMainPanels("menu");
   if (scrollToTop) {
     const page = document.getElementById("page-menu");
-    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+    scrollPanelToTop(page);
   }
   setBottomTab("menu", animate);
 }
@@ -1135,7 +1144,7 @@ function showReorderPanel(options = {}) {
   showMainPanels("reorder");
   if (scrollToTop) {
     const page = document.getElementById("page-menu");
-    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+    scrollPanelToTop(page);
   }
   setBottomTab("reorder", animate);
 }
@@ -1148,7 +1157,7 @@ function showAccountPanel(options = {}) {
   renderAccount();
   if (scrollToTop) {
     const page = document.getElementById("page-account");
-    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+    scrollPanelToTop(page);
   }
   setBottomTab("account", animate);
 }
@@ -1160,7 +1169,7 @@ function showSearchPanel(options = {}) {
   renderSearchResults();
   if (scrollToTop) {
     const page = document.getElementById("page-search");
-    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+    scrollPanelToTop(page);
   }
   window.setTimeout(() => document.getElementById("menuSearchInput")?.focus(), 80);
   setBottomTab("search", animate);
@@ -3038,7 +3047,7 @@ async function loadOrdersForAccount() {
   }
 }
 
-accountButton.addEventListener("click", showAccountPanel);
+accountButton?.addEventListener("click", showAccountPanel);
 
 heroAccountButton?.addEventListener("click", showAccountPanel);
 
@@ -3104,8 +3113,8 @@ couponCodeInput?.addEventListener("keydown", (event) => {
   }
 });
 
-closeSidebarBtn.addEventListener("click", closeDrawer);
-accountOverlay.addEventListener("click", closeDrawer);
+closeSidebarBtn?.addEventListener("click", closeDrawer);
+accountOverlay?.addEventListener("click", closeDrawer);
 
 const accountBackButton = document.querySelector("#accountBackButton");
 if (accountBackButton) {
@@ -3227,7 +3236,7 @@ const handleAccountSubmit = async (event) => {
 if (accountContentEl) accountContentEl.addEventListener("submit", handleAccountSubmit);
 accountPanelContent?.addEventListener("submit", handleAccountSubmit);
 
-accountShell.addEventListener("click", async (event) => {
+accountShell?.addEventListener("click", async (event) => {
   const action = event.target.closest("[data-account-action]")?.dataset.accountAction;
   if (action === "logout") {
     await logoutCustomer();
