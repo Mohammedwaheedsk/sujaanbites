@@ -42,7 +42,32 @@ const STORAGE_KEYS = {
   couponCode: "sujaanBitesCouponCode",
   sessionToken: "sujaanBitesSessionToken",
   deviceId: "sujaanBitesDeviceId",
+  theme: "sujaanBitesTheme",
 };
+
+function getStoredTheme() {
+  return localStorage.getItem(STORAGE_KEYS.theme) === "dark" ? "dark" : "light";
+}
+
+function applyTheme(theme, options = {}) {
+  const { persist = true } = options;
+  const nextTheme = theme === "dark" ? "dark" : "light";
+  document.documentElement.setAttribute("data-theme", nextTheme);
+  document.documentElement.style.colorScheme = nextTheme;
+  document.querySelectorAll(".theme-icon").forEach((icon) => {
+    icon.textContent = nextTheme === "dark" ? "☀" : "◑";
+  });
+  const themeMeta = document.querySelector('meta[name="theme-color"]');
+  if (themeMeta) themeMeta.setAttribute("content", nextTheme === "dark" ? "#0c0806" : "#FAF6F0");
+  if (persist) localStorage.setItem(STORAGE_KEYS.theme, nextTheme);
+}
+
+function toggleTheme() {
+  const currentTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
+  applyTheme(currentTheme === "dark" ? "light" : "dark");
+}
+
+applyTheme(getStoredTheme(), { persist: false });
 
 const state = {
   menu: [],
@@ -1038,7 +1063,7 @@ function openCartPanel() {
   setBottomTab("menu");
 }
 
-function closeCartPanel(nextTab = "home") {
+function closeCartPanel(nextTab = null) {
   if (!cartPanel || !cartPanelOverlay) return;
   cartPanel.classList.remove("show");
   cartPanelOverlay.classList.remove("show");
@@ -1048,7 +1073,7 @@ function closeCartPanel(nextTab = "home") {
     cartPanel.classList.add("hidden");
     cartPanelOverlay.classList.add("hidden");
   }, 180);
-  setBottomTab(nextTab);
+  if (nextTab) setBottomTab(nextTab);
 }
 
 function showMainPanels(tabName) {
@@ -1058,14 +1083,18 @@ function showMainPanels(tabName) {
     account: document.getElementById("page-account"),
     search: document.getElementById("page-search"),
   };
+  const reorderPanel = document.getElementById("reorderPanel");
+  const orderShell = document.getElementById("orderShell");
   
   Object.values(pages).forEach(page => {
     if (page) page.classList.remove("active");
   });
+  orderShell?.classList.toggle("hidden", tabName === "reorder");
+  reorderPanel?.classList.toggle("hidden", tabName !== "reorder");
 
   if (tabName === "search" && pages.search) {
     pages.search.classList.add("active");
-  } else if (tabName === "menu" && pages.menu) {
+  } else if ((tabName === "menu" || tabName === "reorder") && pages.menu) {
     pages.menu.classList.add("active");
   } else if (tabName === "account" && pages.account) {
     pages.account.classList.add("active");
@@ -1076,7 +1105,7 @@ function showMainPanels(tabName) {
 
 function showHomePanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
-  closeCartPanel("home");
+  closeCartPanel();
   if (state.drawerOpen) closeDrawer();
   showMainPanels("home");
   if (scrollToTop) {
@@ -1088,7 +1117,7 @@ function showHomePanel(options = {}) {
 
 function showMenuPanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
-  closeCartPanel("menu");
+  closeCartPanel();
   if (state.drawerOpen) closeDrawer();
   showMainPanels("menu");
   if (scrollToTop) {
@@ -1099,13 +1128,21 @@ function showMenuPanel(options = {}) {
 }
 
 function showReorderPanel(options = {}) {
-  // Reorder is now merged or can just show home for now if it doesn't have a page
-  showHomePanel(options);
+  const { scrollToTop = true, animate = true } = options;
+  closeCartPanel();
+  if (state.drawerOpen) closeDrawer();
+  renderReorderPanel();
+  showMainPanels("reorder");
+  if (scrollToTop) {
+    const page = document.getElementById("page-menu");
+    if (page) page.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  setBottomTab("reorder", animate);
 }
 
 function showAccountPanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
-  closeCartPanel("account");
+  closeCartPanel();
   if (state.drawerOpen) closeDrawer();
   showMainPanels("account");
   renderAccount();
@@ -1118,7 +1155,7 @@ function showAccountPanel(options = {}) {
 
 function showSearchPanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
-  closeCartPanel("search");
+  closeCartPanel();
   showMainPanels("search");
   renderSearchResults();
   if (scrollToTop) {
@@ -1150,6 +1187,17 @@ function openTabByName(tabName, options = {}) {
     showSearchPanel(options);
   }
 }
+
+bottomTabs.forEach((tab) => {
+  tab.addEventListener("click", (event) => {
+    if (navDragSuppressClick) return;
+    const targetTab = tab.dataset.bottomTab;
+    if (!targetTab) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openTabByName(targetTab, { scrollToTop: true, animate: true });
+  });
+});
 
 function getCurrentBottomTab() {
   const active = [...bottomTabs].find((tab) => tab.classList.contains("active"));
@@ -1855,8 +1903,8 @@ function renderProfileSetup() {
   } else {
     accountContent.innerHTML = `
       <div class="account-page-view slide-in saved-user ios-profile-fallback">
-        <strong>${state.profile.name}</strong>
-        <p>${state.profile.phone}</p>
+        <strong>${existing.name || "Customer"}</strong>
+        <p>${existing.phone || ""}</p>
         <div class="account-actions">
           <button class="secondary-button ios-logout-btn" type="button" data-account-action="logout">Logout</button>
         </div>
@@ -2447,6 +2495,49 @@ function renderCheckoutAddressPicker() {
     .join("");
 }
 
+function normalizeMenuPayload(payload) {
+  const menu = Array.isArray(payload) ? payload : payload?.menu;
+  const categories = Array.isArray(payload?.categories) ? payload.categories : [];
+  return {
+    menu: Array.isArray(menu) ? menu.filter((item) => item && item.id && item.name) : [],
+    categories,
+  };
+}
+
+async function loadMenuFromJsonFile() {
+  const candidates = [
+    "data/menu.json",
+    "backend/data/menu.json",
+    "../backend/data/menu.json",
+  ];
+  let lastError = null;
+  for (const path of candidates) {
+    try {
+      const response = await fetch(path, { cache: "no-store" });
+      if (!response.ok) throw new Error(`Menu file ${path} returned ${response.status}`);
+      const parsed = normalizeMenuPayload(await response.json());
+      if (parsed.menu.length > 0) return parsed;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError || new Error("No menu JSON file found");
+}
+
+function applyLoadedMenu(result) {
+  state.menu = (result.menu && result.menu.length > 0) ? result.menu : DEFAULT_MENU;
+  state.menuCategories = Array.isArray(result.categories) ? result.categories : [];
+  const availableCategories = new Set(state.menu.map((item) => normalizeCategory(item.category)).filter(Boolean));
+  if (state.activeCategory !== "all" && !availableCategories.has(normalizeCategory(state.activeCategory))) {
+    state.activeCategory = "all";
+  }
+  renderFilters();
+  syncCartToStock();
+  renderMenu();
+  renderCart();
+  initInteractiveWidgets();
+}
+
 async function loadMenu() {
   if (state.loadingMenu) return;
   state.loadingMenu = true;
@@ -2455,25 +2546,16 @@ async function loadMenu() {
   }
   try {
     const result = await apiRequest("/api/menu");
-    state.menu = (result.menu && result.menu.length > 0) ? result.menu : DEFAULT_MENU;
-    state.menuCategories = Array.isArray(result.categories) ? result.categories : [];
-    const availableCategories = new Set(state.menu.map((item) => normalizeCategory(item.category)).filter(Boolean));
-    if (state.activeCategory !== "all" && !availableCategories.has(normalizeCategory(state.activeCategory))) {
-      state.activeCategory = "all";
-    }
-    renderFilters();
-    syncCartToStock();
-    renderMenu();
-    renderCart();
-    initInteractiveWidgets();
+    applyLoadedMenu(normalizeMenuPayload(result));
   } catch (error) {
-    console.warn("API menu failed, using default menu:", error);
-    state.menu = DEFAULT_MENU;
-    renderFilters();
-    syncCartToStock();
-    renderMenu();
-    renderCart();
-    initInteractiveWidgets();
+    console.warn("API menu failed, trying menu.json:", error);
+    try {
+      const result = await loadMenuFromJsonFile();
+      applyLoadedMenu(result);
+    } catch (fileError) {
+      console.warn("Menu JSON failed, using default menu:", fileError);
+      applyLoadedMenu({ menu: DEFAULT_MENU, categories: [] });
+    }
   } finally {
     state.loadingMenu = false;
   }
@@ -2664,7 +2746,7 @@ async function saveProfileAndFirstAddress(form) {
   state.profile = profile;
   state.addresses = [addressRecord];
   state.selectedAddressId = addressRecord.id;
-  state.activeTab = "profile";
+  state.activeTab = "dashboard";
   state.addressMode = null;
   state.drawerOpen = false;
 
@@ -2681,7 +2763,8 @@ async function saveProfileAndFirstAddress(form) {
       renderAccount();
       return;
     }
-    throw error;
+    console.warn("Customer details saved locally. Backend sync skipped:", error);
+    renderAccount();
   }
 }
 
@@ -3166,6 +3249,13 @@ paymentOptionInputs.forEach((input) => {
 });
 
 document.addEventListener("click", (event) => {
+  const themeButton = event.target.closest("#themeToggleBtn");
+  if (themeButton) {
+    event.preventDefault();
+    toggleTheme();
+    return;
+  }
+
   const homeButton = event.target.closest("[data-nav-home]");
   if (homeButton) {
     event.preventDefault();
@@ -3561,7 +3651,7 @@ async function boot() {
   syncCouponUi();
   await loadCustomerState();
   state.drawerOpen = false;
-  state.activeTab = "profile";
+  state.activeTab = getResolvedCustomerProfile()?.phone ? "dashboard" : "profile";
   renderAccount();
   renderCart();
   await loadMenu();
@@ -3945,21 +4035,7 @@ async function addCustomBoxToCart() {
 
 // Initialize App Navigation
 window.addEventListener("DOMContentLoaded", () => {
-  // Theme Toggle Logic
-  const themeToggleBtn = document.getElementById("themeToggleBtn");
-  if (themeToggleBtn) {
-    const savedTheme = localStorage.getItem("sujaanBitesTheme") || "light";
-    if (savedTheme === "dark") {
-      document.documentElement.setAttribute("data-theme", "dark");
-    }
-    
-    themeToggleBtn.addEventListener("click", () => {
-      const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
-      const newTheme = currentTheme === "dark" ? "light" : "dark";
-      document.documentElement.setAttribute("data-theme", newTheme);
-      localStorage.setItem("sujaanBitesTheme", newTheme);
-    });
-  }
+  applyTheme(getStoredTheme(), { persist: false });
 
   if (isCartPage) return;
   // Make sure the bottom tab matches the default active page
