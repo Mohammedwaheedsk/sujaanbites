@@ -1007,7 +1007,8 @@ function positionBottomNavIndicator(tabName, animate = true) {
   if (!activeTab || !bottomNavIndicator || !nav) return;
   const navRect = nav.getBoundingClientRect();
   const tabRect = activeTab.getBoundingClientRect();
-  const left = Math.max(0, Math.min(navRect.width - tabRect.width, tabRect.left - navRect.left));
+  const paddingLeft = parseFloat(getComputedStyle(nav).paddingLeft) || 0;
+  const left = Math.max(0, Math.min(navRect.width - tabRect.width, tabRect.left - navRect.left - paddingLeft));
   bottomNavIndicator.style.transition = animate ? "" : "none";
   bottomNavIndicator.style.width = `${tabRect.width}px`;
   bottomNavIndicator.style.transform = `translateX(${Math.round(left)}px)`;
@@ -2329,6 +2330,7 @@ function renderAccountDashboard() {
       <!-- Profile Header Card -->
       ${profileCardHTML}
       
+      ${isNew ? "" : `
       <!-- Quick Actions Row -->
       <div class="wf-quick-actions">
         <button class="wf-action-btn" type="button" data-nav-subpage="orders">
@@ -2370,10 +2372,11 @@ function renderAccountDashboard() {
             <span class="wf-row-chevron">›</span>
           </button>
           <div class="wf-logout-wrapper">
-             <button class="wf-logout-btn" type="button" id="iosLogoutBtn">Log out</button>
+             <button class="wf-logout-btn" type="button" id="iosLogoutBtn" data-account-action="logout">Log out</button>
           </div>
         </div>
       </div>
+      `}
     </div>
   `;
 }
@@ -2452,7 +2455,7 @@ async function loadMenu() {
   }
   try {
     const result = await apiRequest("/api/menu");
-    state.menu = result.menu || [];
+    state.menu = (result.menu && result.menu.length > 0) ? result.menu : DEFAULT_MENU;
     state.menuCategories = Array.isArray(result.categories) ? result.categories : [];
     const availableCategories = new Set(state.menu.map((item) => normalizeCategory(item.category)).filter(Boolean));
     if (state.activeCategory !== "all" && !availableCategories.has(normalizeCategory(state.activeCategory))) {
@@ -2464,10 +2467,13 @@ async function loadMenu() {
     renderCart();
     initInteractiveWidgets();
   } catch (error) {
-    console.error(error);
-    if (menuGrid) {
-      menuGrid.innerHTML = '<div class="menu-loading">We could not load the menu right now.</div>';
-    }
+    console.warn("API menu failed, using default menu:", error);
+    state.menu = DEFAULT_MENU;
+    renderFilters();
+    syncCartToStock();
+    renderMenu();
+    renderCart();
+    initInteractiveWidgets();
   } finally {
     state.loadingMenu = false;
   }
@@ -3228,7 +3234,8 @@ function positionBottomNavIndicatorAtX(clientX, animate = false) {
   const nearest = getNearestBottomTab(clientX) || bottomTabs[0];
   const tabRect = nearest.getBoundingClientRect();
   const width = tabRect.width;
-  const left = Math.max(0, Math.min(navRect.width - width, clientX - navRect.left - width / 2));
+  const paddingLeft = parseFloat(getComputedStyle(bottomNav).paddingLeft) || 0;
+  const left = Math.max(0, Math.min(navRect.width - width, clientX - navRect.left - paddingLeft - width / 2));
   bottomNavIndicator.style.transition = animate ? "" : "none";
   bottomNavIndicator.style.width = `${width}px`;
   bottomNavIndicator.style.transform = `translateX(${Math.round(left)}px)`;
