@@ -5359,3 +5359,178 @@ body {
     padding: 14px 16px;
   }
 }
+
+/* Final theme and readability pass */
+:root,
+[data-theme="light"] {
+  --bg: #fff7ee;
+  --bg-primary: #fff7ee;
+  --panel: #fffdf8;
+  --card: #fff3e6;
+  --ink: #24160f;
+  --muted: #725645;
+  --line: rgba(96, 54, 30, 0.14);
+  --accent: #d96625;
+  --accent-deep: #8d4118;
+  --accent-glow: rgba(217, 102, 37, 0.13);
+  --glass: rgba(255, 253, 248, 0.92);
+  --glass-border: rgba(96, 54, 30, 0.14);
+  --bg-apple: #fff7ee;
+  --bg-card-apple: #fffdf8;
+  --bg-card-active-apple: rgba(217, 102, 37, 0.11);
+  --text-primary-apple: #24160f;
+  --text-secondary-apple: #725645;
+  --text-tertiary-apple: #8c6a55;
+  --border-apple: rgba(96, 54, 30, 0.14);
+}
+
+[data-theme="dark"] {
+  --bg: #120b07;
+  --bg-primary: #120b07;
+  --panel: #1d120c;
+  --card: #26170f;
+  --ink: #fff8ee;
+  --muted: #e0c7ad;
+  --line: rgba(255, 231, 204, 0.16);
+  --accent: #f28a36;
+  --accent-deep: #f2b267;
+  --accent-glow: rgba(242, 138, 54, 0.16);
+  --glass: rgba(29, 18, 12, 0.92);
+  --glass-border: rgba(255, 231, 204, 0.14);
+  --bg-apple: #120b07;
+  --bg-card-apple: #1d120c;
+  --bg-card-active-apple: rgba(242, 138, 54, 0.15);
+  --text-primary-apple: #fff8ee;
+  --text-secondary-apple: #e0c7ad;
+  --text-tertiary-apple: #cda884;
+  --border-apple: rgba(255, 231, 204, 0.16);
+}
+
+html,
+body,
+.app-page {
+  background: var(--bg) !important;
+  color: var(--ink) !important;
+}
+
+.menu-panel,
+.order-shell,
+.reorder-panel,
+.account-shell,
+.search-dock,
+.checkout-panel,
+.cart-panel,
+.cart-total-card,
+.selected-address,
+.delivery-card,
+.offers-panel,
+.coupon-card,
+.offer-card,
+.payment-option,
+.dish-card,
+.flavor-sheet,
+.item-preview-card,
+.general-info-card,
+.wf-list-group,
+.wf-action-btn {
+  background-color: var(--panel) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+
+.menu-loading,
+.empty,
+.brand small,
+.hero p,
+.dish-card p,
+.availability,
+.selected-address p,
+.delivery-card p,
+.offer-card p,
+.coupon-card p,
+.account-shell p,
+.general-info-card p:not(.eyebrow),
+.search-results small,
+.cart-page-payment-copy small,
+.payment-option small {
+  color: var(--muted) !important;
+}
+
+.eyebrow,
+.section-head .eyebrow,
+.offers-panel .eyebrow,
+.cart-header .eyebrow,
+.account-shell .eyebrow {
+  color: color-mix(in srgb, var(--accent) 74%, var(--ink)) !important;
+  opacity: 1 !important;
+}
+
+.menu-panel h2,
+.menu-section h3,
+.dish-card h3,
+.account-shell h2,
+.account-shell h3,
+.search-dock h2,
+.cart-header h2,
+.delivery-card strong,
+.offer-card strong,
+.coupon-card strong,
+.payment-option strong,
+.wf-row-label {
+  color: var(--ink) !important;
+}
+
+.price,
+.price-line,
+.wf-action-btn strong,
+.wf-row-chevron,
+.theme-toggle,
+.bottom-app-nav .active {
+  color: var(--accent-deep) !important;
+}
+
+input,
+select,
+textarea {
+  background: color-mix(in srgb, var(--panel) 88%, var(--card)) !important;
+  border-color: var(--line) !important;
+  color: var(--ink) !important;
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: color-mix(in srgb, var(--muted) 72%, transparent) !important;
+  opacity: 1 !important;
+}
+
+.theme-toggle {
+  background: var(--card) !important;
+  border: 1px solid var(--line) !important;
+  box-shadow: 0 8px 18px rgba(65, 35, 18, 0.08);
+}
+
+.bottom-app-nav {
+  touch-action: none !important;
+  background: color-mix(in srgb, var(--panel) 88%, transparent) !important;
+  border-color: var(--line) !important;
+}
+
+.bottom-app-nav button,
+.bottom-app-nav a {
+  touch-action: none !important;
+  color: var(--muted) !important;
+}
+
+.bottom-nav-indicator {
+  background: linear-gradient(180deg, var(--accent-glow), color-mix(in srgb, var(--accent-glow) 35%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--accent) 22%, transparent) !important;
+}
+
+[data-theme="dark"] .hero::before,
+[data-theme="dark"] .hero::after {
+  opacity: 0.74;
+}
+
+[data-theme="dark"] .bottom-app-nav {
+  box-shadow: 0 -20px 44px rgba(0, 0, 0, 0.36);
+}

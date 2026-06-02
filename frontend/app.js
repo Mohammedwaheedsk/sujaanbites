@@ -2541,13 +2541,26 @@ function normalizeMenuPayload(payload) {
 }
 
 async function loadMenuFromJsonFile() {
+  const pagePath = window.location.pathname || "/";
+  const repoBase = pagePath.includes("/frontend/")
+    ? pagePath.slice(0, pagePath.indexOf("/frontend/") + 1)
+    : "/";
   const candidates = [
     "data/menu.json",
+    "./data/menu.json",
+    "menu.json",
+    "./menu.json",
+    "frontend/data/menu.json",
+    `${repoBase}frontend/data/menu.json`,
     "backend/data/menu.json",
     "../backend/data/menu.json",
+    `${repoBase}backend/data/menu.json`,
   ];
   let lastError = null;
+  const seen = new Set();
   for (const path of candidates) {
+    if (!path || seen.has(path)) continue;
+    seen.add(path);
     try {
       const response = await fetch(path, { cache: "no-store" });
       if (!response.ok) throw new Error(`Menu file ${path} returned ${response.status}`);
@@ -3126,16 +3139,30 @@ async function loadOrdersForAccount() {
   }
 }
 
-accountButton?.addEventListener("click", showAccountPanel);
+accountButton?.addEventListener("click", (event) => {
+  event.preventDefault();
+  showAccountPanel({ scrollToTop: true, animate: true });
+});
 
-heroAccountButton?.addEventListener("click", showAccountPanel);
+heroAccountButton?.addEventListener("click", (event) => {
+  event.preventDefault();
+  showAccountPanel({ scrollToTop: true, animate: true });
+});
 
 accountOpenButtons.forEach((button) => {
-  button.addEventListener("click", showAccountPanel);
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    showAccountPanel({ scrollToTop: true, animate: true });
+  });
 });
 
 searchOpenButtons.forEach((button) => {
-  button.addEventListener("click", showSearchPanel);
+  button.addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    showSearchPanel({ scrollToTop: true, animate: true });
+  });
 });
 
 searchCloseButton?.addEventListener("click", closeSearchDock);
@@ -3468,6 +3495,7 @@ bottomNav?.addEventListener("pointermove", (event) => {
   }
   if (!navDragMoved) return;
 
+  event.preventDefault();
   positionBottomNavIndicatorAtX(event.clientX, false);
   const nearest = getNearestBottomTab(event.clientX);
   const targetTab = nearest?.dataset?.bottomTab;
@@ -3488,6 +3516,7 @@ function finishBottomNavDrag(event) {
     // Ignore if capture was never granted.
   }
   if (!navDragMoved) return;
+  event.preventDefault();
   navDragSuppressClick = true;
   const nearest = getNearestBottomTab(clientX);
   const targetTab = nearest?.dataset?.bottomTab || getCurrentBottomTab();
