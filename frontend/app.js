@@ -2305,60 +2305,61 @@ function renderAccountDashboard() {
   const profile = getResolvedCustomerProfile() || state.profile || {};
   accountContent.innerHTML = `
     <div class="account-dashboard-page slide-active">
-      <div class="ios-profile-header">
-        <div class="ios-avatar-circle">
-          <span>${(profile.name || "S")[0].toUpperCase()}</span>
-        </div>
-        <div class="ios-profile-meta">
+      <!-- Profile Header Card -->
+      <div class="wf-profile-card">
+        <div class="wf-profile-info">
           <h3>${profile.name || "Valued Customer"}</h3>
           <p>${profile.phone || ""}</p>
         </div>
-        <button class="ios-profile-edit-btn" id="iosEditProfileBtn" type="button">Edit</button>
+        <div class="wf-avatar-circle">
+          <span>${(profile.name || "S")[0].toUpperCase()}</span>
+        </div>
       </div>
       
-      <div class="ios-list-group">
-        <button class="ios-list-row" type="button" data-nav-subpage="addresses">
-          <div class="ios-row-left">
-            <span class="ios-row-icon address-icon">📍</span>
-            <span class="ios-row-label">Saved Addresses</span>
-          </div>
-          <div class="ios-row-right">
-            <span class="ios-row-badge">${state.addresses?.length || 0}</span>
-            <span class="ios-row-chevron">›</span>
-          </div>
+      <!-- Quick Actions Row -->
+      <div class="wf-quick-actions">
+        <button class="wf-action-btn" type="button" data-nav-subpage="orders">
+          <span>Your<br>Orders</span>
         </button>
-        <button class="ios-list-row" type="button" data-nav-subpage="orders">
-          <div class="ios-row-left">
-            <span class="ios-row-icon orders-icon">📦</span>
-            <span class="ios-row-label">Previous Orders</span>
-          </div>
-          <div class="ios-row-right">
-            <span class="ios-row-badge">${state.previousOrders?.length || 0}</span>
-            <span class="ios-row-chevron">›</span>
-          </div>
+        <button class="wf-action-btn" type="button" data-nav-subpage="care">
+          <span>Help &<br>Support</span>
         </button>
-        <button class="ios-list-row" type="button" data-nav-subpage="spends">
-          <div class="ios-row-left">
-            <span class="ios-row-icon spends-icon">💳</span>
-            <span class="ios-row-label">Past Spends</span>
-          </div>
-          <div class="ios-row-right">
-            <span class="ios-row-chevron">›</span>
-          </div>
-        </button>
-        <button class="ios-list-row" type="button" data-nav-subpage="care">
-          <div class="ios-row-left">
-            <span class="ios-row-icon care-icon">💬</span>
-            <span class="ios-row-label">Customer Care</span>
-          </div>
-          <div class="ios-row-right">
-            <span class="ios-row-chevron">›</span>
-          </div>
+        <button class="wf-action-btn" type="button" data-nav-subpage="profile">
+          <span>Your<br>Profile</span>
         </button>
       </div>
 
-      <div class="ios-logout-container">
-        <button class="ios-logout-btn" type="button" id="iosLogoutBtn">Log Out</button>
+      <!-- Section 1: Your Information -->
+      <div class="wf-section">
+        <h4 class="wf-section-title">Your Information</h4>
+        <div class="wf-list-group">
+          <button class="wf-list-row" type="button" data-nav-subpage="orders">
+            <span class="wf-row-label">Previous Orders</span>
+            <span class="wf-row-chevron">›</span>
+          </button>
+          <button class="wf-list-row" type="button" data-nav-subpage="addresses">
+            <span class="wf-row-label">Saved addresses</span>
+            <span class="wf-row-chevron">›</span>
+          </button>
+          <button class="wf-list-row" type="button" data-nav-subpage="care">
+            <span class="wf-row-label">Help & Support</span>
+            <span class="wf-row-chevron">›</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Section 2: Other Information -->
+      <div class="wf-section">
+        <h4 class="wf-section-title">Other Information</h4>
+        <div class="wf-list-group">
+          <button class="wf-list-row" type="button">
+            <span class="wf-row-label">ℹ General info</span>
+            <span class="wf-row-chevron">›</span>
+          </button>
+          <div class="wf-logout-wrapper">
+             <button class="wf-logout-btn" type="button" id="iosLogoutBtn">Log out</button>
+          </div>
+        </div>
       </div>
     </div>
   `;
