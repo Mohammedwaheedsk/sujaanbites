@@ -1153,6 +1153,9 @@ function showAccountPanel(options = {}) {
   const { scrollToTop = true, animate = true } = options;
   closeCartPanel();
   if (state.drawerOpen) closeDrawer();
+  const hasProfile = getResolvedCustomerProfile() || state.profile;
+  state.activeTab = hasProfile?.phone ? "dashboard" : "profile";
+  state.addressMode = state.activeTab === "profile" ? "profile" : null;
   showMainPanels("account");
   renderAccount();
   if (scrollToTop) {
@@ -1851,16 +1854,19 @@ function updateQuantity(id, change) {
 
 function renderProfileSetup() {
   const existing = getResolvedCustomerProfile() || state.profile || {};
-  const savedAddress = state.addresses[0] || null;
+  const savedAddress = getActiveAddress() || state.addresses[0] || null;
   const selectedAddress = getActiveAddress();
   const hasSavedIdentity = Boolean(existing?.name || existing?.phone || state.addresses.length);
 
   accountShellTitle.textContent = hasSavedIdentity ? "Your details" : "Complete your details";
 
-  if (!hasSavedIdentity || state.addressMode === "profile") {
-    accountContent.innerHTML = `
+  accountContent.innerHTML = `
     <div class="account-page-view slide-in profile-setup-page">
       <form class="auth-form ios-form" id="profileSetupForm">
+        <div class="profile-edit-intro">
+          <strong>${hasSavedIdentity ? "Edit your account" : "Create your account"}</strong>
+          <p>${hasSavedIdentity ? "Update your name, phone number, and selected delivery address." : "Save your details once and checkout faster next time."}</p>
+        </div>
         <label class="ios-input-group">
           <span>Name</span>
           <input id="profileName" type="text" placeholder="Your name" value="${existing.name || ""}" required />
@@ -1909,17 +1915,6 @@ function renderProfileSetup() {
       </form>
     </div>
     `;
-  } else {
-    accountContent.innerHTML = `
-      <div class="account-page-view slide-in saved-user ios-profile-fallback">
-        <strong>${existing.name || "Customer"}</strong>
-        <p>${existing.phone || ""}</p>
-        <div class="account-actions">
-          <button class="secondary-button ios-logout-btn" type="button" data-account-action="logout">Logout</button>
-        </div>
-      </div>
-    `;
-  }
 
   if (selectedAddress && state.selectedLocation == null) {
     state.selectedLocation = selectedAddress.location || null;
@@ -2290,6 +2285,29 @@ function renderCareTab() {
   `;
 }
 
+function renderGeneralInfoTab() {
+  accountShellTitle.textContent = "General info";
+  accountContent.innerHTML = `
+    <div class="account-page-view slide-in general-info-page">
+      <article class="general-info-card">
+        <p class="eyebrow">Offerings</p>
+        <h3>What Sujaan Bites offers</h3>
+        <p>Sujaan Bites serves fresh baked cookies, single pieces, cookie boxes, combo packs, and gifting-friendly packs with a simple prepaid checkout. Customers can save addresses, reorder from past orders, and track restaurant updates after purchase.</p>
+      </article>
+      <article class="general-info-card">
+        <p class="eyebrow">Cookie recipes</p>
+        <h3>Our recipe style</h3>
+        <p>Our cookies are built around premium flour, butter, sugar, cocoa, chocolate chips, dry fruits, biscuit crumbs, and flavour-specific fillings. Each flavour is prepared in small batches so the cookies stay rich, soft inside, and neatly packed for delivery.</p>
+      </article>
+      <article class="general-info-card">
+        <p class="eyebrow">Why us</p>
+        <h3>Why choose Sujaan Bites?</h3>
+        <p>We focus on clear menu choices, transparent pricing, saved customer details, responsive support, and reliable order updates. The goal is a quick mobile ordering experience with cookies that feel fresh, personal, and worth coming back for.</p>
+      </article>
+    </div>
+  `;
+}
+
 function renderAccount() {
   if (!accountShell || !accountContent) return;
   
@@ -2327,6 +2345,8 @@ function renderAccount() {
       title.textContent = "Spend Analytics";
     } else if (state.activeTab === "care") {
       title.textContent = "Customer Care";
+    } else if (state.activeTab === "general") {
+      title.textContent = "General Info";
     }
   }
 
@@ -2344,6 +2364,8 @@ function renderAccount() {
     renderOrdersTab();
   } else if (state.activeTab === "spends") {
     renderSpendsTab();
+  } else if (state.activeTab === "general") {
+    renderGeneralInfoTab();
   } else {
     renderCareTab();
   }
@@ -2356,27 +2378,29 @@ function renderAccount() {
 function renderAccountDashboard() {
   const profile = getResolvedCustomerProfile() || state.profile || {};
   const isNew = !profile.phone;
+  const orderCount = (state.previousOrders || []).filter(isVisibleCustomerOrder).length;
+  const addressCount = (state.addresses || []).length;
 
   let profileCardHTML = "";
   if (isNew) {
     profileCardHTML = `
-      <div class="wf-profile-card" style="justify-content: center; text-align: center; flex-direction: column; gap: 12px; padding: 32px 20px;">
-        <div class="wf-profile-info" style="display: flex; flex-direction: column; align-items: center;">
+      <div class="wf-profile-card wf-profile-card-new">
+        <div class="wf-profile-info">
           <h3>Welcome to Sujaan Bites</h3>
-          <p>Login to access your orders and addresses.</p>
+          <p>Create your account to save addresses and view orders.</p>
         </div>
-        <button class="primary-button" style="margin-top: 8px; width: 100%;" type="button" data-nav-subpage="profile">Login / Sign Up</button>
+        <button class="primary-button wf-signup-button" type="button" data-nav-subpage="profile">Login / Sign Up</button>
       </div>
     `;
   } else {
     profileCardHTML = `
       <div class="wf-profile-card">
         <div class="wf-profile-info">
-          <h3>${profile.name || "Valued Customer"}</h3>
+          <h3>${profile.name || "Customer"}</h3>
           <p>${profile.phone || ""}</p>
         </div>
         <div class="wf-avatar-circle">
-          <span>${(profile.name || "S")[0].toUpperCase()}</span>
+          <span>${(profile.name || "S").trim()[0]?.toUpperCase() || "S"}</span>
         </div>
       </div>
     `;
@@ -2391,12 +2415,15 @@ function renderAccountDashboard() {
       <!-- Quick Actions Row -->
       <div class="wf-quick-actions">
         <button class="wf-action-btn" type="button" data-nav-subpage="orders">
+          <strong>${orderCount}</strong>
           <span>Your<br>Orders</span>
         </button>
         <button class="wf-action-btn" type="button" data-nav-subpage="care">
+          <strong>24/7</strong>
           <span>Help &<br>Support</span>
         </button>
-        <button class="wf-action-btn" type="button" data-nav-subpage="profile">
+        <button class="wf-action-btn" type="button" data-account-action="edit-profile">
+          <strong>${addressCount}</strong>
           <span>Your<br>Profile</span>
         </button>
       </div>
@@ -2424,8 +2451,8 @@ function renderAccountDashboard() {
       <div class="wf-section">
         <h4 class="wf-section-title">Other Information</h4>
         <div class="wf-list-group">
-          <button class="wf-list-row" type="button">
-            <span class="wf-row-label">ℹ General info</span>
+          <button class="wf-list-row" type="button" data-nav-subpage="general">
+            <span class="wf-row-label">General info</span>
             <span class="wf-row-chevron">›</span>
           </button>
           <div class="wf-logout-wrapper">
@@ -2770,8 +2797,9 @@ async function saveProfileAndFirstAddress(form) {
   }
 
   const profile = { name, phone };
+  const currentAddress = getActiveAddress() || state.addresses[0] || null;
   const addressRecord = {
-    id: Date.now().toString(),
+    id: currentAddress?.id || Date.now().toString(),
     name,
     phone,
     houseNumber,
@@ -2789,7 +2817,22 @@ async function saveProfileAndFirstAddress(form) {
   };
 
   state.profile = profile;
-  state.addresses = [addressRecord];
+  if (state.addresses.length) {
+    state.addresses = state.addresses.map((entry) => (
+      entry.id === addressRecord.id
+        ? addressRecord
+        : {
+            ...entry,
+            name,
+            phone,
+          }
+    ));
+    if (!state.addresses.some((entry) => entry.id === addressRecord.id)) {
+      state.addresses.unshift(addressRecord);
+    }
+  } else {
+    state.addresses = [addressRecord];
+  }
   state.selectedAddressId = addressRecord.id;
   state.activeTab = "dashboard";
   state.addressMode = null;
@@ -3185,6 +3228,11 @@ async function handleAccountClick(event) {
   const subpage = event.target.closest("[data-nav-subpage]")?.dataset.navSubpage;
   if (subpage) {
     state.activeTab = subpage;
+    if (subpage === "profile") {
+      state.addressMode = "profile";
+    } else {
+      state.addressMode = null;
+    }
     if (subpage === "orders" || subpage === "spends") {
       await loadOrdersForAccount();
     }
@@ -3205,6 +3253,13 @@ async function handleAccountClick(event) {
   }
 
   const action = event.target.closest("[data-account-action]")?.dataset.accountAction;
+  if (action === "edit-profile") {
+    state.activeTab = "profile";
+    state.addressMode = "profile";
+    renderAccount();
+    return;
+  }
+
   if (action === "logout") {
     await logoutCustomer();
     return;
