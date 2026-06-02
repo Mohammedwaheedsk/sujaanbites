@@ -52,7 +52,7 @@ const state = {
   profile: null,
   addresses: [],
   selectedAddressId: null,
-  activeTab: "profile",
+  activeTab: "dashboard",
   drawerOpen: false,
   editingAddressId: null,
   addressMode: null,
@@ -2238,14 +2238,14 @@ function renderAccount() {
   accountLogoutButton?.classList.add("hidden");
 
   const hasProfile = getResolvedCustomerProfile() || state.profile;
-  const isDashboardView = hasProfile && state.activeTab === "profile" && state.addressMode !== "profile";
+  const isDashboardView = state.activeTab === "dashboard";
 
   const backBtn = document.querySelector("#accountBackButton");
   const eyebrow = document.querySelector("#accountShellEyebrow");
   const title = document.querySelector("#accountShellTitle");
 
   if (backBtn) {
-    if (isDashboardView || !hasProfile) {
+    if (isDashboardView) {
       backBtn.classList.add("hidden");
     } else {
       backBtn.classList.remove("hidden");
@@ -2253,16 +2253,14 @@ function renderAccount() {
   }
 
   if (eyebrow) {
-    eyebrow.textContent = hasProfile ? "Settings" : "Onboarding";
+    eyebrow.textContent = isDashboardView ? "Account" : "Settings";
   }
 
   if (title) {
-    if (!hasProfile) {
-      title.textContent = "Complete your details";
-    } else if (isDashboardView) {
-      title.textContent = "Account";
+    if (isDashboardView) {
+      title.textContent = "Dashboard";
     } else if (state.activeTab === "profile") {
-      title.textContent = "Edit Profile";
+      title.textContent = hasProfile ? "Edit Profile" : "Complete your details";
     } else if (state.activeTab === "addresses") {
       title.textContent = "Saved Addresses";
     } else if (state.activeTab === "orders") {
@@ -2278,11 +2276,7 @@ function renderAccount() {
     tab.classList.toggle("active", tab.dataset.accountTab === state.activeTab);
   });
 
-  if (!hasProfile) {
-    state.activeTab = "profile";
-    state.addressMode = "profile";
-    renderProfileSetup();
-  } else if (isDashboardView) {
+  if (isDashboardView) {
     renderAccountDashboard();
   } else if (state.activeTab === "profile") {
     renderProfileSetup();
@@ -2303,9 +2297,21 @@ function renderAccount() {
 
 function renderAccountDashboard() {
   const profile = getResolvedCustomerProfile() || state.profile || {};
-  accountContent.innerHTML = `
-    <div class="account-dashboard-page slide-active">
-      <!-- Profile Header Card -->
+  const isNew = !profile.phone;
+
+  let profileCardHTML = "";
+  if (isNew) {
+    profileCardHTML = `
+      <div class="wf-profile-card" style="justify-content: center; text-align: center; flex-direction: column; gap: 12px; padding: 32px 20px;">
+        <div class="wf-profile-info" style="display: flex; flex-direction: column; align-items: center;">
+          <h3>Welcome to Sujaan Bites</h3>
+          <p>Login to access your orders and addresses.</p>
+        </div>
+        <button class="primary-button" style="margin-top: 8px; width: 100%;" type="button" data-nav-subpage="profile">Login / Sign Up</button>
+      </div>
+    `;
+  } else {
+    profileCardHTML = `
       <div class="wf-profile-card">
         <div class="wf-profile-info">
           <h3>${profile.name || "Valued Customer"}</h3>
@@ -2315,6 +2321,13 @@ function renderAccountDashboard() {
           <span>${(profile.name || "S")[0].toUpperCase()}</span>
         </div>
       </div>
+    `;
+  }
+
+  accountContent.innerHTML = `
+    <div class="account-dashboard-page slide-active">
+      <!-- Profile Header Card -->
+      ${profileCardHTML}
       
       <!-- Quick Actions Row -->
       <div class="wf-quick-actions">
@@ -3017,7 +3030,7 @@ if (accountBackButton) {
 const accountPanelBackButton = document.querySelector("#accountPanelBackButton");
 if (accountPanelBackButton) {
   accountPanelBackButton.addEventListener("click", () => {
-    state.activeTab = "profile";
+    state.activeTab = "dashboard";
     state.addressMode = null;
     renderAccount();
   });
@@ -3925,6 +3938,22 @@ async function addCustomBoxToCart() {
 
 // Initialize App Navigation
 window.addEventListener("DOMContentLoaded", () => {
+  // Theme Toggle Logic
+  const themeToggleBtn = document.getElementById("themeToggleBtn");
+  if (themeToggleBtn) {
+    const savedTheme = localStorage.getItem("sujaanBitesTheme") || "light";
+    if (savedTheme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+    
+    themeToggleBtn.addEventListener("click", () => {
+      const currentTheme = document.documentElement.getAttribute("data-theme") || "light";
+      const newTheme = currentTheme === "dark" ? "light" : "dark";
+      document.documentElement.setAttribute("data-theme", newTheme);
+      localStorage.setItem("sujaanBitesTheme", newTheme);
+    });
+  }
+
   if (isCartPage) return;
   // Make sure the bottom tab matches the default active page
   const defaultTab = pageMode || "home";
