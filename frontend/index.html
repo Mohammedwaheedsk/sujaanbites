@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,400&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="preconnect" href="https://api.qrserver.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260603b" />
+  <link rel="stylesheet" href="styles.css?v=20260603c" />
 </head>
 
 <body data-page="home">
@@ -371,14 +371,6 @@
       </article>
     </div>
 
-    <div class="cart-toast hidden" id="cartToast" aria-live="polite">
-      <img class="cart-toast-thumb" src="assets/sujaan-logo.png" alt="" />
-      <span class="cart-toast-copy">
-        <strong id="cartToastText">1 Item added</strong>
-        <small>Ready in your cart</small>
-      </span>
-      <a class="cart-toast-action" href="/cart" data-route="/cart" data-open-cart id="cartToastAction">View Cart ›</a>
-    </div>
     </div> <!-- End page-menu -->
 
     <!-- Search Tab -->
@@ -538,6 +530,15 @@
     </section>
 
   </main>
+
+  <div class="cart-toast hidden" id="cartToast" aria-live="polite">
+    <img class="cart-toast-thumb" src="assets/sujaan-logo.png" alt="" />
+    <span class="cart-toast-copy">
+      <strong id="cartToastText">1 Item added</strong>
+      <small>Ready in your cart</small>
+    </span>
+    <a class="cart-toast-action" href="/cart" data-route="/cart" data-open-cart id="cartToastAction">View Cart ›</a>
+  </div>
 
   <nav class="bottom-app-nav" aria-label="Primary">
     <span class="bottom-nav-indicator" id="bottomNavIndicator" aria-hidden="true"></span>

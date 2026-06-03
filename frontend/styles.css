@@ -5919,3 +5919,138 @@ textarea::placeholder {
     aspect-ratio: 1.25 !important;
   }
 }
+
+/* Final cart dock placement: keep it fixed to the viewport above bottom navigation. */
+body > .cart-toast {
+  position: fixed !important;
+  left: 50% !important;
+  right: auto !important;
+  bottom: calc(74px + env(safe-area-inset-bottom, 14px)) !important;
+  z-index: 260 !important;
+  width: min(520px, calc(100vw - 28px)) !important;
+  height: 76px !important;
+  min-height: 76px !important;
+  max-height: 76px !important;
+  display: grid !important;
+  grid-template-columns: 56px minmax(0, 1fr) minmax(112px, 34%) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  padding: 10px 12px !important;
+  margin: 0 !important;
+  border: 1px solid rgba(230, 183, 113, 0.18) !important;
+  border-radius: 24px !important;
+  background:
+    linear-gradient(135deg, rgba(34, 20, 14, 0.96), rgba(18, 11, 8, 0.94)) !important;
+  color: #fff8ee !important;
+  box-shadow:
+    0 22px 54px rgba(0, 0, 0, 0.5),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  transform: translate3d(-50%, 20px, 0) !important;
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.24s ease,
+    visibility 0s 0.24s !important;
+  pointer-events: auto !important;
+  -webkit-backdrop-filter: blur(26px) saturate(180%) !important;
+  backdrop-filter: blur(26px) saturate(180%) !important;
+}
+
+body > .cart-toast.show {
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: translate3d(-50%, 0, 0) !important;
+  transition:
+    transform 0.28s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.24s ease,
+    visibility 0s 0s !important;
+}
+
+body > .cart-toast.hidden:not(.show) {
+  display: grid !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
+
+body > .cart-toast .cart-toast-thumb {
+  width: 56px !important;
+  height: 56px !important;
+  border-radius: 18px !important;
+  border: 1px solid rgba(230, 183, 113, 0.22) !important;
+  background: #fffaf2 !important;
+  object-fit: cover !important;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.34) !important;
+}
+
+body > .cart-toast .cart-toast-copy {
+  min-width: 0 !important;
+  display: grid !important;
+  gap: 3px !important;
+}
+
+body > .cart-toast .cart-toast-copy strong {
+  color: #fff8ee !important;
+  font-size: clamp(1rem, 4.4vw, 1.2rem) !important;
+  font-weight: 900 !important;
+  line-height: 1.05 !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+body > .cart-toast .cart-toast-copy small {
+  color: rgba(255, 248, 238, 0.66) !important;
+  font-size: 0.8rem !important;
+  font-weight: 700 !important;
+}
+
+body > .cart-toast .cart-toast-action {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 54px !important;
+  min-height: 54px !important;
+  border: 0 !important;
+  border-radius: 20px !important;
+  background: linear-gradient(135deg, #f2bd74, #c97932) !important;
+  color: #2a150c !important;
+  box-shadow: 0 10px 22px rgba(201, 121, 50, 0.28) !important;
+  font-size: 0.92rem !important;
+  font-weight: 950 !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+}
+
+[data-theme="light"] body > .cart-toast {
+  background:
+    linear-gradient(135deg, rgba(55, 31, 18, 0.96), rgba(35, 20, 13, 0.94)) !important;
+  border-color: rgba(198, 107, 45, 0.24) !important;
+}
+
+body.cart-panel-open > .cart-toast,
+body.modal-open > .cart-toast {
+  display: none !important;
+}
+
+@media (max-width: 420px) {
+  body > .cart-toast {
+    bottom: calc(72px + env(safe-area-inset-bottom, 14px)) !important;
+    width: calc(100vw - 24px) !important;
+    grid-template-columns: 52px minmax(0, 1fr) 104px !important;
+    gap: 10px !important;
+    padding: 9px 10px !important;
+    border-radius: 22px !important;
+  }
+
+  body > .cart-toast .cart-toast-thumb {
+    width: 52px !important;
+    height: 52px !important;
+  }
+
+  body > .cart-toast .cart-toast-action {
+    height: 50px !important;
+    min-height: 50px !important;
+    font-size: 0.84rem !important;
+  }
+}
