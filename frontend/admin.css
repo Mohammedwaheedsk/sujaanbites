@@ -1,20 +1,33 @@
 :root {
   color-scheme: light;
-  --bg: #fff4ea;
-  --panel: #fffdf8;
-  --card: #ffffff;
-  --ink: #23150c;
-  --muted: #6b5749;
-  --line: #edd7c3;
-  --accent: #f26419;
-  --accent-dark: #7d3a11;
-  --accent-2: #2f8f4f;
-  --mint: #2f8f4f;
-  --gold: #ffd08f;
+  --bg: #fbf2e8;
+  --panel: #fffaf3;
+  --card: #fffdf8;
+  --ink: #2f1d14;
+  --muted: #806b5d;
+  --line: #ead4bf;
+  --accent: #c66b2d;
+  --accent-dark: #7a3d19;
+  --accent-2: #b78a42;
+  --mint: #4f9d67;
+  --gold: #e4b75f;
   --danger: #bd1e1e;
-  --shadow: 0 10px 26px rgba(63, 33, 14, 0.1);
-  --shadow-lg: 0 24px 48px rgba(63, 33, 14, 0.14);
-  --shadow-md: 0 10px 26px rgba(63, 33, 14, 0.1);
+  --shadow: 0 14px 34px rgba(54, 27, 11, 0.1);
+  --shadow-lg: 0 28px 62px rgba(54, 27, 11, 0.16);
+  --shadow-md: 0 14px 34px rgba(54, 27, 11, 0.1);
+}
+
+html,
+body {
+  width: 100%;
+  height: auto !important;
+  min-height: 100%;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  user-select: auto;
+  -webkit-user-select: auto;
 }
 
 /* The customer site uses a bright fixed overlay; it washes out the admin UI. */
@@ -28,17 +41,26 @@ body::before {
 }
 
 body {
+  min-height: 100svh;
+  padding-bottom: max(18px, env(safe-area-inset-bottom));
   color: var(--ink);
   background:
-    radial-gradient(1000px 300px at 10% -5%, rgba(255, 130, 37, 0.18), transparent 50%),
-    radial-gradient(900px 220px at 90% -10%, rgba(255, 211, 71, 0.2), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.82), rgba(255, 247, 236, 0.66) 34%, rgba(251, 242, 232, 0.94)),
+    radial-gradient(900px 360px at 8% -5%, rgba(201, 107, 45, 0.16), transparent 58%),
+    radial-gradient(760px 320px at 92% -6%, rgba(228, 183, 95, 0.22), transparent 60%),
     var(--bg);
 }
 
 .topbar {
+  display: flex !important;
+  position: sticky;
+  top: 0;
+  z-index: 30;
   border-bottom: 1px solid rgba(90, 54, 30, 0.12);
-  background: rgba(255, 249, 241, 0.88);
-  box-shadow: none;
+  background: rgba(255, 249, 241, 0.9);
+  box-shadow: 0 12px 28px rgba(53, 27, 12, 0.08);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
 }
 
 .brand small {
@@ -56,17 +78,28 @@ body {
   color: var(--muted);
 }
 
+.nav {
+  display: flex !important;
+}
+
 input,
 select,
 textarea {
   border-color: var(--line);
-  background: #fff;
+  background: rgba(255, 253, 248, 0.94);
   color: var(--ink);
 }
 
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: rgba(198, 107, 45, 0.75);
+  box-shadow: 0 0 0 4px rgba(198, 107, 45, 0.14);
+}
+
 .admin-shell {
-  width: min(1180px, calc(100% - 32px));
-  margin: 26px auto 56px;
+  width: min(1180px, calc(100% - 24px));
+  margin: 18px auto 64px;
 }
 
 .admin-login,
@@ -75,14 +108,16 @@ textarea {
   gap: 20px;
   padding: clamp(20px, 3vw, 32px);
   border: 1px solid var(--line);
-  border-radius: 14px;
-  background: #ffffff;
+  border-radius: 28px;
+  background:
+    linear-gradient(180deg, rgba(255, 253, 248, 0.96), rgba(255, 249, 242, 0.94)),
+    var(--card);
   box-shadow: var(--shadow);
 }
 
 .admin-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.5fr) minmax(300px, 1fr);
+  grid-template-columns: 1fr;
   gap: 18px;
 }
 
@@ -147,14 +182,14 @@ textarea {
 .stat-card,
 .order-card {
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
+  border-radius: 22px;
+  background: rgba(255, 253, 248, 0.94);
 }
 
 .stats-group {
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: linear-gradient(180deg, #fff, #fffaf6);
+  border-radius: 22px;
+  background: linear-gradient(180deg, rgba(255, 253, 248, 0.98), rgba(255, 248, 239, 0.9));
   padding: 12px;
   display: grid;
   gap: 10px;
@@ -195,8 +230,8 @@ textarea {
 .orders-list {
   display: grid;
   gap: 14px;
-  max-height: 72vh;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
   padding-right: 4px;
 }
 
@@ -266,17 +301,17 @@ textarea {
 .menu-manager {
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
-  max-height: 82vh;
-  overflow: auto;
+  border-radius: 24px;
+  background: rgba(255, 253, 248, 0.94);
+  max-height: none;
+  overflow: visible;
 }
 
 .admin-panel {
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
+  border-radius: 24px;
+  background: rgba(255, 253, 248, 0.94);
 }
 
 .admin-location-panel {
@@ -286,9 +321,9 @@ textarea {
 }
 
 .admin-location-actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr;
   gap: 8px;
-  flex-wrap: wrap;
 }
 
 #menuManager {
@@ -302,8 +337,8 @@ textarea {
   margin-bottom: 14px;
   padding: 12px;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fffaf5;
+  border-radius: 18px;
+  background: rgba(255, 247, 238, 0.92);
 }
 
 .menu-add-form textarea {
@@ -316,8 +351,8 @@ textarea {
   gap: 12px;
   padding: 16px;
   border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fff;
+  border-radius: 24px;
+  background: rgba(255, 253, 248, 0.94);
 }
 
 .history-filters {
@@ -338,11 +373,11 @@ textarea {
 
 .history-day {
   border: 1px solid var(--line);
-  border-radius: 10px;
+  border-radius: 18px;
   padding: 12px;
   display: grid;
   gap: 8px;
-  background: #fff;
+  background: rgba(255, 253, 248, 0.94);
 }
 
 .history-day-head {
@@ -360,8 +395,8 @@ textarea {
 
 .review-card {
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fff;
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.94);
   padding: 12px;
   display: grid;
   gap: 8px;
@@ -401,8 +436,8 @@ textarea {
   gap: 12px;
   padding: 14px;
   border: 1px solid var(--line);
-  border-radius: 10px;
-  background: #fff;
+  border-radius: 18px;
+  background: rgba(255, 253, 248, 0.94);
 }
 
 .menu-item-preview {
@@ -484,6 +519,29 @@ textarea {
 }
 
 @media (max-width: 760px) {
+  body {
+    font-size: 15px;
+  }
+
+  .topbar {
+    padding: 12px;
+  }
+
+  .brand {
+    min-width: 0;
+  }
+
+  .brand strong,
+  .brand small {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .nav {
+    flex-shrink: 0;
+  }
+
   .admin-heading,
   .order-card-top {
     align-items: flex-start;
@@ -499,23 +557,55 @@ textarea {
   }
 
   .stats-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
   }
 
   .admin-shell {
-    width: calc(100% - 18px);
-    margin: 14px auto 24px;
+    width: calc(100% - 14px);
+    margin: 12px auto 36px;
   }
 
   .admin-login,
   .admin-dashboard {
-    border-radius: 12px;
-    padding: 14px;
+    border-radius: 24px;
+    padding: 16px;
     gap: 14px;
   }
 
+  .admin-actions,
+  .order-controls,
+  .history-filters {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .admin-actions button,
+  .order-controls button,
+  .order-controls select,
+  .history-filters label,
+  .history-filters button,
+  .admin-location-actions button {
+    width: 100%;
+  }
+
+  .stat-card {
+    min-width: 0;
+    padding: 10px 8px;
+  }
+
+  .stat-card strong {
+    font-size: 1.25rem;
+  }
+
+  .stat-card span {
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+
   .order-card {
-    padding: 12px;
+    padding: 14px;
     gap: 12px;
   }
 
@@ -526,5 +616,72 @@ textarea {
   .menu-item-preview img {
     width: 68px;
     height: 68px;
+  }
+}
+
+@media (min-width: 900px) {
+  .admin-grid {
+    grid-template-columns: minmax(0, 1.45fr) minmax(320px, 0.95fr);
+  }
+
+  .orders-list {
+    max-height: 72vh;
+    overflow: auto;
+  }
+
+  .menu-manager {
+    max-height: 82vh;
+    overflow: auto;
+  }
+
+  .admin-location-actions {
+    display: flex;
+    flex-wrap: wrap;
+  }
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color-scheme: dark;
+    --bg: #100b08;
+    --panel: #1b120d;
+    --card: #201610;
+    --ink: #fff8ef;
+    --muted: #d2bca8;
+    --line: rgba(232, 191, 143, 0.2);
+    --accent: #d88b48;
+    --accent-dark: #f1bd79;
+    --accent-2: #e0ae61;
+    --shadow: 0 18px 40px rgba(0, 0, 0, 0.36);
+  }
+
+  body {
+    background:
+      radial-gradient(780px 360px at 12% -8%, rgba(201, 107, 45, 0.2), transparent 60%),
+      radial-gradient(720px 280px at 88% -8%, rgba(228, 183, 95, 0.14), transparent 60%),
+      var(--bg);
+  }
+
+  .topbar,
+  .admin-login,
+  .admin-dashboard,
+  .stat-card,
+  .order-card,
+  .stats-group,
+  .menu-manager,
+  .admin-panel,
+  .admin-history,
+  .history-day,
+  .review-card,
+  .menu-item-card {
+    background: rgba(32, 22, 16, 0.9);
+  }
+
+  input,
+  select,
+  textarea,
+  .menu-add-form {
+    background: rgba(19, 12, 8, 0.86);
+    color: var(--ink);
   }
 }
