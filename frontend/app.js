@@ -273,6 +273,10 @@ const flavorOptions = document.querySelector("#flavorOptions");
 const cartToast = document.querySelector("#cartToast");
 const cartToastText = document.querySelector("#cartToastText");
 const cartToastAction = document.querySelector("#cartToastAction");
+const reviewStage = document.querySelector(".review-video-stage");
+const reviewCards = Array.from(document.querySelectorAll("[data-review-card]"));
+const reviewVideos = Array.from(document.querySelectorAll(".review-video"));
+const reviewMuteButtons = Array.from(document.querySelectorAll("[data-review-mute]"));
 const cartPageEmpty = document.querySelector("#cartPageEmpty");
 const cartPageContent = document.querySelector("#cartPageContent");
 const cartPageFooter = document.querySelector("#cartPageFooter");
@@ -344,6 +348,176 @@ function pulseElement(element) {
   element.classList.add("tap-pop");
   window.setTimeout(() => element.classList.remove("tap-pop"), 220);
 }
+
+let activeReviewIndex = Math.max(0, reviewCards.findIndex((card) => card.classList.contains("review-video-card--active")));
+let reviewMuted = true;
+let reviewAutoTimer = null;
+let reviewDragStartX = 0;
+let reviewDragStartY = 0;
+let reviewDragging = false;
+const REVIEW_VIDEO_CONTENT = [
+  {
+    name: "Aarav K.",
+    review: "Fresh cookies, careful packing, and the box reached in perfect condition.",
+    rating: "★★★★★"
+  },
+  {
+    name: "Riya S.",
+    review: "The Double Chocolate box was rich, gooey, and worth every bite. Delivery felt smooth from start to finish.",
+    rating: "★★★★★"
+  },
+  {
+    name: "Mihir P.",
+    review: "Loved the soft centre and premium taste. The cookies felt bakery-fresh even after the ride home.",
+    rating: "★★★★☆"
+  }
+];
+
+function getActiveReviewVideo() {
+  return reviewCards[activeReviewIndex]?.querySelector(".review-video") || reviewVideos[reviewVideos.length - 1] || null;
+}
+
+function syncReviewVideoAudio(isMuted = reviewMuted) {
+  reviewMuted = isMuted;
+  const activeVideo = getActiveReviewVideo();
+  reviewVideos.forEach((video) => {
+    video.loop = true;
+    video.playsInline = true;
+    video.muted = video === activeVideo ? reviewMuted : true;
+    video.volume = video === activeVideo && !reviewMuted ? 1 : 0;
+    if (video === activeVideo) {
+      video.play?.().catch(() => {});
+    } else {
+      video.pause?.();
+      try {
+        video.currentTime = 0;
+      } catch {
+        // Some browsers do not allow resetting video time until metadata is ready.
+      }
+    }
+  });
+  reviewMuteButtons.forEach((button) => {
+    button.setAttribute("aria-pressed", String(!reviewMuted));
+    button.setAttribute("aria-label", reviewMuted ? "Unmute review video" : "Mute review video");
+    const icon = button.querySelector(".review-mute-icon");
+    if (icon) icon.textContent = reviewMuted ? "🔇" : "🔊";
+  });
+}
+
+function renderReviewStack(direction = "next") {
+  const total = reviewCards.length;
+  if (!total) return;
+  reviewCards.forEach((card, index) => {
+    const offset = (index - activeReviewIndex + total) % total;
+    const review = REVIEW_VIDEO_CONTENT[index % REVIEW_VIDEO_CONTENT.length];
+    const nameNode = card.querySelector("[data-review-name]");
+    const textNode = card.querySelector("[data-review-text]");
+    const ratingNode = card.querySelector("[data-review-rating]");
+    if (nameNode) nameNode.textContent = review.name;
+    if (textNode) textNode.textContent = review.review;
+    if (ratingNode) {
+      ratingNode.textContent = review.rating;
+      ratingNode.setAttribute("aria-label", `${review.rating.replace(/☆/g, "").length} star rating`);
+    }
+    card.classList.remove(
+      "review-video-card--active",
+      "review-video-card--prev",
+      "review-video-card--next",
+      "review-video-card--back",
+      "review-video-card--to-right",
+      "review-video-card--to-left"
+    );
+    if (offset === 0) {
+      card.classList.add("review-video-card--active");
+      card.removeAttribute("aria-hidden");
+    } else if (offset === 1) {
+      card.classList.add("review-video-card--next");
+      card.setAttribute("aria-hidden", "true");
+    } else if (offset === total - 1) {
+      card.classList.add("review-video-card--prev");
+      card.setAttribute("aria-hidden", "true");
+    } else {
+      card.classList.add("review-video-card--back");
+      card.setAttribute("aria-hidden", "true");
+    }
+  });
+  syncReviewVideoAudio(reviewMuted);
+}
+
+function restartReviewAutoSlide() {
+  window.clearTimeout(reviewAutoTimer);
+  if (reviewCards.length < 2) return;
+  reviewAutoTimer = window.setTimeout(() => {
+    moveReviewStack("next", false);
+  }, 7000);
+}
+
+function moveReviewStack(direction = "next", userInitiated = true) {
+  if (reviewCards.length < 2) return;
+  const total = reviewCards.length;
+  const currentCard = reviewCards[activeReviewIndex];
+  currentCard?.classList.add(direction === "next" ? "review-video-card--to-right" : "review-video-card--to-left");
+  activeReviewIndex = direction === "next"
+    ? (activeReviewIndex - 1 + total) % total
+    : (activeReviewIndex + 1) % total;
+  window.setTimeout(() => renderReviewStack(direction), 120);
+  restartReviewAutoSlide();
+  if (userInitiated) vibrate(8, "selection");
+}
+
+if (reviewVideos.length) {
+  renderReviewStack("next");
+  restartReviewAutoSlide();
+}
+
+reviewMuteButtons.forEach((button) => {
+  button.addEventListener("click", () => {
+    vibrate(10, "selection");
+    syncReviewVideoAudio(!reviewMuted);
+    restartReviewAutoSlide();
+  });
+});
+
+reviewStage?.addEventListener("pointerdown", (event) => {
+  if (event.target.closest("[data-review-mute]")) return;
+  reviewDragging = true;
+  reviewDragStartX = event.clientX;
+  reviewDragStartY = event.clientY;
+  reviewStage.classList.add("is-dragging");
+  reviewStage.setPointerCapture?.(event.pointerId);
+});
+
+reviewStage?.addEventListener("pointermove", (event) => {
+  if (!reviewDragging) return;
+  const deltaX = event.clientX - reviewDragStartX;
+  const deltaY = event.clientY - reviewDragStartY;
+  if (Math.abs(deltaX) > Math.abs(deltaY) && Math.abs(deltaX) > 8) {
+    event.preventDefault();
+  }
+  reviewStage.style.setProperty("--review-drag-x", `${Math.max(-48, Math.min(48, deltaX))}px`);
+});
+
+function finishReviewDrag(event) {
+  if (!reviewDragging) return;
+  const clientX = Number.isFinite(event.clientX) ? event.clientX : reviewDragStartX;
+  const clientY = Number.isFinite(event.clientY) ? event.clientY : reviewDragStartY;
+  const deltaX = clientX - reviewDragStartX;
+  const deltaY = clientY - reviewDragStartY;
+  reviewDragging = false;
+  reviewStage?.classList.remove("is-dragging");
+  reviewStage?.style.removeProperty("--review-drag-x");
+  if (Math.abs(deltaX) > 46 && Math.abs(deltaX) > Math.abs(deltaY)) {
+    moveReviewStack(deltaX > 0 ? "next" : "prev");
+  } else {
+    restartReviewAutoSlide();
+  }
+}
+
+reviewStage?.addEventListener("pointerup", finishReviewDrag);
+reviewStage?.addEventListener("pointercancel", finishReviewDrag);
+reviewStage?.addEventListener("lostpointercapture", (event) => {
+  if (reviewDragging) finishReviewDrag(event);
+});
 
 function formatPrice(value) {
   return currency.format(value || 0);

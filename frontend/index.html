@@ -17,7 +17,7 @@
   <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800;0,9..40,900;1,9..40,400&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="preconnect" href="https://api.qrserver.com" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link rel="stylesheet" href="styles.css?v=20260603c" />
+  <link rel="stylesheet" href="styles.css?v=20260604a" />
 </head>
 
 <body data-page="home">
@@ -123,39 +123,49 @@
         </div>
       </div>
 
-      <!-- App Store Style Reviews Slider -->
-      <div class="reviews-section">
+      <!-- Stacked Video Reviews -->
+      <div class="reviews-section video-reviews-section" id="reviews">
         <div class="section-title-wrapper">
-          <p class="eyebrow">LOVED BY HUNDREDS</p>
+          <p class="eyebrow">REVIEWS</p>
           <h2>Cookie Lovers Say</h2>
         </div>
-        <div class="reviews-slider-container">
-          <div class="reviews-track">
-            <article class="review-item-card">
-              <div class="review-header">
-                <strong>Aarav K.</strong>
-                <span class="review-stars">★★★★★</span>
-              </div>
-              <p class="review-text">"The Belgian chocolate melt is out of this world. Soft, warm, and highly addictive. The delivery was incredibly fast!"</p>
-              <small class="review-date">Today</small>
-            </article>
-            <article class="review-item-card">
-              <div class="review-header">
-                <strong>Riya S.</strong>
-                <span class="review-stars">★★★★★</span>
-              </div>
-              <p class="review-text">"Hands down the best stuffed Biscoff cookie in India. Liquid gold core with crispy, caramelized edges. Speechless."</p>
-              <small class="review-date">Yesterday</small>
-            </article>
-            <article class="review-item-card">
-              <div class="review-header">
-                <strong>Dev M.</strong>
-                <span class="review-stars">★★★★★</span>
-              </div>
-              <p class="review-text">"Lush molten core with premium brown butter notes. The cookie box is a masterpiece of packaging and flavor."</p>
-              <small class="review-date">3 days ago</small>
-            </article>
-          </div>
+        <div class="review-video-stage" aria-label="Customer video reviews">
+          <article class="review-video-card review-video-card--prev" data-review-card aria-hidden="true">
+            <video class="review-video" src="assets/review-cookie-1.mov" muted loop playsinline preload="metadata"></video>
+            <div class="review-video-gradient" aria-hidden="true"></div>
+            <div class="review-video-copy">
+              <strong data-review-name></strong>
+              <p data-review-text></p>
+              <span data-review-rating aria-label="Customer rating"></span>
+            </div>
+            <button class="review-mute-button" type="button" data-review-mute aria-label="Unmute review video" aria-pressed="false">
+              <span class="review-mute-icon" aria-hidden="true">🔇</span>
+            </button>
+          </article>
+          <article class="review-video-card review-video-card--next" data-review-card aria-hidden="true">
+            <video class="review-video" src="assets/review-cookie-1.mov" muted loop playsinline preload="metadata"></video>
+            <div class="review-video-gradient" aria-hidden="true"></div>
+            <div class="review-video-copy">
+              <strong data-review-name></strong>
+              <p data-review-text></p>
+              <span data-review-rating aria-label="Customer rating"></span>
+            </div>
+            <button class="review-mute-button" type="button" data-review-mute aria-label="Unmute review video" aria-pressed="false">
+              <span class="review-mute-icon" aria-hidden="true">🔇</span>
+            </button>
+          </article>
+          <article class="review-video-card review-video-card--active" data-review-card>
+            <video class="review-video" src="assets/review-cookie-1.mov" autoplay muted loop playsinline preload="metadata"></video>
+            <div class="review-video-gradient" aria-hidden="true"></div>
+            <div class="review-video-copy">
+              <strong data-review-name></strong>
+              <p data-review-text></p>
+              <span data-review-rating aria-label="Customer rating"></span>
+            </div>
+            <button class="review-mute-button" type="button" data-review-mute aria-label="Unmute review video" aria-pressed="false">
+              <span class="review-mute-icon" aria-hidden="true">🔇</span>
+            </button>
+          </article>
         </div>
       </div>
 
@@ -566,13 +576,13 @@
       </span>
       <small>Account</small>
     </button>
-    <button class="search-nav-button" type="button" data-bottom-tab="search" data-open-search aria-label="Search">
-      <span class="ios-svg-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </span>
-      <small>Search</small>
-    </button>
   </nav>
+  <button class="search-nav-button" type="button" data-bottom-tab="search" data-open-search aria-label="Search">
+    <span class="ios-svg-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </span>
+    <small>Search</small>
+  </button>
 
   <section class="tracking-dock hidden" id="trackingDock" aria-label="Order tracking panel">
     <button class="tracking-toggle" id="trackingToggle" type="button" aria-expanded="false">
@@ -699,7 +709,7 @@
       }, 420);
     });
   </script>
-  <script src="app.js?v=20260603b"></script>
+  <script src="app.js?v=20260604a"></script>
 </body>
 
 </html>

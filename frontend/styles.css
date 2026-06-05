@@ -6054,3 +6054,403 @@ body.modal-open > .cart-toast {
     font-size: 0.84rem !important;
   }
 }
+
+/* 2026-06-04: stacked customer review videos and redesigned bottom navigator */
+.video-reviews-section {
+  padding: clamp(48px, 10vw, 76px) 0 clamp(34px, 8vw, 56px) !important;
+  overflow: hidden !important;
+}
+
+.video-reviews-section .section-title-wrapper {
+  width: min(100%, 560px) !important;
+  margin: 0 auto !important;
+  padding: 0 22px !important;
+}
+
+.review-video-stage {
+  position: relative !important;
+  width: min(100%, 430px) !important;
+  height: min(76vh, 650px) !important;
+  min-height: 520px !important;
+  margin: 26px auto 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  perspective: 1200px !important;
+  isolation: isolate !important;
+}
+
+.review-video-card {
+  position: absolute !important;
+  width: min(78vw, 328px) !important;
+  height: min(100%, 620px) !important;
+  aspect-ratio: 9 / 16 !important;
+  overflow: hidden !important;
+  border-radius: 34px !important;
+  background: #140b07 !important;
+  border: 1px solid rgba(231, 177, 103, 0.26) !important;
+  box-shadow:
+    0 32px 70px rgba(18, 7, 2, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.16) !important;
+  touch-action: pan-y !important;
+  transition:
+    transform 0.46s cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 0.3s ease,
+    filter 0.3s ease !important;
+  will-change: transform, opacity !important;
+  isolation: isolate !important;
+}
+
+.review-video-card--active,
+.review-video-card--main {
+  z-index: 3 !important;
+  transform: translateX(var(--review-drag-x, 0px)) scale(1) !important;
+  opacity: 1 !important;
+  filter: saturate(1) brightness(1) !important;
+}
+
+.review-video-card--prev,
+.review-video-card--left {
+  z-index: 2 !important;
+  transform: translateX(-64px) rotate(-8deg) scale(0.9) !important;
+  opacity: 0.72 !important;
+  filter: saturate(0.8) brightness(0.72) !important;
+}
+
+.review-video-card--next,
+.review-video-card--right {
+  z-index: 1 !important;
+  transform: translateX(64px) rotate(8deg) scale(0.9) !important;
+  opacity: 0.72 !important;
+  filter: saturate(0.8) brightness(0.72) !important;
+}
+
+.review-video-card--back {
+  z-index: 0 !important;
+  transform: translateX(0) translateY(10px) scale(0.82) !important;
+  opacity: 0 !important;
+  filter: saturate(0.75) brightness(0.6) !important;
+  pointer-events: none !important;
+}
+
+.review-video-card--to-right {
+  transform: translateX(92px) rotate(10deg) scale(0.88) !important;
+  opacity: 0.68 !important;
+}
+
+.review-video-card--to-left {
+  transform: translateX(-92px) rotate(-10deg) scale(0.88) !important;
+  opacity: 0.68 !important;
+}
+
+.review-video-stage.is-dragging .review-video-card {
+  transition-duration: 0.08s !important;
+}
+
+.review-video {
+  width: 100% !important;
+  height: 100% !important;
+  display: block !important;
+  object-fit: cover !important;
+  background: #140b07 !important;
+}
+
+.review-video-gradient {
+  position: absolute !important;
+  inset: auto 0 0 !important;
+  height: 46% !important;
+  background: linear-gradient(180deg, rgba(16, 8, 5, 0), rgba(16, 8, 5, 0.9) 72%, rgba(16, 8, 5, 0.98)) !important;
+  pointer-events: none !important;
+  z-index: 1 !important;
+}
+
+.review-video-copy {
+  position: absolute !important;
+  left: 18px !important;
+  right: 74px !important;
+  bottom: 18px !important;
+  display: grid !important;
+  gap: 5px !important;
+  color: #fff8ed !important;
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.48) !important;
+  z-index: 2 !important;
+}
+
+.review-video-copy strong {
+  color: #fff8ed !important;
+  font-size: 1.02rem !important;
+  font-weight: 950 !important;
+  line-height: 1.05 !important;
+}
+
+.review-video-copy p {
+  color: rgba(255, 248, 237, 0.86) !important;
+  font-size: 0.86rem !important;
+  line-height: 1.25 !important;
+  margin: 0 !important;
+}
+
+.review-video-copy span {
+  color: #f3be64 !important;
+  font-size: 0.98rem !important;
+  letter-spacing: 1px !important;
+}
+
+.review-mute-button {
+  position: absolute !important;
+  right: 16px !important;
+  bottom: 18px !important;
+  width: 52px !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 1px solid rgba(255, 248, 237, 0.24) !important;
+  border-radius: 50% !important;
+  background: rgba(18, 9, 5, 0.7) !important;
+  color: #fff8ed !important;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.35) !important;
+  -webkit-backdrop-filter: blur(16px) saturate(140%) !important;
+  backdrop-filter: blur(16px) saturate(140%) !important;
+  cursor: pointer !important;
+  z-index: 2 !important;
+}
+
+.review-mute-icon {
+  font-size: 1.35rem !important;
+  line-height: 1 !important;
+}
+
+.review-video-card:not(.review-video-card--active) .review-video-copy,
+.review-video-card:not(.review-video-card--active) .review-mute-button {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.bottom-app-nav {
+  left: max(10px, env(safe-area-inset-left, 0px)) !important;
+  right: auto !important;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  top: auto !important;
+  width: min(430px, calc(100vw - 94px)) !important;
+  max-width: none !important;
+  min-height: 74px !important;
+  height: 74px !important;
+  padding: 7px !important;
+  display: grid !important;
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 4px !important;
+  border-radius: 30px !important;
+  background: rgba(24, 14, 9, 0.78) !important;
+  border: 1px solid rgba(255, 238, 212, 0.12) !important;
+  box-shadow:
+    0 24px 60px rgba(0, 0, 0, 0.38),
+    inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+  transform: none !important;
+  overflow: visible !important;
+}
+
+.bottom-app-nav .bottom-nav-indicator {
+  display: none !important;
+}
+
+.bottom-app-nav button:not(.search-nav-button) {
+  width: 100% !important;
+  height: 60px !important;
+  min-height: 60px !important;
+  padding: 7px 2px !important;
+  display: grid !important;
+  justify-items: center !important;
+  align-content: center !important;
+  gap: 3px !important;
+  border-radius: 24px !important;
+  background: transparent !important;
+  border: 0 !important;
+  color: rgba(255, 244, 230, 0.72) !important;
+}
+
+.bottom-app-nav button:not(.search-nav-button).active {
+  color: #f1bb66 !important;
+  background: linear-gradient(145deg, rgba(92, 60, 32, 0.78), rgba(47, 31, 20, 0.88)) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+}
+
+.bottom-app-nav button .ios-svg-icon {
+  width: 24px !important;
+  height: 24px !important;
+  display: grid !important;
+  place-items: center !important;
+}
+
+.bottom-app-nav button .ios-svg-icon svg {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.bottom-app-nav button small {
+  font-size: 0.72rem !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  color: currentColor !important;
+}
+
+.bottom-app-nav .search-nav-button {
+  position: fixed !important;
+  top: auto !important;
+  left: auto !important;
+  right: max(10px, env(safe-area-inset-right, 0px)) !important;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  width: 74px !important;
+  height: 74px !important;
+  min-height: 74px !important;
+  display: grid !important;
+  place-items: center !important;
+  gap: 2px !important;
+  padding: 8px 0 !important;
+  border-radius: 50% !important;
+  background: rgba(22, 12, 8, 0.86) !important;
+  color: rgba(255, 244, 230, 0.78) !important;
+  border: 1px solid rgba(255, 238, 212, 0.13) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+  transform: none !important;
+}
+
+.bottom-app-nav .search-nav-button.active {
+  color: #f1bb66 !important;
+  background: linear-gradient(145deg, rgba(92, 60, 32, 0.78), rgba(47, 31, 20, 0.88)) !important;
+}
+
+body > .cart-toast {
+  bottom: calc(92px + env(safe-area-inset-bottom, 0px)) !important;
+  width: min(430px, calc(100vw - 24px)) !important;
+  border-color: rgba(238, 185, 105, 0.24) !important;
+}
+
+[data-theme="light"] .bottom-app-nav {
+  background: rgba(47, 29, 18, 0.78) !important;
+  border-color: rgba(83, 48, 27, 0.14) !important;
+}
+
+[data-theme="light"] .bottom-app-nav .search-nav-button {
+  background: rgba(47, 29, 18, 0.82) !important;
+}
+
+@media (max-width: 430px) {
+  .review-video-stage {
+    min-height: 500px !important;
+    height: 70vh !important;
+    margin-top: 22px !important;
+  }
+
+  .review-video-card {
+    width: min(76vw, 302px) !important;
+    border-radius: 30px !important;
+  }
+
+  .review-video-card--prev,
+  .review-video-card--left {
+    transform: translateX(-44px) rotate(-7deg) scale(0.9) !important;
+  }
+
+  .review-video-card--next,
+  .review-video-card--right {
+    transform: translateX(44px) rotate(7deg) scale(0.9) !important;
+  }
+
+  .review-video-copy {
+    left: 16px !important;
+    right: 70px !important;
+    bottom: 16px !important;
+  }
+
+  .review-mute-button {
+    right: 14px !important;
+    bottom: 16px !important;
+    width: 48px !important;
+    height: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .bottom-app-nav {
+    width: calc(100vw - 92px) !important;
+    min-height: 70px !important;
+    height: 70px !important;
+    border-radius: 28px !important;
+  }
+
+  .bottom-app-nav button:not(.search-nav-button) {
+    height: 56px !important;
+    min-height: 56px !important;
+    border-radius: 22px !important;
+  }
+
+  .bottom-app-nav .search-nav-button {
+    width: 70px !important;
+    height: 70px !important;
+    min-height: 70px !important;
+  }
+
+  body > .cart-toast {
+    bottom: calc(86px + env(safe-area-inset-bottom, 0px)) !important;
+  }
+}
+
+/* Search is a separate circular control outside the pill navigator. */
+.search-nav-button {
+  position: fixed !important;
+  top: auto !important;
+  left: auto !important;
+  right: max(10px, env(safe-area-inset-right, 0px)) !important;
+  bottom: calc(12px + env(safe-area-inset-bottom, 0px)) !important;
+  z-index: 275 !important;
+  width: 74px !important;
+  height: 74px !important;
+  min-width: 74px !important;
+  min-height: 74px !important;
+  display: grid !important;
+  place-items: center !important;
+  gap: 2px !important;
+  padding: 8px 0 !important;
+  border-radius: 50% !important;
+  background: rgba(22, 12, 8, 0.86) !important;
+  color: rgba(255, 244, 230, 0.78) !important;
+  border: 1px solid rgba(255, 238, 212, 0.13) !important;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+  -webkit-backdrop-filter: blur(24px) saturate(155%) !important;
+  backdrop-filter: blur(24px) saturate(155%) !important;
+  transform: none !important;
+}
+
+.search-nav-button.active {
+  color: #f1bb66 !important;
+  background: linear-gradient(145deg, rgba(92, 60, 32, 0.78), rgba(47, 31, 20, 0.88)) !important;
+}
+
+.search-nav-button .ios-svg-icon,
+.search-nav-button .ios-svg-icon svg {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+.search-nav-button small {
+  font-size: 0.72rem !important;
+  line-height: 1 !important;
+  font-weight: 850 !important;
+  color: currentColor !important;
+}
+
+[data-theme="light"] .search-nav-button {
+  background: rgba(47, 29, 18, 0.82) !important;
+}
+
+@media (max-width: 430px) {
+  .search-nav-button {
+    width: 70px !important;
+    height: 70px !important;
+    min-width: 70px !important;
+    min-height: 70px !important;
+  }
+}
