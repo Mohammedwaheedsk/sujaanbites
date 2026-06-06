@@ -1401,9 +1401,15 @@ function shiftTabBy(direction, options = {}) {
 
 function renderSearchResults() {
   if (!searchResults) return;
+  searchResults.classList.remove("hidden");
   const term = String(state.searchTerm || "").trim().toLowerCase();
   if (!term) {
-    searchResults.innerHTML = '<p class="search-empty">Start typing to see matching items.</p>';
+    searchResults.innerHTML = `
+      <div class="search-empty-state">
+        <strong>Search cookies</strong>
+        <p>Type a flavour, box size, category, or combo name.</p>
+      </div>
+    `;
     return;
   }
 
@@ -1413,6 +1419,7 @@ function renderSearchResults() {
       group.flavor,
       group.category,
       group.description || "",
+      ...group.variants.map((variant) => variant.description || ""),
       ...group.variants.map((variant) => `${variant.name} ${variant.variantLabel}`),
     ]
       .join(" ")
@@ -1421,7 +1428,13 @@ function renderSearchResults() {
   });
 
   if (!matches.length) {
-    searchResults.innerHTML = '<p class="search-empty">No matching cookies found.</p>';
+    searchResults.innerHTML = `
+      <div class="search-empty-state">
+        <strong>No results found</strong>
+        <p>No items found. Try a different search.</p>
+        <button class="secondary-button small" type="button" data-clear-search>Clear search</button>
+      </div>
+    `;
     return;
   }
 
@@ -3598,6 +3611,17 @@ document.addEventListener("click", (event) => {
     closeSearchDock();
     showMenuPanel();
     openFlavorMenu(searchResult.dataset.searchOpenFlavor);
+    return;
+  }
+
+  const clearSearchButton = event.target.closest("[data-clear-search]");
+  if (clearSearchButton) {
+    event.preventDefault();
+    state.searchTerm = "";
+    if (menuSearchInput) menuSearchInput.value = "";
+    renderMenu();
+    renderSearchResults();
+    menuSearchInput?.focus();
     return;
   }
 });

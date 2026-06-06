@@ -27,6 +27,8 @@ const adminLocationMap = document.querySelector("#adminLocationMap");
 const adminUseCurrentLocation = document.querySelector("#adminUseCurrentLocation");
 const adminSaveLocation = document.querySelector("#adminSaveLocation");
 const adminLocationStatus = document.querySelector("#adminLocationStatus");
+const adminSectionTabs = document.querySelectorAll("[data-admin-section-tab]");
+const adminPanels = document.querySelectorAll("[data-admin-panel]");
 
 let locationMap = null;
 let locationMarker = null;
@@ -123,6 +125,20 @@ function normalizeCategoryList(values) {
     if (!unique.has(key)) unique.set(key, label);
   }
   return [...unique.values()];
+}
+
+function setAdminSection(section = "orders") {
+  adminSectionTabs.forEach((tab) => {
+    const active = tab.dataset.adminSectionTab === section;
+    tab.classList.toggle("active", active);
+    tab.setAttribute("aria-selected", active ? "true" : "false");
+  });
+  adminPanels.forEach((panel) => {
+    panel.classList.toggle("active", panel.dataset.adminPanel === section);
+  });
+  if (section === "location" && locationMap) {
+    setTimeout(() => locationMap.invalidateSize(), 120);
+  }
 }
 
 function getSnapshot(orders) {
@@ -584,6 +600,7 @@ async function loadDashboard() {
       adminRequest("/api/admin/categories"),
     ]);
     showDashboard(true);
+    setAdminSection(document.querySelector("[data-admin-section-tab].active")?.dataset.adminSectionTab || "orders");
     ordersCache = ordersPayload.orders || [];
     renderStats(ordersPayload.orders || []);
     renderOrders(ordersPayload.orders || []);
@@ -614,6 +631,10 @@ adminLoginForm.addEventListener("submit", async (event) => {
 });
 
 refreshOrders.addEventListener("click", loadDashboard);
+
+adminSectionTabs.forEach((tab) => {
+  tab.addEventListener("click", () => setAdminSection(tab.dataset.adminSectionTab || "orders"));
+});
 
 adminLogout.addEventListener("click", () => {
   localStorage.removeItem(ADMIN_STORAGE_KEY);
