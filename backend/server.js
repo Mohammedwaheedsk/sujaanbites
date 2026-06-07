@@ -39,6 +39,17 @@ const LONG_DISTANCE_THRESHOLD_KM = 20;
 const SESSION_LOCK_TTL_MS = 1000 * 60 * 60 * 24 * 14; // 14 days
 const FREE_DELIVERY_THRESHOLD = 1599;
 const TEST_COUPON_CODE = "TEST SITE";
+const DEFAULT_OFFERS = {
+  couponOffers: [],
+  progressOffer: {
+    enabled: true,
+    label: "Orders above ₹1599 is free",
+    minSubtotal: FREE_DELIVERY_THRESHOLD,
+    rewardType: "free_delivery",
+    rewardValue: 0,
+  },
+  bundleOffers: [],
+};
 
 const DEFAULT_STOCK_COUNT = 20;
 
@@ -86,7 +97,7 @@ async function ensureStore() {
   await ensureJsonFile(FILES.orders, []);
   await ensureJsonFile(FILES.payments, []);
   await ensureJsonFile(FILES.customers, []);
-  await ensureJsonFile(FILES.settings, { adminLocation: null, menuCategories: [] });
+  await ensureJsonFile(FILES.settings, { adminLocation: null, menuCategories: [], offers: DEFAULT_OFFERS });
 }
 
 async function getSupabaseClient() {
@@ -239,6 +250,7 @@ function fromSettingsRow(row) {
   return {
     adminLocation: payload.adminLocation || null,
     menuCategories: normalizeMenuCategories(payload.menuCategories),
+    offers: normalizeOffers(payload.offers),
   };
 }
 
@@ -249,6 +261,7 @@ function toSettingsRow(settings) {
     payload: {
       adminLocation: settings?.adminLocation || null,
       menuCategories: normalizeMenuCategories(settings?.menuCategories),
+      offers: normalizeOffers(settings?.offers),
     },
   };
 }
@@ -263,6 +276,78 @@ function normalizeMenuCategories(values) {
     if (!unique.has(key)) unique.set(key, label);
   }
   return [...unique.values()];
+}
+
+function normalizeRewardType(value, fallback = "flat_discount") {
+  const type = String(value || "").trim().toLowerCase();
+  const allowed = new Set(["set_total", "flat_discount", "percent_discount", "free_delivery", "free_item"]);
+  return allowed.has(type) ? type : fallback;
+}
+
+function normalizeOfferValue(value) {
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? Math.max(0, parsed) : 0;
+}
+
+function normalizeCouponOffers(values) {
+  if (!Array.isArray(values)) return [];
+  return values
+    .map((entry, index) => {
+      const code = normalizeCouponCode(entry?.code);
+      if (!code) return null;
+      const rewardType = normalizeRewardType(entry?.rewardType, "flat_discount");
+      return {
+        id: String(entry?.id || `coupon-${index + 1}`),
+        code,
+        label: String(entry?.label || code).trim() || code,
+        rewardType,
+        rewardValue: normalizeOfferValue(entry?.rewardValue),
+        enabled: entry?.enabled !== false,
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeProgressOffer(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return {
+    enabled: source.enabled !== false,
+    label: String(source.label || DEFAULT_OFFERS.progressOffer.label).trim() || DEFAULT_OFFERS.progressOffer.label,
+    minSubtotal: Math.max(0, Number(source.minSubtotal ?? DEFAULT_OFFERS.progressOffer.minSubtotal) || 0),
+    rewardType: normalizeRewardType(source.rewardType, "free_delivery"),
+    rewardValue: normalizeOfferValue(source.rewardValue),
+  };
+}
+
+function normalizeBundleOffers(values) {
+  if (!Array.isArray(values)) return [];
+  return values
+    .map((entry, index) => {
+      const requiredItemIds = [...new Set((Array.isArray(entry?.requiredItemIds) ? entry.requiredItemIds : []).map((itemId) => String(itemId || "").trim()).filter(Boolean))];
+      if (!requiredItemIds.length) return null;
+      const rewardType = normalizeRewardType(entry?.rewardType, "flat_discount");
+      return {
+        id: String(entry?.id || `bundle-${index + 1}`),
+        label: String(entry?.label || "Combo offer").trim() || "Combo offer",
+        requiredItemIds,
+        requiredQuantity: Math.max(1, Math.floor(Number(entry?.requiredQuantity) || 1)),
+        rewardType,
+        rewardValue: normalizeOfferValue(entry?.rewardValue),
+        freeItemId: String(entry?.freeItemId || "").trim(),
+        freeItemQuantity: Math.max(1, Math.floor(Number(entry?.freeItemQuantity) || 1)),
+        enabled: entry?.enabled !== false,
+      };
+    })
+    .filter(Boolean);
+}
+
+function normalizeOffers(value) {
+  const source = value && typeof value === "object" ? value : {};
+  return {
+    couponOffers: normalizeCouponOffers(source.couponOffers),
+    progressOffer: normalizeProgressOffer(source.progressOffer),
+    bundleOffers: normalizeBundleOffers(source.bundleOffers),
+  };
 }
 
 function normalizePhone(phone) {
@@ -417,21 +502,168 @@ function normalizeCouponCode(value) {
     .toUpperCase();
 }
 
-function applyCouponToTotals(subtotal, delivery, couponCode) {
+function applyReward({
+  rewardType,
+  rewardValue,
+  currentTotal,
+  currentDelivery,
+  rows = [],
+  freeItemId = "",
+  freeItemQuantity = 1,
+}) {
+  const total = Math.max(0, Number(currentTotal || 0));
+  const delivery = Math.max(0, Number(currentDelivery || 0));
+  const value = normalizeOfferValue(rewardValue);
+
+  if (rewardType === "set_total") {
+    const target = Math.max(0, Math.round(value));
+    const discount = Math.max(0, total - target);
+    return { total: total - discount, delivery, discount };
+  }
+
+  if (rewardType === "percent_discount") {
+    const discount = Math.max(0, Math.min(total, Math.round(total * (value / 100))));
+    return { total: total - discount, delivery, discount };
+  }
+
+  if (rewardType === "free_delivery") {
+    const discount = delivery;
+    return { total: total - discount, delivery: 0, discount };
+  }
+
+  if (rewardType === "free_item") {
+    const targetRow = rows.find((row) => row.id === freeItemId);
+    if (!targetRow) return { total, delivery, discount: 0 };
+    const eligibleQty = Math.min(Number(targetRow.quantity || 0), Math.max(1, freeItemQuantity));
+    const discount = Math.max(0, Math.min(total, eligibleQty * Number(targetRow.price || 0)));
+    return { total: total - discount, delivery, discount };
+  }
+
+  const discount = Math.max(0, Math.min(total, Math.round(value)));
+  return { total: total - discount, delivery, discount };
+}
+
+function getBundleOfferMatch(offer, rows) {
+  if (!offer?.enabled) return false;
+  const rowById = new Map((rows || []).map((row) => [row.id, row]));
+  return offer.requiredItemIds.every((itemId) => Number(rowById.get(itemId)?.quantity || 0) >= offer.requiredQuantity);
+}
+
+function applyConfiguredOffers(subtotal, delivery, rows, couponCode, settings) {
+  const offers = normalizeOffers(settings?.offers);
+  let currentTotal = Math.max(0, Number(subtotal || 0) + Number(delivery || 0));
+  let currentDelivery = Math.max(0, Number(delivery || 0));
+  let totalDiscount = 0;
+  let couponLabel = "";
+  let couponMessage = "";
+  let automaticOffer = null;
+  let couponApplied = null;
+
+  const automaticCandidates = [];
+  const progressOffer = offers.progressOffer;
+  if (progressOffer.enabled && Number(subtotal || 0) >= progressOffer.minSubtotal) {
+    const applied = applyReward({
+      rewardType: progressOffer.rewardType,
+      rewardValue: progressOffer.rewardValue,
+      currentTotal,
+      currentDelivery,
+      rows,
+    });
+    automaticCandidates.push({
+      source: "progress",
+      label: progressOffer.label,
+      rewardType: progressOffer.rewardType,
+      rewardValue: progressOffer.rewardValue,
+      result: applied,
+    });
+  }
+
+  for (const offer of offers.bundleOffers) {
+    if (!getBundleOfferMatch(offer, rows)) continue;
+    const applied = applyReward({
+      rewardType: offer.rewardType,
+      rewardValue: offer.rewardValue,
+      currentTotal,
+      currentDelivery,
+      rows,
+      freeItemId: offer.freeItemId,
+      freeItemQuantity: offer.freeItemQuantity,
+    });
+    automaticCandidates.push({
+      source: "bundle",
+      label: offer.label,
+      rewardType: offer.rewardType,
+      rewardValue: offer.rewardValue,
+      result: applied,
+    });
+  }
+
+  automaticCandidates.sort((a, b) => b.result.discount - a.result.discount);
+  if (automaticCandidates[0]?.result?.discount > 0) {
+    automaticOffer = automaticCandidates[0];
+    currentTotal = automaticOffer.result.total;
+    currentDelivery = automaticOffer.result.delivery;
+    totalDiscount += automaticOffer.result.discount;
+  }
+
   const normalized = normalizeCouponCode(couponCode);
   if (normalized === TEST_COUPON_CODE) {
-    return {
-      couponCode: normalized,
-      discount: Math.max(0, subtotal + delivery - 1),
-      total: 1,
-      couponLabel: "TEST SITE",
+    const discount = Math.max(0, currentTotal - 1);
+    totalDiscount += discount;
+    currentTotal = currentTotal - discount;
+    couponLabel = "TEST SITE";
+    couponApplied = {
+      code: normalized,
+      label: couponLabel,
+      rewardType: "set_total",
+      rewardValue: 1,
     };
+    couponMessage = "Offer unlocked. Your payable amount has been updated.";
+  } else if (normalized) {
+    const offer = offers.couponOffers.find((entry) => entry.enabled && entry.code === normalized);
+    if (!offer) {
+      couponMessage = "Coupon not recognized.";
+    } else {
+      const applied = applyReward({
+        rewardType: offer.rewardType,
+        rewardValue: offer.rewardValue,
+        currentTotal,
+        currentDelivery,
+        rows,
+      });
+      currentTotal = applied.total;
+      currentDelivery = applied.delivery;
+      totalDiscount += applied.discount;
+      couponLabel = offer.label;
+      couponApplied = offer;
+      couponMessage = applied.discount > 0
+        ? "Offer unlocked. Your payable amount has been updated."
+        : "Coupon applied.";
+    }
   }
+
+  const remaining = Math.max(0, progressOffer.minSubtotal - Number(subtotal || 0));
+  const progress = progressOffer.minSubtotal > 0
+    ? Math.max(0, Math.min(1, Number(subtotal || 0) / progressOffer.minSubtotal))
+    : 0;
+
   return {
     couponCode: normalized || "",
-    discount: 0,
-    total: subtotal + delivery,
-    couponLabel: "",
+    discount: totalDiscount,
+    total: currentTotal,
+    delivery: currentDelivery,
+    couponLabel,
+    offerMeta: {
+      couponMessage,
+      couponApplied,
+      automaticOffer,
+      progressOffer: {
+        ...progressOffer,
+        unlocked: progressOffer.enabled && Number(subtotal || 0) >= progressOffer.minSubtotal,
+        progress,
+        remaining,
+      },
+    },
   };
 }
 
@@ -442,7 +674,7 @@ function buildDeliveryMeta({ orderType, quantity, subtotal, address, settings })
       distanceSurcharge: 0,
       delivery: 0,
       freeDelivery: false,
-      freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+      freeDeliveryThreshold: normalizeOffers(settings?.offers).progressOffer.minSubtotal || FREE_DELIVERY_THRESHOLD,
       distanceKm: null,
       isLongDistance: false,
       estimatedWindow: "",
@@ -469,7 +701,6 @@ function buildDeliveryMeta({ orderType, quantity, subtotal, address, settings })
     : null;
 
   const isLongDistance = Number.isFinite(distanceKm) && distanceKm > LONG_DISTANCE_THRESHOLD_KM;
-  const freeDelivery = Number(subtotal || 0) > FREE_DELIVERY_THRESHOLD;
   const calculatedDelivery = Number.isFinite(distanceKm)
     ? distanceKm <= 180
       ? 49
@@ -477,13 +708,12 @@ function buildDeliveryMeta({ orderType, quantity, subtotal, address, settings })
         ? 59
         : 79
     : 49;
-  const delivery = freeDelivery ? 0 : calculatedDelivery;
 
   return {
-    delivery,
+    delivery: calculatedDelivery,
     calculatedDelivery,
-    freeDelivery,
-    freeDeliveryThreshold: FREE_DELIVERY_THRESHOLD,
+    freeDelivery: false,
+    freeDeliveryThreshold: normalizeOffers(settings?.offers).progressOffer.minSubtotal || FREE_DELIVERY_THRESHOLD,
     distanceKm: Number.isFinite(distanceKm) ? Number(distanceKm.toFixed(2)) : null,
     isLongDistance,
     estimatedWindow: isLongDistance ? "3-7 days" : "",
@@ -723,7 +953,7 @@ async function getSettings() {
         await writeJson(FILES.settings, settings);
         return settings;
       }
-      const localSettings = await readJson(FILES.settings, { adminLocation: null, menuCategories: [] });
+      const localSettings = await readJson(FILES.settings, { adminLocation: null, menuCategories: [], offers: DEFAULT_OFFERS });
       const row = toSettingsRow(localSettings);
       const { error: upsertError } = await supabase.from("settings").upsert(row, { onConflict: "id" });
       if (upsertError) throw upsertError;
@@ -732,10 +962,11 @@ async function getSettings() {
       console.warn(`Supabase settings read failed, falling back to local files: ${error.message}`);
     }
   }
-  const settings = await readJson(FILES.settings, { adminLocation: null, menuCategories: [] });
+  const settings = await readJson(FILES.settings, { adminLocation: null, menuCategories: [], offers: DEFAULT_OFFERS });
   return {
     adminLocation: settings?.adminLocation || null,
     menuCategories: normalizeMenuCategories(settings?.menuCategories),
+    offers: normalizeOffers(settings?.offers),
   };
 }
 
@@ -743,6 +974,7 @@ async function saveSettings(settings) {
   const normalized = {
     adminLocation: settings?.adminLocation || null,
     menuCategories: normalizeMenuCategories(settings?.menuCategories),
+    offers: normalizeOffers(settings?.offers),
   };
   if (USE_SUPABASE) {
     try {
@@ -871,17 +1103,22 @@ function calculateOrder(menu, items, orderType, options = {}) {
     settings: options.settings || null,
   });
   const delivery = subtotal > 0 ? deliveryMeta.delivery : 0;
-  const coupon = applyCouponToTotals(subtotal, delivery, options.couponCode);
+  const coupon = applyConfiguredOffers(subtotal, delivery, rows, options.couponCode, options.settings);
+  deliveryMeta.freeDelivery = coupon.delivery === 0 && delivery > 0;
+  deliveryMeta.delivery = coupon.delivery;
+  deliveryMeta.offerMeta = coupon.offerMeta;
 
   return {
     rows,
     deliveryMeta,
     totals: {
       subtotal,
-      delivery,
+      delivery: coupon.delivery,
       discount: coupon.discount,
       couponCode: coupon.couponCode,
       couponLabel: coupon.couponLabel,
+      couponMessage: coupon.offerMeta?.couponMessage || "",
+      offerMeta: coupon.offerMeta,
       total: coupon.total,
     },
   };
@@ -1042,7 +1279,11 @@ async function handleApi(req, res, url) {
   if (req.method === "GET" && url.pathname === "/api/menu") {
     const menu = await getMenu();
     const settings = await getSettings();
-    sendJson(res, 200, { menu, categories: settings.menuCategories || [] });
+    sendJson(res, 200, {
+      menu,
+      categories: settings.menuCategories || [],
+      offers: normalizeOffers(settings.offers),
+    });
     return;
   }
 
@@ -1186,6 +1427,13 @@ async function handleApi(req, res, url) {
     return;
   }
 
+  if (req.method === "GET" && url.pathname === "/api/admin/offers") {
+    if (!requireAdmin(req, res)) return;
+    const settings = await getSettings();
+    sendJson(res, 200, { offers: normalizeOffers(settings.offers) });
+    return;
+  }
+
   if (req.method === "PUT" && url.pathname === "/api/admin/categories") {
     if (!requireAdmin(req, res)) return;
     const body = await readBody(req);
@@ -1194,6 +1442,16 @@ async function handleApi(req, res, url) {
     settings.menuCategories = categories;
     await saveSettings(settings);
     sendJson(res, 200, { categories });
+    return;
+  }
+
+  if (req.method === "PUT" && url.pathname === "/api/admin/offers") {
+    if (!requireAdmin(req, res)) return;
+    const body = await readBody(req);
+    const settings = await getSettings();
+    settings.offers = normalizeOffers(body?.offers);
+    await saveSettings(settings);
+    sendJson(res, 200, { offers: settings.offers });
     return;
   }
 
