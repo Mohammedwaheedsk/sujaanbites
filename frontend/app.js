@@ -72,6 +72,7 @@ applyTheme(getStoredTheme(), { persist: false });
 const state = {
   menu: [],
   menuCategories: [],
+  offersConfig: null,
   activeCategory: "all",
   cart: new Map(),
   profile: null,
@@ -1595,7 +1596,13 @@ function renderMenu() {
         const soldOut = group.variants.every((item) => item.available === false || getMenuStock(item) <= 0);
         const startingPrice = Math.min(...group.variants.map((item) => Number(item.price) || 0));
         return `
-        <article class="dish-card flavor-card ${soldOut ? "unavailable" : ""}" data-flavor-key="${group.key}">
+        <article
+          class="dish-card flavor-card ${soldOut ? "unavailable" : ""}"
+          data-flavor-key="${group.key}"
+          role="button"
+          tabindex="${soldOut ? "-1" : "0"}"
+          aria-label="Open ${group.flavor} options"
+        >
           <img class="dish-image" src="${group.image || "assets/hero-food.png"}" alt="${group.flavor}" />
           ${soldOut ? '<span class="next-available-chip">Next available at 9:30 am</span>' : ""}
           <div class="dish-top">
@@ -1752,15 +1759,15 @@ function getQuoteKey(rows, address) {
 
 function syncCouponUi() {
   const normalized = normalizeCouponCode(state.couponCode);
+  const couponMessage = String(state.quotedTotals?.couponMessage || state.quotedTotals?.offerMeta?.couponMessage || "").trim();
+  const applied = Boolean(normalized && (state.quotedTotals?.couponApplied || Number(state.quotedTotals?.discount || 0) > 0 || couponMessage));
   if (couponCodeInput) couponCodeInput.value = normalized;
   if (couponStatus) {
-    couponStatus.classList.toggle("success", normalized === "TEST SITE");
-    couponStatus.classList.toggle("error", Boolean(normalized && normalized !== "TEST SITE"));
-    couponStatus.textContent = normalized === "TEST SITE"
-      ? "Offer unlocked. Your payable amount has been updated."
-      : normalized
-        ? "Coupon not recognized."
-        : "No coupon applied.";
+    couponStatus.classList.toggle("success", applied);
+    couponStatus.classList.toggle("error", Boolean(normalized) && !applied);
+    couponStatus.textContent = normalized
+      ? couponMessage || (applied ? "Offer unlocked. Your payable amount has been updated." : "Coupon not recognized.")
+      : "No coupon applied.";
   }
   if (clearCouponButton) {
     clearCouponButton.classList.toggle("hidden", !normalized);
@@ -1848,10 +1855,10 @@ function getTotals() {
   );
   const delivery = canUseQuote ? Number(state.quotedTotals.delivery || 0) : (rows.length ? BUSINESS.deliveryFee : 0);
   const couponCode = normalizeCouponCode(state.couponCode);
-  const couponApplied = couponCode === "TEST SITE";
   const quotedTotal = canUseQuote ? Number(state.quotedTotals.total || 0) : subtotal + delivery;
-  const total = couponApplied ? 1 : quotedTotal;
-  const discount = couponApplied ? Math.max(0, subtotal + delivery - 1) : Number(state.quotedTotals?.discount || 0);
+  const discount = canUseQuote ? Number(state.quotedTotals?.discount || 0) : 0;
+  const couponApplied = Boolean(couponCode && (state.quotedTotals?.couponApplied || discount > 0 || state.quotedTotals?.couponMessage));
+  const total = quotedTotal;
   return {
     rows,
     subtotal,
@@ -1870,6 +1877,8 @@ function renderCart() {
   void ensureDeliveryQuote();
   const totals = getTotals();
   syncCouponUi();
+  const freeDeliveryThreshold = Number(state.offersConfig?.progressOffer?.minSubtotal || state.deliveryMeta?.freeDeliveryThreshold || 1599);
+  const progressMeta = state.quotedTotals?.offerMeta?.progressOffer || null;
   if (itemCount) itemCount.textContent = `${totals.quantity} ${totals.quantity === 1 ? "item" : "items"}`;
   
   const headerCartBadge = document.getElementById("headerCartBadge");
@@ -1884,11 +1893,11 @@ function renderCart() {
 
   if (subtotalEl) subtotalEl.textContent = formatPrice(totals.subtotal);
   if (deliveryFeeEl) {
-    const qualifiesFree = totals.subtotal > 1599;
-    const metaFree = Boolean(state.deliveryMeta?.freeDelivery);
+    const qualifiesFree = totals.subtotal >= freeDeliveryThreshold;
+    const metaFree = Boolean(state.deliveryMeta?.freeDelivery) || Boolean(progressMeta?.unlocked);
     const showFree = qualifiesFree || metaFree;
     if (showFree) {
-      const actual = Number(state.deliveryMeta?.calculatedDelivery || state.quotedTotals?.delivery || totals.delivery || BUSINESS.deliveryFee);
+      const actual = Number(state.deliveryMeta?.calculatedDelivery || progressMeta?.deliveryBeforeDiscount || totals.delivery || BUSINESS.deliveryFee);
       deliveryFeeEl.innerHTML = `<span class="delivery-free"><span class="delivery-strike">${formatPrice(actual)}</span><span class="free-badge">FREE DELIVERY</span></span>`;
     } else {
       deliveryFeeEl.textContent = formatPrice(totals.delivery);
@@ -1955,8 +1964,9 @@ function renderCart() {
     }
   }
 
-  const freeDeliveryThreshold = 1599;
-  const progress = Math.max(0, Math.min(1, totals.subtotal / freeDeliveryThreshold));
+  const progress = progressMeta
+    ? Math.max(0, Math.min(1, Number(progressMeta.progress || 0)))
+    : Math.max(0, Math.min(1, totals.subtotal / freeDeliveryThreshold));
   if (freeDeliveryProgressBar) {
     freeDeliveryProgressBar.style.width = `${Math.round(progress * 100)}%`;
   }
@@ -1964,7 +1974,9 @@ function renderCart() {
     freeDeliveryProgressLabel.textContent = `${formatPrice(totals.subtotal)} / ${formatPrice(freeDeliveryThreshold)}`;
   }
   if (freeDeliveryProgressRemaining) {
-    const remaining = Math.max(0, freeDeliveryThreshold - totals.subtotal);
+    const remaining = progressMeta
+      ? Math.max(0, Number(progressMeta.remainingSubtotal || 0))
+      : Math.max(0, freeDeliveryThreshold - totals.subtotal);
     freeDeliveryProgressRemaining.textContent = remaining > 0
       ? `${formatPrice(remaining)} away from free delivery`
       : "Free delivery unlocked";
@@ -1973,9 +1985,9 @@ function renderCart() {
   const deliveryCardTitle = document.querySelector("#deliveryEtaLabel");
   const deliveryCardSub = document.querySelector("#deliveryEtaHint");
   if (deliveryCardTitle && deliveryCardSub) {
-    if (state.deliveryMeta?.freeDelivery) {
+    if (Boolean(state.deliveryMeta?.freeDelivery) || Boolean(progressMeta?.unlocked)) {
       deliveryCardTitle.textContent = "Free delivery unlocked";
-      deliveryCardSub.textContent = "Your cart value is above ₹1599, so delivery is free.";
+      deliveryCardSub.textContent = `Your cart value is above ${formatPrice(freeDeliveryThreshold)}, so delivery is free.`;
     } else if (state.deliveryMeta?.isLongDistance) {
       deliveryCardTitle.textContent = "Delivery in 3-7 days";
       const distanceText = Number.isFinite(Number(state.deliveryMeta.distanceKm))
@@ -2721,9 +2733,11 @@ function renderCheckoutAddressPicker() {
 function normalizeMenuPayload(payload) {
   const menu = Array.isArray(payload) ? payload : payload?.menu;
   const categories = Array.isArray(payload?.categories) ? payload.categories : [];
+  const offers = payload?.offers && typeof payload.offers === "object" ? payload.offers : null;
   return {
     menu: Array.isArray(menu) ? menu.filter((item) => item && item.id && item.name) : [],
     categories,
+    offers,
   };
 }
 
@@ -2763,6 +2777,7 @@ async function loadMenuFromJsonFile() {
 function applyLoadedMenu(result) {
   state.menu = (result.menu && result.menu.length > 0) ? result.menu : DEFAULT_MENU;
   state.menuCategories = Array.isArray(result.categories) ? result.categories : [];
+  state.offersConfig = result.offers && typeof result.offers === "object" ? result.offers : null;
   const availableCategories = new Set(state.menu.map((item) => normalizeCategory(item.category)).filter(Boolean));
   if (state.activeCategory !== "all" && !availableCategories.has(normalizeCategory(state.activeCategory))) {
     state.activeCategory = "all";
@@ -3768,6 +3783,28 @@ menuGrid?.addEventListener("click", (event) => {
   if (increase) updateQuantity(increase.dataset.menuIncrease, 1);
   if (decrease) updateQuantity(decrease.dataset.menuDecrease, -1);
   state.checkoutNeedsAccountConfirm = true;
+});
+
+menuGrid?.addEventListener("pointerup", (event) => {
+  const card = event.target.closest(".flavor-card");
+  const directAction = event.target.closest("[data-add], [data-menu-increase], [data-menu-decrease], [data-open-flavor]");
+  if (!card || directAction || !card.dataset.flavorKey) return;
+  openFlavorMenu(card.dataset.flavorKey);
+});
+
+menuGrid?.addEventListener("touchend", (event) => {
+  const card = event.target.closest(".flavor-card");
+  const directAction = event.target.closest("[data-add], [data-menu-increase], [data-menu-decrease], [data-open-flavor]");
+  if (!card || directAction || !card.dataset.flavorKey) return;
+  openFlavorMenu(card.dataset.flavorKey);
+}, { passive: true });
+
+menuGrid?.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter" && event.key !== " ") return;
+  const card = event.target.closest(".flavor-card");
+  if (!card?.dataset.flavorKey) return;
+  event.preventDefault();
+  openFlavorMenu(card.dataset.flavorKey);
 });
 
 function openItemPreview(item) {

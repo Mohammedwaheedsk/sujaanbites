@@ -18,9 +18,31 @@ const categoryManager = document.querySelector("#categoryManager");
 const newCategoryName = document.querySelector("#newCategoryName");
 const addCategoryButton = document.querySelector("#addCategoryButton");
 const menuStockCount = document.querySelector("#menuStockCount");
+const couponOfferForm = document.querySelector("#couponOfferForm");
+const offerCouponCode = document.querySelector("#offerCouponCode");
+const offerCouponLabel = document.querySelector("#offerCouponLabel");
+const offerCouponType = document.querySelector("#offerCouponType");
+const offerCouponValue = document.querySelector("#offerCouponValue");
+const couponOffersList = document.querySelector("#couponOffersList");
+const progressOfferForm = document.querySelector("#progressOfferForm");
+const progressOfferEnabled = document.querySelector("#progressOfferEnabled");
+const progressOfferLabel = document.querySelector("#progressOfferLabel");
+const progressOfferThreshold = document.querySelector("#progressOfferThreshold");
+const progressOfferType = document.querySelector("#progressOfferType");
+const progressOfferValue = document.querySelector("#progressOfferValue");
+const bundleOfferForm = document.querySelector("#bundleOfferForm");
+const bundleOfferLabel = document.querySelector("#bundleOfferLabel");
+const bundleRequiredQuantity = document.querySelector("#bundleRequiredQuantity");
+const bundleRewardType = document.querySelector("#bundleRewardType");
+const bundleRewardValue = document.querySelector("#bundleRewardValue");
+const bundleFreeItem = document.querySelector("#bundleFreeItem");
+const bundleFreeItemQuantity = document.querySelector("#bundleFreeItemQuantity");
+const bundleMenuPicker = document.querySelector("#bundleMenuPicker");
+const bundleOffersList = document.querySelector("#bundleOffersList");
 const historyFilters = document.querySelector("#historyFilters");
 const historyFrom = document.querySelector("#historyFrom");
 const historyTo = document.querySelector("#historyTo");
+const incomeSummary = document.querySelector("#incomeSummary");
 const historyStats = document.querySelector("#historyStats");
 const historyList = document.querySelector("#historyList");
 const adminLocationMap = document.querySelector("#adminLocationMap");
@@ -40,6 +62,8 @@ let lastDashboardFocusedAt = 0;
 let alertAudio = null;
 let configuredCategories = [];
 let ordersCache = [];
+let adminMenuCache = [];
+let offersState = { couponOffers: [], progressOffer: null, bundleOffers: [] };
 let lastHapticAt = 0;
 
 const currency = new Intl.NumberFormat("en-IN", {
@@ -125,6 +149,32 @@ function normalizeCategoryList(values) {
     if (!unique.has(key)) unique.set(key, label);
   }
   return [...unique.values()];
+}
+
+function createDefaultOffers() {
+  return {
+    couponOffers: [],
+    progressOffer: {
+      enabled: true,
+      label: "Orders above ₹1599 is free",
+      minSubtotal: 1599,
+      rewardType: "free_delivery",
+      rewardValue: 0,
+    },
+    bundleOffers: [],
+  };
+}
+
+function normalizeAdminOffers(offers) {
+  const base = createDefaultOffers();
+  return {
+    couponOffers: Array.isArray(offers?.couponOffers) ? offers.couponOffers : base.couponOffers,
+    progressOffer: {
+      ...base.progressOffer,
+      ...(offers?.progressOffer || {}),
+    },
+    bundleOffers: Array.isArray(offers?.bundleOffers) ? offers.bundleOffers : base.bundleOffers,
+  };
 }
 
 function setAdminSection(section = "orders") {
@@ -246,7 +296,7 @@ function renderStats(orders) {
     .filter((order) => order.paymentStatus === "captured" || order.paymentMethod === "cod")
     .reduce((sum, order) => sum + order.totals.total, 0);
 
-  adminStats.innerHTML = `
+  const statsMarkup = `
     <article class="stats-group">
       <p class="stats-group-title">Today</p>
       <div class="stats-grid">
@@ -264,6 +314,8 @@ function renderStats(orders) {
       </div>
     </article>
   `;
+  adminStats.innerHTML = statsMarkup;
+  if (incomeSummary) incomeSummary.innerHTML = statsMarkup;
 }
 
 function renderOrders(orders) {
@@ -492,6 +544,108 @@ function renderCategoryManager() {
   `;
 }
 
+function getMenuLabelById(id) {
+  return adminMenuCache.find((item) => item.id === id)?.name || id;
+}
+
+function renderBundleMenuPicker() {
+  if (!bundleMenuPicker) return;
+  if (!adminMenuCache.length) {
+    bundleMenuPicker.innerHTML = '<p class="empty">Add menu items first to configure bundle offers.</p>';
+    return;
+  }
+  bundleMenuPicker.innerHTML = adminMenuCache
+    .map(
+      (item) => `
+        <label class="offer-menu-option">
+          <input type="checkbox" value="${item.id}" />
+          <span>${item.name}</span>
+        </label>
+      `,
+    )
+    .join("");
+  if (bundleFreeItem) {
+    bundleFreeItem.innerHTML = `
+      <option value="">Select free item</option>
+      ${adminMenuCache.map((item) => `<option value="${item.id}">${item.name}</option>`).join("")}
+    `;
+  }
+}
+
+function renderCouponOffers() {
+  if (!couponOffersList) return;
+  if (!offersState.couponOffers.length) {
+    couponOffersList.innerHTML = '<p class="empty">No coupon offers added yet.</p>';
+    return;
+  }
+  couponOffersList.innerHTML = offersState.couponOffers
+    .map(
+      (offer, index) => `
+        <article class="offer-list-card">
+          <div>
+            <strong>${offer.code}</strong>
+            <p>${offer.label || "Coupon offer"} · ${String(offer.rewardType || "").replaceAll("_", " ")}${Number(offer.rewardValue) ? ` · ${offer.rewardValue}` : ""}</p>
+          </div>
+          <button class="secondary-button danger" type="button" data-remove-coupon-offer="${index}">Remove</button>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function renderBundleOffers() {
+  if (!bundleOffersList) return;
+  if (!offersState.bundleOffers.length) {
+    bundleOffersList.innerHTML = '<p class="empty">No bundle offers added yet.</p>';
+    return;
+  }
+  bundleOffersList.innerHTML = offersState.bundleOffers
+    .map(
+      (offer, index) => `
+        <article class="offer-list-card">
+          <div>
+            <strong>${offer.label || `Bundle offer ${index + 1}`}</strong>
+            <p>
+              Add ${Number(offer.requiredQuantity || 0)} of:
+              ${(offer.requiredItemIds || []).map(getMenuLabelById).join(", ") || "Selected items"}
+              · Reward: ${String(offer.rewardType || "").replaceAll("_", " ")}
+              ${Number(offer.rewardValue) ? ` · ${offer.rewardValue}` : ""}
+              ${offer.freeItemId ? ` · Free item: ${getMenuLabelById(offer.freeItemId)} x ${offer.freeItemQuantity || 1}` : ""}
+            </p>
+          </div>
+          <button class="secondary-button danger" type="button" data-remove-bundle-offer="${index}">Remove</button>
+        </article>
+      `,
+    )
+    .join("");
+}
+
+function renderProgressOffer() {
+  const current = normalizeAdminOffers(offersState).progressOffer;
+  if (progressOfferEnabled) progressOfferEnabled.checked = current.enabled !== false;
+  if (progressOfferLabel) progressOfferLabel.value = current.label || "";
+  if (progressOfferThreshold) progressOfferThreshold.value = Number(current.minSubtotal || 0);
+  if (progressOfferType) progressOfferType.value = current.rewardType || "free_delivery";
+  if (progressOfferValue) progressOfferValue.value = Number(current.rewardValue || 0);
+}
+
+function renderOffersEditor() {
+  renderBundleMenuPicker();
+  renderCouponOffers();
+  renderBundleOffers();
+  renderProgressOffer();
+}
+
+async function saveOffersState() {
+  const payload = normalizeAdminOffers(offersState);
+  const response = await adminRequest("/api/admin/offers", {
+    method: "PUT",
+    body: JSON.stringify({ offers: payload }),
+  });
+  offersState = normalizeAdminOffers(response.offers);
+  renderOffersEditor();
+}
+
 async function saveCategories(nextCategories) {
   const categories = normalizeCategoryList(nextCategories);
   const payload = await adminRequest("/api/admin/categories", {
@@ -593,20 +747,24 @@ function initAdminLocationMap(savedLocation) {
 
 async function loadDashboard() {
   try {
-    const [ordersPayload, menuPayload, locationPayload, categoriesPayload] = await Promise.all([
+    const [ordersPayload, menuPayload, locationPayload, categoriesPayload, offersPayload] = await Promise.all([
       adminRequest("/api/admin/orders"),
       adminRequest("/api/admin/menu"),
       adminRequest("/api/admin/location"),
       adminRequest("/api/admin/categories"),
+      adminRequest("/api/admin/offers"),
     ]);
     showDashboard(true);
     setAdminSection(document.querySelector("[data-admin-section-tab].active")?.dataset.adminSectionTab || "orders");
     ordersCache = ordersPayload.orders || [];
+    adminMenuCache = menuPayload.menu || [];
+    offersState = normalizeAdminOffers(offersPayload.offers);
     renderStats(ordersPayload.orders || []);
     renderOrders(ordersPayload.orders || []);
-    renderMenuManager(menuPayload.menu || []);
+    renderMenuManager(adminMenuCache);
     configuredCategories = normalizeCategoryList(categoriesPayload.categories || []);
     renderCategoryManager();
+    renderOffersEditor();
     initAdminLocationMap(locationPayload.adminLocation || null);
     await loadHistory();
     const nextSnapshot = getSnapshot(ordersPayload.orders || []);
@@ -790,6 +948,98 @@ categoryManager?.addEventListener("click", async (event) => {
   const category = remove.dataset.removeCategory;
   try {
     await saveCategories(configuredCategories.filter((entry) => entry.toLowerCase() !== String(category || "").toLowerCase()));
+    markAdminSeen();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+couponOfferForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const code = String(offerCouponCode?.value || "").trim().toUpperCase();
+  if (!code) {
+    alert("Enter a coupon code first.");
+    return;
+  }
+  offersState.couponOffers.push({
+    enabled: true,
+    code,
+    label: String(offerCouponLabel?.value || "").trim() || code,
+    rewardType: String(offerCouponType?.value || "flat_discount"),
+    rewardValue: Number(offerCouponValue?.value || 0),
+  });
+  try {
+    await saveOffersState();
+    couponOfferForm.reset();
+    if (offerCouponType) offerCouponType.value = "flat_discount";
+    markAdminSeen();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+progressOfferForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  offersState.progressOffer = {
+    enabled: progressOfferEnabled?.checked !== false,
+    label: String(progressOfferLabel?.value || "").trim() || "Orders above ₹1599 is free",
+    minSubtotal: Number(progressOfferThreshold?.value || 0),
+    rewardType: String(progressOfferType?.value || "free_delivery"),
+    rewardValue: Number(progressOfferValue?.value || 0),
+  };
+  try {
+    await saveOffersState();
+    markAdminSeen();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+bundleOfferForm?.addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const requiredItemIds = [...bundleMenuPicker.querySelectorAll("input[type='checkbox']:checked")].map((input) => input.value);
+  if (!requiredItemIds.length) {
+    alert("Select at least one menu item for the bundle offer.");
+    return;
+  }
+  offersState.bundleOffers.push({
+    enabled: true,
+    label: String(bundleOfferLabel?.value || "").trim() || "Bundle offer",
+    requiredItemIds,
+    requiredQuantity: Number(bundleRequiredQuantity?.value || 1),
+    rewardType: String(bundleRewardType?.value || "flat_discount"),
+    rewardValue: Number(bundleRewardValue?.value || 0),
+    freeItemId: String(bundleFreeItem?.value || "").trim() || undefined,
+    freeItemQuantity: Number(bundleFreeItemQuantity?.value || 1),
+  });
+  try {
+    await saveOffersState();
+    bundleOfferForm.reset();
+    renderOffersEditor();
+    markAdminSeen();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+couponOffersList?.addEventListener("click", async (event) => {
+  const remove = event.target.closest("[data-remove-coupon-offer]");
+  if (!remove) return;
+  offersState.couponOffers.splice(Number(remove.dataset.removeCouponOffer), 1);
+  try {
+    await saveOffersState();
+    markAdminSeen();
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+bundleOffersList?.addEventListener("click", async (event) => {
+  const remove = event.target.closest("[data-remove-bundle-offer]");
+  if (!remove) return;
+  offersState.bundleOffers.splice(Number(remove.dataset.removeBundleOffer), 1);
+  try {
+    await saveOffersState();
     markAdminSeen();
   } catch (error) {
     alert(error.message);

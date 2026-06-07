@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="admin.css?v=20260603a" />
+  <link rel="stylesheet" href="admin.css?v=20260607a" />
 </head>
 
 <body>
@@ -55,14 +55,7 @@
 
       <div class="admin-stats" id="adminStats"></div>
 
-      <div class="admin-section-tabs" role="tablist" aria-label="Admin dashboard sections">
-        <button class="active" type="button" data-admin-section-tab="orders">Orders</button>
-        <button type="button" data-admin-section-tab="location">Location</button>
-        <button type="button" data-admin-section-tab="menu">Menu catalog</button>
-        <button type="button" data-admin-section-tab="history">History</button>
-      </div>
-
-      <div class="admin-grid">
+      <div class="admin-panels-wrap">
         <section class="admin-panel admin-panel-orders active" data-admin-panel="orders">
           <div class="admin-subhead">
             <h2>Incoming orders</h2>
@@ -141,27 +134,155 @@
           </form>
           <div id="menuManager"></div>
         </section>
+
+        <section class="admin-history admin-panel-income" data-admin-panel="income">
+          <div class="admin-subhead">
+            <h2>Income and order history</h2>
+            <p>Track present totals, past income, and daily order performance.</p>
+          </div>
+          <div class="admin-stats" id="incomeSummary"></div>
+          <form class="history-filters" id="historyFilters">
+            <label>
+              From
+              <input type="date" id="historyFrom" />
+            </label>
+            <label>
+              To
+              <input type="date" id="historyTo" />
+            </label>
+            <button class="secondary-button" type="submit">Load history</button>
+          </form>
+          <div class="admin-stats" id="historyStats"></div>
+          <div class="history-list" id="historyList"></div>
+        </section>
+
+        <section class="admin-panel admin-panel-offers" data-admin-panel="offers">
+          <div class="admin-subhead">
+            <h2>Offers and coupons</h2>
+            <p>Create coupon offers, progress unlocks, and bundle-based rewards for customers.</p>
+          </div>
+
+          <div class="offers-grid">
+            <article class="offer-card">
+              <div class="admin-subhead">
+                <h3>1. Coupon code offer</h3>
+                <p>Unlock a flat amount, percentage, free delivery, or fixed final total with a code.</p>
+              </div>
+              <form class="menu-add-form" id="couponOfferForm">
+                <label>
+                  Coupon code
+                  <input id="offerCouponCode" type="text" placeholder="FESTIVE50" />
+                </label>
+                <label>
+                  Offer label
+                  <input id="offerCouponLabel" type="text" placeholder="Festival offer" />
+                </label>
+                <label>
+                  Offer type
+                  <select id="offerCouponType">
+                    <option value="flat_discount">Flat discount ₹X</option>
+                    <option value="percent_discount">Percent discount %X</option>
+                    <option value="set_total">Break cart total to ₹X</option>
+                    <option value="free_delivery">Free delivery</option>
+                  </select>
+                </label>
+                <label>
+                  Offer value
+                  <input id="offerCouponValue" type="number" min="0" step="1" placeholder="50" />
+                </label>
+                <button class="secondary-button" type="submit">Add coupon offer</button>
+              </form>
+              <div id="couponOffersList"></div>
+            </article>
+
+            <article class="offer-card">
+              <div class="admin-subhead">
+                <h3>2. Spend ₹XX to unlock offer</h3>
+                <p>This controls the progress bar and automatic threshold reward seen by customers.</p>
+              </div>
+              <form class="menu-add-form" id="progressOfferForm">
+                <label class="toggle checkbox-toggle">
+                  <input id="progressOfferEnabled" type="checkbox" checked />
+                  <span>Enable progress-based offer</span>
+                </label>
+                <label>
+                  Label
+                  <input id="progressOfferLabel" type="text" placeholder="Orders above ₹1599 is free" />
+                </label>
+                <label>
+                  Unlock at subtotal ₹
+                  <input id="progressOfferThreshold" type="number" min="0" step="1" placeholder="1599" />
+                </label>
+                <label>
+                  Unlock reward
+                  <select id="progressOfferType">
+                    <option value="free_delivery">Free delivery</option>
+                    <option value="flat_discount">Flat discount ₹X</option>
+                    <option value="percent_discount">Percent discount %X</option>
+                  </select>
+                </label>
+                <label>
+                  Reward value
+                  <input id="progressOfferValue" type="number" min="0" step="1" placeholder="0" />
+                </label>
+                <button class="secondary-button" type="submit">Save progress offer</button>
+              </form>
+            </article>
+
+            <article class="offer-card">
+              <div class="admin-subhead">
+                <h3>3. Add these X items from menu and get offer</h3>
+                <p>Create bundle rewards like discount, free item, or free delivery after chosen products are added.</p>
+              </div>
+              <form class="menu-add-form" id="bundleOfferForm">
+                <label>
+                  Offer label
+                  <input id="bundleOfferLabel" type="text" placeholder="Add 3 cookies and get free delivery" />
+                </label>
+                <label>
+                  Required quantity
+                  <input id="bundleRequiredQuantity" type="number" min="1" step="1" placeholder="3" />
+                </label>
+                <label>
+                  Reward type
+                  <select id="bundleRewardType">
+                    <option value="flat_discount">Flat discount ₹X</option>
+                    <option value="percent_discount">Percent discount %X</option>
+                    <option value="free_item">X items free</option>
+                    <option value="free_delivery">Free delivery</option>
+                  </select>
+                </label>
+                <label>
+                  Reward value
+                  <input id="bundleRewardValue" type="number" min="0" step="1" placeholder="100" />
+                </label>
+                <label>
+                  Free item (for X items free)
+                  <select id="bundleFreeItem"></select>
+                </label>
+                <label>
+                  Free item quantity
+                  <input id="bundleFreeItemQuantity" type="number" min="1" step="1" placeholder="1" />
+                </label>
+                <div class="offer-menu-picker">
+                  <p>Select menu items</p>
+                  <div id="bundleMenuPicker" class="offer-menu-checks"></div>
+                </div>
+                <button class="secondary-button" type="submit">Add bundle offer</button>
+              </form>
+              <div id="bundleOffersList"></div>
+            </article>
+          </div>
+        </section>
       </div>
 
-      <section class="admin-history" data-admin-panel="history">
-        <div class="admin-subhead">
-          <h2>Order history analytics</h2>
-          <p>Check daily order count, income, and old records any time.</p>
-        </div>
-        <form class="history-filters" id="historyFilters">
-          <label>
-            From
-            <input type="date" id="historyFrom" />
-          </label>
-          <label>
-            To
-            <input type="date" id="historyTo" />
-          </label>
-          <button class="secondary-button" type="submit">Load history</button>
-        </form>
-        <div class="admin-stats" id="historyStats"></div>
-        <div class="history-list" id="historyList"></div>
-      </section>
+      <nav class="admin-bottom-nav" aria-label="Admin sections">
+        <button class="active" type="button" data-admin-section-tab="orders">Orders</button>
+        <button type="button" data-admin-section-tab="location">Location</button>
+        <button type="button" data-admin-section-tab="menu">Menu Catalog</button>
+        <button type="button" data-admin-section-tab="income">Income</button>
+        <button type="button" data-admin-section-tab="offers">Offers</button>
+      </nav>
     </section>
   </main>
 
@@ -169,7 +290,7 @@
   <script>
     window.__API_BASE = "";
   </script>
-  <script src="admin.js?v=20260526a"></script>
+  <script src="admin.js?v=20260607a"></script>
 </body>
 
 </html>
