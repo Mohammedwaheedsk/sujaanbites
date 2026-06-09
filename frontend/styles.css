@@ -17,19 +17,14 @@
 }
 
 html {
-  width: 100%;
   scroll-behavior: smooth;
-  overflow-x: hidden;
 }
 
 body {
   margin: 0;
-  width: 100%;
-  min-height: 100svh;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   color: var(--ink);
   padding-bottom: 176px;
-  overflow-x: hidden;
   background:
     linear-gradient(180deg, rgba(255, 247, 239, 0.96), rgba(255, 247, 239, 0.96)),
     radial-gradient(circle at top left, rgba(201, 130, 79, 0.08), transparent 26%),
@@ -52,7 +47,7 @@ textarea {
   align-items: center;
   justify-content: space-between;
   gap: 20px;
-  padding: calc(14px + env(safe-area-inset-top)) clamp(16px, 4vw, 56px) 14px;
+  padding: 14px clamp(16px, 4vw, 56px);
   border-bottom: 1px solid rgba(74, 46, 26, 0.08);
   background: rgba(255, 247, 239, 0.94);
   backdrop-filter: blur(16px);
@@ -271,7 +266,6 @@ textarea {
   min-height: clamp(460px, 68vh, 720px);
   overflow: hidden;
   isolation: isolate;
-  background: #20130d;
 }
 
 .hero img {
@@ -1269,7 +1263,7 @@ footer {
 @media (max-width: 880px) {
   .topbar {
     gap: 10px;
-    padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
+    padding: 10px 12px;
   }
 
   .brand {
@@ -1307,7 +1301,7 @@ footer {
   }
 
   .hero {
-    min-height: min(56svh, 430px);
+    min-height: min(62svh, 430px);
   }
 
   .hero::after {
@@ -1318,7 +1312,7 @@ footer {
 
   .hero-copy {
     width: calc(100% - 24px);
-    padding: 44px 0 36px;
+    padding: 58px 0 56px;
     margin-inline: 12px;
   }
 
@@ -1501,13 +1495,13 @@ footer {
   }
 
   .hero {
-    min-height: min(50svh, 372px);
+    min-height: min(58svh, 390px);
   }
 
   .hero-copy {
     width: calc(100% - 20px);
     margin-inline: 10px;
-    padding: 36px 0 26px;
+    padding: 42px 0 30px;
   }
 
   .hero h1 {
