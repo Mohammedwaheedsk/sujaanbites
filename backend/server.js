@@ -146,6 +146,7 @@ function toMenuRow(item) {
     id: item.id,
     name: item.name,
     description: item.description,
+    ingredients: item.ingredients || "",
     price: Number(item.price || 0),
     category: String(item.category || "").trim() || "other",
     image: item.image || "",
@@ -160,6 +161,7 @@ function fromMenuRow(row) {
     id: row.id,
     name: row.name,
     description: row.description,
+    ingredients: row.ingredients || "",
     price: Number(row.price || 0),
     category: row.category,
     image: row.image || "",
@@ -180,6 +182,7 @@ function normalizeMenuItem(item = {}) {
     id: item.id,
     name: item.name,
     description: item.description,
+    ingredients: String(item.ingredients || "").trim(),
     price: Number(item.price || 0),
     category: String(item.category || "").trim() || "other",
     image: item.image || "",
@@ -871,6 +874,9 @@ async function saveMenu(menu) {
       if (message.includes("stock_count")) {
         throw new Error("Supabase schema is missing stock_count. Run the latest supabase.sql and redeploy.");
       }
+      if (message.includes("ingredients")) {
+        throw new Error("Supabase schema is missing ingredients. Add the ingredients column, then redeploy.");
+      }
       throw new Error(`Supabase menu write failed: ${message || "unknown error"}`);
     }
   }
@@ -1486,6 +1492,7 @@ async function handleApi(req, res, url) {
     const body = await readBody(req);
     const name = String(body.name || "").trim();
     const description = String(body.description || "").trim();
+    const ingredients = String(body.ingredients || "").trim();
     const category = String(body.category || "").trim() || "Cookies";
     const price = Number(body.price);
     const stockCount = normalizeStockCount(body.stockCount);
@@ -1505,6 +1512,7 @@ async function handleApi(req, res, url) {
       id: `item_${Date.now().toString(36)}`,
       name,
       description,
+      ingredients,
       category,
       image: "assets/hero-food.png",
       price,
@@ -1534,6 +1542,7 @@ async function handleApi(req, res, url) {
       ...current,
       name: typeof body.name === "string" ? body.name.trim() || current.name : current.name,
       description: typeof body.description === "string" ? body.description.trim() || current.description : current.description,
+      ingredients: typeof body.ingredients === "string" ? body.ingredients.trim() : current.ingredients,
       category: typeof body.category === "string" ? body.category.trim() || current.category : current.category,
       price: Number.isFinite(Number(body.price)) ? Math.max(0, Number(body.price)) : current.price,
       available: typeof body.available === "boolean" ? body.available : current.available,
