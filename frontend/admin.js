@@ -49,6 +49,8 @@ const adminLocationMap = document.querySelector("#adminLocationMap");
 const adminUseCurrentLocation = document.querySelector("#adminUseCurrentLocation");
 const adminSaveLocation = document.querySelector("#adminSaveLocation");
 const adminLocationStatus = document.querySelector("#adminLocationStatus");
+const adminSearchInput = document.querySelector("#adminSearchInput");
+const adminStatusFilter = document.querySelector("#adminStatusFilter");
 const adminSectionTabs = document.querySelectorAll("[data-admin-section-tab]");
 const adminPanels = document.querySelectorAll("[data-admin-panel]");
 
@@ -64,6 +66,8 @@ let configuredCategories = [];
 let ordersCache = [];
 let adminMenuCache = [];
 let offersState = { couponOffers: [], progressOffer: null, bundleOffers: [] };
+let adminSearchTerm = "";
+let adminStatusValue = "all";
 let lastHapticAt = 0;
 
 const currency = new Intl.NumberFormat("en-IN", {
@@ -318,10 +322,44 @@ function renderStats(orders) {
   if (incomeSummary) incomeSummary.innerHTML = statsMarkup;
 }
 
+function orderMatchesAdminFilters(order) {
+  const statusMatch = adminStatusValue === "all" || order.status === adminStatusValue;
+  const term = adminSearchTerm.trim().toLowerCase();
+  if (!statusMatch) return false;
+  if (!term) return true;
+  const searchable = [
+    order.id,
+    order.customerName,
+    order.customerPhone,
+    order.status,
+    order.paymentStatus,
+    order.address?.address,
+    order.address?.houseNumber,
+    order.address?.streetName,
+    ...(order.items || []).map((item) => item.name),
+  ].join(" ").toLowerCase();
+  return searchable.includes(term);
+}
+
+function menuMatchesAdminSearch(item) {
+  const term = adminSearchTerm.trim().toLowerCase();
+  if (!term) return true;
+  return [item.id, item.name, item.description, item.category, item.available === false ? "unavailable" : "available"]
+    .join(" ")
+    .toLowerCase()
+    .includes(term);
+}
+
+function rerenderAdminFilteredViews() {
+  renderOrders(ordersCache || []);
+  renderMenuManager(adminMenuCache || []);
+}
+
 function renderOrders(orders) {
-  const incoming = (orders || []).filter((order) => ["pending_admin_acceptance", "received"].includes(order.status));
-  const live = (orders || []).filter((order) => ["accepted", "preparing", "out_for_delivery"].includes(order.status));
-  const reviewed = (orders || []).filter(
+  const filteredOrders = (orders || []).filter(orderMatchesAdminFilters);
+  const incoming = filteredOrders.filter((order) => ["pending_admin_acceptance", "received"].includes(order.status));
+  const live = filteredOrders.filter((order) => ["accepted", "preparing", "out_for_delivery"].includes(order.status));
+  const reviewed = filteredOrders.filter(
     (order) => Number(order.review?.deliveryRating) > 0
       || (Array.isArray(order.review?.productRatings) && order.review.productRatings.length > 0),
   );
@@ -468,12 +506,13 @@ function isDeliveryCheckDue(order) {
 }
 
 function renderMenuManager(menu) {
-  if (!menu.length) {
+  const filteredMenu = (menu || []).filter(menuMatchesAdminSearch);
+  if (!filteredMenu.length) {
     menuManager.innerHTML = '<p class="empty">No menu items found.</p>';
     return;
   }
 
-  menuManager.innerHTML = menu
+  menuManager.innerHTML = filteredMenu
     .map(
       (item) => {
         const stockCount = Number.isFinite(Number(item.stockCount)) ? Math.max(0, Math.floor(Number(item.stockCount))) : 0;
@@ -498,6 +537,10 @@ function renderMenuManager(menu) {
             <label>
               Category
               <input type="text" data-menu-category="${item.id}" value="${item.category || ""}" />
+            </label>
+            <label>
+              Ingredients
+              <textarea rows="2" data-menu-ingredients="${item.id}">${item.ingredients || ""}</textarea>
             </label>
             <label>
               Stock count
@@ -794,6 +837,16 @@ adminSectionTabs.forEach((tab) => {
   tab.addEventListener("click", () => setAdminSection(tab.dataset.adminSectionTab || "orders"));
 });
 
+adminSearchInput?.addEventListener("input", (event) => {
+  adminSearchTerm = event.target.value || "";
+  rerenderAdminFilteredViews();
+});
+
+adminStatusFilter?.addEventListener("change", (event) => {
+  adminStatusValue = event.target.value || "all";
+  renderOrders(ordersCache || []);
+});
+
 adminLogout.addEventListener("click", () => {
   localStorage.removeItem(ADMIN_STORAGE_KEY);
   showDashboard(false);
@@ -874,6 +927,7 @@ menuManager.addEventListener("click", async (event) => {
       name: String(document.querySelector(`[data-menu-name="${itemId}"]`)?.value || "").trim(),
       description: String(document.querySelector(`[data-menu-description="${itemId}"]`)?.value || "").trim(),
       category: String(document.querySelector(`[data-menu-category="${itemId}"]`)?.value || "").trim(),
+      ingredients: String(document.querySelector(`[data-menu-ingredients="${itemId}"]`)?.value || "").trim(),
       stockCount: Number(document.querySelector(`[data-menu-stock="${itemId}"]`)?.value),
     };
 
@@ -914,6 +968,7 @@ menuAddForm?.addEventListener("submit", async (event) => {
     category: document.querySelector("#menuCategory").value.trim(),
     stockCount: Number(menuStockCount?.value),
     description: document.querySelector("#menuDescription").value.trim(),
+    ingredients: document.querySelector("#menuIngredients")?.value.trim() || "",
   };
 
   try {

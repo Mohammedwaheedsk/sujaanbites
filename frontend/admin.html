@@ -8,7 +8,7 @@
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="admin.css?v=20260607a" />
+  <link rel="stylesheet" href="admin.css?v=20260608-modern" />
 </head>
 
 <body>
@@ -42,20 +42,58 @@
     </section>
 
     <section class="admin-dashboard hidden" id="dashboardPanel">
-      <div class="admin-heading">
-        <div>
-          <p class="eyebrow">Live orders</p>
-          <h1>Order dashboard</h1>
-        </div>
-        <div class="admin-actions">
-          <button class="secondary-button" id="refreshOrders" type="button">Refresh</button>
-          <button class="text-button" id="adminLogout" type="button">Logout</button>
-        </div>
-      </div>
+      <div class="admin-layout">
+        <aside class="admin-sidebar" aria-label="Admin navigation">
+          <div class="admin-sidebar-card">
+            <p class="eyebrow">Workspace</p>
+            <h2>Sujaan Ops</h2>
+            <p>Orders, menu, income, and offers in one calmer control room.</p>
+          </div>
+          <nav class="admin-side-nav" aria-label="Admin sections desktop">
+            <button class="active" type="button" data-admin-section-tab="orders">Orders</button>
+            <button type="button" data-admin-section-tab="location">Location</button>
+            <button type="button" data-admin-section-tab="menu">Menu Catalog</button>
+            <button type="button" data-admin-section-tab="income">Income</button>
+            <button type="button" data-admin-section-tab="offers">Offers</button>
+          </nav>
+        </aside>
 
-      <div class="admin-stats" id="adminStats"></div>
+        <div class="admin-main-column">
+          <div class="admin-heading">
+            <div>
+              <p class="eyebrow">Live orders</p>
+              <h1>Order dashboard</h1>
+              <p class="admin-heading-copy">Filter quickly, accept new orders, and keep customer updates clear.</p>
+            </div>
+            <div class="admin-actions">
+              <button class="secondary-button" id="refreshOrders" type="button">Refresh</button>
+              <button class="text-button" id="adminLogout" type="button">Logout</button>
+            </div>
+          </div>
 
-      <div class="admin-panels-wrap">
+          <div class="admin-stats" id="adminStats"></div>
+
+          <div class="admin-toolbar" aria-label="Admin filters">
+            <label class="admin-search-field">
+              <span class="sr-only">Search orders and menu</span>
+              <span aria-hidden="true">⌕</span>
+              <input id="adminSearchInput" type="search" placeholder="Search orders, customers, phone, menu..." autocomplete="off" />
+            </label>
+            <label class="admin-filter-field">
+              <span>Status</span>
+              <select id="adminStatusFilter">
+                <option value="all">All statuses</option>
+                <option value="pending_admin_acceptance">Needs acceptance</option>
+                <option value="accepted">Accepted</option>
+                <option value="preparing">Preparing</option>
+                <option value="out_for_delivery">Out for delivery</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="admin-panels-wrap">
         <section class="admin-panel admin-panel-orders active" data-admin-panel="orders">
           <div class="admin-subhead">
             <h2>Incoming orders</h2>
@@ -129,6 +167,10 @@
             <label>
               Description
               <textarea id="menuDescription" rows="2" placeholder="Buttery cookie with dark chocolate chips"></textarea>
+            </label>
+            <label>
+              Ingredients
+              <textarea id="menuIngredients" rows="2" placeholder="Flour, butter, sugar, cocoa, chocolate chips"></textarea>
             </label>
             <button class="secondary-button" type="submit">Add menu item</button>
           </form>
@@ -274,9 +316,11 @@
             </article>
           </div>
         </section>
+          </div>
+        </div>
       </div>
 
-      <nav class="admin-bottom-nav" aria-label="Admin sections">
+      <nav class="admin-bottom-nav" aria-label="Admin sections mobile">
         <button class="active" type="button" data-admin-section-tab="orders">Orders</button>
         <button type="button" data-admin-section-tab="location">Location</button>
         <button type="button" data-admin-section-tab="menu">Menu Catalog</button>
@@ -290,7 +334,7 @@
   <script>
     window.__API_BASE = "";
   </script>
-  <script src="admin.js?v=20260607a"></script>
+  <script src="admin.js?v=20260608-modern"></script>
 </body>
 
 </html>

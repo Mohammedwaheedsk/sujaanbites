@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0c0806" />
   <title>Sujaan Bites | Product Info</title>
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
@@ -46,7 +46,7 @@
       margin: 0;
       color: var(--ink);
       font-family: "DM Sans", "Inter", -apple-system, sans-serif;
-      padding-bottom: 104px;
+      padding-bottom: 148px;
       background:
         radial-gradient(circle at 18% 0%, rgba(212, 160, 84, 0.14), transparent 28%),
         radial-gradient(circle at 92% 8%, rgba(240, 201, 122, 0.08), transparent 25%),
@@ -519,46 +519,87 @@
     }
     .bottom-app-nav {
       position: fixed;
-      left: 50%;
+      left: 14px;
+      right: 82px;
       bottom: calc(14px + env(safe-area-inset-bottom));
       z-index: 28;
       display: grid;
-      grid-template-columns: repeat(4, minmax(58px, 1fr));
-      gap: 4px;
-      width: min(460px, calc(100% - 28px));
-      min-height: 72px;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 6px;
+      min-height: 78px;
       padding: 8px;
       border: 1px solid rgba(212, 160, 84, 0.1);
-      border-radius: 30px;
+      border-radius: 28px;
       background: rgba(18, 13, 10, 0.92);
       box-shadow: 0 26px 58px rgba(0, 0, 0, 0.55);
-      transform: translateX(-50%);
       backdrop-filter: blur(18px);
+      overflow: hidden;
     }
-    .bottom-app-nav a {
+    .bottom-nav-indicator {
+      position: absolute;
+      top: 8px;
+      bottom: 8px;
+      left: 8px;
+      width: 58px;
+      border-radius: 22px;
+      background: rgba(212, 160, 84, 0.12);
+      transition: transform 0.24s ease, width 0.24s ease;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bottom-app-nav button,
+    .search-nav-button {
+      position: relative;
+      z-index: 1;
       display: grid;
       place-items: center;
-      gap: 2px;
+      gap: 4px;
       min-height: 56px;
       border-radius: 24px;
       color: rgba(250, 245, 239, 0.6);
-      text-decoration: none;
+      border: 0;
+      background: transparent;
       font-weight: 850;
+      cursor: pointer;
       transition: color 0.2s ease, background 0.2s ease;
     }
-    .bottom-app-nav a:hover {
+    .bottom-app-nav button:hover,
+    .search-nav-button:hover {
       color: rgba(250, 245, 239, 0.85);
     }
-    .bottom-app-nav span {
-      font-size: 1.55rem;
-      line-height: 1;
+    .ios-svg-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 24px;
+      height: 24px;
     }
-    .bottom-app-nav small {
+    .ios-svg-icon svg {
+      width: 22px;
+      height: 22px;
+      display: block;
+    }
+    .bottom-app-nav small,
+    .search-nav-button small {
       font-size: 0.68rem;
     }
-    .bottom-app-nav .active {
+    .bottom-app-nav .active,
+    .search-nav-button.active {
       color: #d4a054;
       background: rgba(212, 160, 84, 0.1);
+    }
+    .search-nav-button {
+      position: fixed;
+      right: 14px;
+      bottom: calc(14px + env(safe-area-inset-bottom));
+      z-index: 29;
+      width: 62px;
+      min-height: 78px;
+      border-radius: 28px;
+      border: 1px solid rgba(212, 160, 84, 0.1);
+      background: rgba(18, 13, 10, 0.92);
+      box-shadow: 0 26px 58px rgba(0, 0, 0, 0.55);
+      backdrop-filter: blur(18px);
+      color: rgba(250, 245, 239, 0.82);
     }
     @media (min-width: 760px) {
       .hero-card {
@@ -625,9 +666,9 @@
       <article class="card">
         <h3>Ingredients</h3>
         <ul>
-          <li>Premium flour, butter, sugar, cocoa, and flavour-specific fillings.</li>
-          <li>Each flavour may include chocolate chips, jam, dry fruits, or biscuit crumbs.</li>
-          <li>Prepared fresh in small batches for a soft centre and crisp finish.</li>
+          <li id="featuredIngredientsPrimary">Premium flour, butter, sugar, cocoa, and flavour-specific fillings.</li>
+          <li id="featuredIngredientsSecondary">Each flavour may include chocolate chips, jam, dry fruits, or biscuit crumbs.</li>
+          <li id="featuredIngredientsTertiary">Prepared fresh in small batches for a soft centre and crisp finish.</li>
         </ul>
       </article>
       <article class="card">
@@ -669,23 +710,38 @@
   </div>
 
   <nav class="bottom-app-nav" aria-label="Primary">
-    <a href="index.html">
-      <span>⌂</span>
+    <span class="bottom-nav-indicator" id="productBottomNavIndicator" aria-hidden="true"></span>
+    <button type="button" data-nav-target="home">
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      </span>
       <small>Home</small>
-    </a>
-    <a href="index.html#menu">
-      <span>▦</span>
+    </button>
+    <button class="active" type="button" data-nav-target="menu">
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9" rx="1.5"/><rect x="14" y="3" width="7" height="5" rx="1.5"/><rect x="14" y="12" width="7" height="9" rx="1.5"/><rect x="3" y="16" width="7" height="5" rx="1.5"/></svg>
+      </span>
       <small>Menu</small>
-    </a>
-    <a class="active" href="cart.html">
-      <span>◴</span>
-      <small>Cart</small>
-    </a>
-    <a href="index.html#menu">
-      <span>⌕</span>
-      <small>Search</small>
-    </a>
+    </button>
+    <button type="button" data-nav-target="reorder">
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+      </span>
+      <small>Reorder</small>
+    </button>
+    <button type="button" data-nav-target="account">
+      <span class="ios-svg-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      </span>
+      <small>Account</small>
+    </button>
   </nav>
+  <button class="search-nav-button" type="button" data-nav-target="search" aria-label="Search">
+    <span class="ios-svg-icon">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+    </span>
+    <small>Search</small>
+  </button>
 
   <div class="toast" id="toast" aria-live="polite">
     <img class="toast-thumb" src="assets/sujaan-logo.png" alt="" />
@@ -718,6 +774,12 @@
     const featuredIncBtn = document.getElementById("featuredIncBtn");
     const featuredDecBtn = document.getElementById("featuredDecBtn");
     const featuredBuyBtn = document.getElementById("featuredBuyBtn");
+    const featuredIngredientsPrimary = document.getElementById("featuredIngredientsPrimary");
+    const featuredIngredientsSecondary = document.getElementById("featuredIngredientsSecondary");
+    const featuredIngredientsTertiary = document.getElementById("featuredIngredientsTertiary");
+    const productNavButtons = Array.from(document.querySelectorAll("[data-nav-target]"));
+    const productBottomNav = document.querySelector(".bottom-app-nav");
+    const productBottomNavIndicator = document.getElementById("productBottomNavIndicator");
     const toast = document.getElementById("toast");
     const toastText = document.getElementById("toastText");
     const toastAction = document.getElementById("toastAction");
@@ -904,6 +966,16 @@
       featuredItemImage.alt = item.name || "Selected product";
       featuredItemTitle.textContent = item.name || "Selected item";
       featuredItemDescription.textContent = item.description || "Freshly baked cookie with a rich homemade feel.";
+      const ingredients = String(item.ingredients || "").split(",").map((entry) => entry.trim()).filter(Boolean);
+      if (featuredIngredientsPrimary) {
+        featuredIngredientsPrimary.textContent = ingredients[0] || "Premium flour, butter, sugar, cocoa, and flavour-specific fillings.";
+      }
+      if (featuredIngredientsSecondary) {
+        featuredIngredientsSecondary.textContent = ingredients[1] || "Each flavour may include chocolate chips, jam, dry fruits, or biscuit crumbs.";
+      }
+      if (featuredIngredientsTertiary) {
+        featuredIngredientsTertiary.textContent = ingredients[2] || "Prepared fresh in small batches for a soft centre and crisp finish.";
+      }
       if (featuredIncBtn) {
         featuredIncBtn.onclick = () => changeFeaturedQuantity(item, 1);
       }
@@ -924,6 +996,29 @@
       };
       updateFeaturedHighlights(item);
       syncFeaturedQty(item.id);
+    }
+
+    function openMainSiteView(view) {
+      syncProductBottomNav(view);
+      const next = new URL("index.html", window.location.href);
+      if (view === "menu") next.hash = "menu";
+      if (view === "reorder") sessionStorage.setItem("sujaanNavTarget", "reorder");
+      if (view === "account") sessionStorage.setItem("sujaanNavTarget", "account");
+      if (view === "search") sessionStorage.setItem("sujaanNavTarget", "search");
+      if (view === "home") sessionStorage.removeItem("sujaanNavTarget");
+      window.location.href = next.toString();
+    }
+
+    function syncProductBottomNav(activeTarget = "menu") {
+      const tabButtons = productNavButtons.filter((button) => productBottomNav?.contains(button));
+      tabButtons.forEach((button) => {
+        button.classList.toggle("active", button.dataset.navTarget === activeTarget);
+      });
+      if (!productBottomNavIndicator) return;
+      const activeButton = tabButtons.find((button) => button.dataset.navTarget === activeTarget) || tabButtons[1] || tabButtons[0];
+      if (!activeButton) return;
+      productBottomNavIndicator.style.width = `${activeButton.offsetWidth}px`;
+      productBottomNavIndicator.style.transform = `translateX(${activeButton.offsetLeft}px)`;
     }
 
     function updateFeaturedHighlights(item) {
@@ -1010,6 +1105,17 @@
       vibrateTap(8);
     });
 
+    productNavButtons.forEach((button) => {
+      button.addEventListener("click", () => {
+        const target = button.dataset.navTarget;
+        if (!target) return;
+        openMainSiteView(target);
+      });
+    });
+
+    window.addEventListener("resize", () => syncProductBottomNav("menu"));
+
+    syncProductBottomNav("menu");
     loadMenu();
   </script>
 </body>
