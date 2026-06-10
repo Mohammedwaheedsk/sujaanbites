@@ -1,430 +1,555 @@
 <!doctype html>
-<html lang="en">
-
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#0c0806" />
-  <meta name="description" content="Sujaan Bites — Premium freshly baked cookies delivered to your door." />
+  <meta name="theme-color" content="#0c0806" id="themeColorMeta" />
+  <meta name="description" content="Sujaan Bites — Fresh baked cookies delivered to your door." />
   <title>Sujaan Bites | Fresh Baked Cookies</title>
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
-  <link rel="apple-touch-icon" href="assets/sujaan-logo.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
   <link rel="manifest" href="manifest.webmanifest" />
-  <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300..900;1,9..40,300..900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
 </head>
-
 <body>
-  <!-- Splash Screen -->
+
+  <!-- ═══════════════════════════════════════════════
+       SPLASH
+  ═══════════════════════════════════════════════ -->
   <div class="splash" id="splash" aria-hidden="true">
-    <div class="splash-card">
-      <img class="splash-logo" src="assets/sujaan-logo.png" alt="" />
-      <div class="splash-text">Sujaan Bites</div>
+    <div class="splash-inner">
+      <img src="assets/sujaan-logo.png" alt="" class="splash-logo" />
+      <strong class="splash-name">Sujaan Bites</strong>
+      <small class="splash-sub">Fresh baked cookies</small>
     </div>
   </div>
 
-  <div class="app-wrapper">
+  <!-- ═══════════════════════════════════════════════
+       APP SHELL
+  ═══════════════════════════════════════════════ -->
+  <div class="app" id="app">
 
-    <!-- ── HOME PAGE ──────────────────────────────────────────── -->
-    <div id="page-home" class="app-page active">
-      <!-- Hero Section -->
-      <section class="hero" aria-labelledby="hero-title">
-        <img src="assets/hero_bakery_stunning.png" alt="Sujaan Bites freshly baked cookies" />
-        <div class="hero-copy">
-          <p class="eyebrow">Order today</p>
-          <h1 id="hero-title">Sujaan<br>Bites</h1>
-          <p>Fresh baked cookies, delivered to your door.</p>
-          <div class="hero-ctas">
-            <button class="hero-btn-primary" type="button" data-nav-menu>Order Now →</button>
-            <button class="hero-btn-secondary" type="button" data-nav-account>Account</button>
-          </div>
-        </div>
-      </section>
-
-      <!-- Announcement Bar -->
-      <div class="announcement-bar" aria-label="Store announcement">
-        <div class="announcement-track" aria-hidden="true">
-          <span>Free shipping on orders above ₹1599</span>
-          <span class="announcement-sep">•</span>
+    <!-- ─── PAGE: HOME ───────────────────────────── -->
+    <div class="page active" id="page-home">
+      <!-- Announcement -->
+      <div class="ann-bar" aria-label="Announcement">
+        <div class="ann-track">
+          <span>🍪 Free deliveries above ₹1599</span>
+          <span class="ann-dot">•</span>
           <span>Fresh baked daily</span>
-          <span class="announcement-sep">•</span>
-          <span>Free shipping on orders above ₹1599</span>
-          <span class="announcement-sep">•</span>
+          <span class="ann-dot">•</span>
+          <span>🍪 Free deliveries above ₹1599</span>
+          <span class="ann-dot">•</span>
           <span>Fresh baked daily</span>
         </div>
       </div>
 
-      <!-- Philosophy / Brand strip -->
-      <section class="brand-strip">
-        <div class="brand-strip-inner">
-          <div class="brand-chip">
-            <span class="brand-chip-icon">🍪</span>
-            <div>
-              <strong>Loved by Hundreds</strong>
-              <small>across the city</small>
-            </div>
-          </div>
-          <div class="brand-chip">
-            <span class="brand-chip-icon">✨</span>
-            <div>
-              <strong>Premium Quality</strong>
-              <small>baked fresh daily</small>
-            </div>
-          </div>
-          <div class="brand-chip">
-            <span class="brand-chip-icon">🚀</span>
-            <div>
-              <strong>Fast Delivery</strong>
-              <small>right to your door</small>
-            </div>
+      <!-- Hero -->
+      <section class="home-hero" aria-label="Welcome">
+        <img src="assets/hero_bakery_stunning.png" alt="Sujaan Bites cookies" class="home-hero-bg" />
+        <div class="home-hero-overlay"></div>
+        <div class="home-hero-content">
+          <img src="assets/sujaan-logo.png" alt="Sujaan Bites logo" class="home-logo" />
+          <h1 class="home-brand">SUJAAN BITES</h1>
+          <p class="home-tagline">Fresh baked cookies, delivered to your door.</p>
+          <div class="home-ctas">
+            <button class="btn-primary" type="button" data-goto="menu">Order Now</button>
+            <button class="btn-outline" type="button" data-goto="account">My Account</button>
           </div>
         </div>
       </section>
 
-      <!-- Featured Items preview -->
-      <section class="featured-section">
-        <div class="featured-head">
-          <p class="eyebrow">Popular picks</p>
-          <h2>Most Loved Cookies</h2>
-        </div>
-        <div class="featured-grid" id="featuredGrid">
-          <!-- Populated by JS -->
-        </div>
-        <button class="see-all-btn" type="button" data-nav-menu>See full menu →</button>
-      </section>
-
-      <!-- Our Philosophy -->
-      <section class="philosophy-section">
-        <div class="philosophy-head">
-          <p class="eyebrow">Our Philosophy</p>
-          <h2>Made with Love</h2>
-        </div>
-        <div class="philosophy-grid">
-          <div class="philosophy-card">
-            <span class="philosophy-icon">🌾</span>
-            <h3>Premium Ingredients</h3>
-            <p>We source only the finest ingredients for a superior taste experience.</p>
+      <!-- Brand description -->
+      <section class="home-about">
+        <div class="home-about-inner">
+          <div class="home-about-chip">
+            <span class="about-icon">🍪</span>
+            <div><strong>Loved by hundreds</strong><small>across the city</small></div>
           </div>
-          <div class="philosophy-card">
-            <span class="philosophy-icon">👨‍🍳</span>
-            <h3>Artisan Craft</h3>
-            <p>Every cookie is handcrafted by experienced bakers with passion.</p>
+          <div class="home-about-chip">
+            <span class="about-icon">✨</span>
+            <div><strong>Premium Quality</strong><small>baked fresh daily</small></div>
           </div>
-          <div class="philosophy-card">
-            <span class="philosophy-icon">❤️</span>
-            <h3>Made With Love</h3>
-            <p>We pour genuine care into every batch, because great food starts there.</p>
+          <div class="home-about-chip">
+            <span class="about-icon">🚚</span>
+            <div><strong>Fast Delivery</strong><small>right to your door</small></div>
           </div>
         </div>
       </section>
 
-      <!-- Cart Toast -->
-      <div class="cart-toast hidden" id="cartToast" aria-live="polite">
-        <img class="cart-toast-thumb" src="assets/sujaan-logo.png" alt="" />
-        <span class="cart-toast-copy">
-          <strong id="cartToastText">1 item added</strong>
-          <small>Ready in your cart</small>
-        </span>
-        <button class="cart-toast-action" type="button" data-open-cart>View →</button>
+      <!-- Brand description section -->
+      <section class="home-desc">
+        <p class="home-desc-eyebrow">Our Promise</p>
+        <h2 class="home-desc-title">Made with love, delivered with care</h2>
+        <p class="home-desc-body">Every cookie at Sujaan Bites is handcrafted using premium ingredients and baked fresh every morning. We pack each order with care so it reaches you warm, intact, and absolutely delicious.</p>
+        <button class="btn-ghost" type="button" data-goto="menu">Browse the menu →</button>
+      </section>
+    </div>
+
+    <!-- ─── PAGE: MENU ───────────────────────────── -->
+    <div class="page" id="page-menu">
+      <!-- Announcement -->
+      <div class="ann-bar" aria-label="Announcement">
+        <div class="ann-track">
+          <span>🍪 Free deliveries above ₹1599</span>
+          <span class="ann-dot">•</span>
+          <span>Fresh baked daily</span>
+          <span class="ann-dot">•</span>
+          <span>🍪 Free deliveries above ₹1599</span>
+          <span class="ann-dot">•</span>
+          <span>Fresh baked daily</span>
+        </div>
+      </div>
+
+      <!-- Menu header card -->
+      <div class="menu-header-card">
+        <div class="menu-header-text">
+          <strong>SUJAAN BITES</strong>
+          <span>This never disappoints you bro</span>
+        </div>
+        <img src="assets/sujaan-logo.png" alt="" class="menu-header-logo" />
+      </div>
+
+      <!-- Search + category -->
+      <div class="menu-controls">
+        <div class="search-wrap">
+          <span class="search-icon-prefix">🔍</span>
+          <input type="search" id="menuSearch" class="search-input" placeholder="Search cookies…" autocomplete="off" />
+        </div>
+        <div class="category-tabs" id="menuFilters" role="tablist" aria-label="Categories"></div>
+      </div>
+
+      <h2 class="section-title" style="padding:0 16px 8px">Menu</h2>
+      <div class="menu-grid" id="menuGrid">
+        <div class="menu-loading">Loading cookies…</div>
       </div>
     </div>
 
-    <!-- ── MENU PAGE ──────────────────────────────────────────── -->
-    <div id="page-menu" class="app-page">
-      <section class="order-shell" id="orderShell" aria-label="Sujaan Bites ordering">
-        <div class="menu-panel">
-          <div class="section-head">
-            <div>
-              <p class="eyebrow">Menu</p>
-              <h2 id="menu">Choose your cookies</h2>
+    <!-- ─── PAGE: REORDER ────────────────────────── -->
+    <div class="page" id="page-reorder">
+      <!-- Announcement -->
+      <div class="ann-bar" aria-label="Announcement">
+        <div class="ann-track">
+          <span>🍪 Free deliveries above ₹1599</span>
+          <span class="ann-dot">•</span>
+          <span>Fresh baked daily</span>
+          <span class="ann-dot">•</span>
+          <span>🍪 Free deliveries above ₹1599</span>
+          <span class="ann-dot">•</span>
+          <span>Fresh baked daily</span>
+        </div>
+      </div>
+
+      <div class="reorder-page-inner">
+        <h2 class="section-title">Reorder</h2>
+
+        <!-- Previous orders block -->
+        <div id="prevOrdersBlock">
+          <p class="section-label">Previous Orders</p>
+          <div id="prevOrdersList">
+            <div class="empty-state">
+              <p>No previous orders yet.</p>
+              <button class="btn-primary" type="button" data-goto="menu" style="margin-top:12px">Order Now</button>
             </div>
-            <div class="filters" id="menuFilters" role="tablist" aria-label="Menu categories"></div>
-          </div>
-          <div class="menu-grid" id="menuGrid">
-            <div class="menu-loading">Loading fresh bakes...</div>
           </div>
         </div>
-      </section>
-    </div>
 
-    <!-- ── ACCOUNT PAGE ───────────────────────────────────────── -->
-    <div id="page-account" class="app-page">
-      <div class="account-page-shell">
-        <div class="account-page-head">
-          <div>
-            <p class="eyebrow">Account</p>
-            <h2 id="accountShellTitle">Your Account</h2>
-          </div>
-          <div class="account-head-actions">
-            <button id="themeToggleBtn" class="theme-toggle-btn" type="button" aria-label="Toggle theme">◑</button>
-          </div>
+        <!-- Previously ordered items (reorder quick-add) -->
+        <div id="reorderItemsBlock" class="hidden">
+          <p class="section-label" style="margin-top:20px">Order again</p>
+          <div id="reorderItems"></div>
         </div>
-        <div class="account-section" id="accountContent"></div>
-      </div>
-    </div>
 
-    <!-- ── SEARCH PAGE ────────────────────────────────────────── -->
-    <div id="page-search" class="app-page">
-      <div class="search-page-shell">
-        <div class="search-page-head">
-          <p class="eyebrow">Search</p>
-          <h2>Find your cookie</h2>
-        </div>
-        <div class="search-input-wrap">
-          <input id="menuSearchInput" class="search-input" type="search" placeholder="Search cookies…" autocomplete="off" />
-        </div>
-        <div class="search-results" id="searchResults">
-          <p class="empty">Start typing to search…</p>
+        <!-- Full menu search -->
+        <div style="margin-top:20px">
+          <p class="section-label">All Items</p>
+          <div class="search-wrap" style="margin-bottom:12px">
+            <span class="search-icon-prefix">🔍</span>
+            <input type="search" id="reorderSearch" class="search-input" placeholder="Search cookies…" autocomplete="off" />
+          </div>
+          <div class="menu-grid" id="reorderGrid"></div>
         </div>
       </div>
     </div>
 
-  </div><!-- /app-wrapper -->
+    <!-- ─── PAGE: ACCOUNT ────────────────────────── -->
+    <div class="page" id="page-account">
+      <div class="account-topbar">
+        <h2 class="account-topbar-title">Account</h2>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Toggle theme">
+          <span id="themeIcon">🌙</span>
+        </button>
+      </div>
+      <!-- Dynamic content rendered by JS -->
+      <div id="accountContent" style="padding-bottom:20px"></div>
+    </div>
 
-  <!-- ── CART PANEL (slide-up) ───────────────────────────────── -->
-  <div class="cart-panel hidden" id="cartPanel" aria-label="Your cart" aria-hidden="true">
+    <!-- ─── PAGE: LOGIN ──────────────────────────── -->
+    <div class="page" id="page-login">
+      <div class="auth-page-inner">
+        <button class="back-btn" type="button" data-goto-back aria-label="Go back">← Back</button>
+        <div class="auth-logo-row">
+          <img src="assets/sujaan-logo.png" alt="Sujaan Bites" class="auth-logo" />
+        </div>
+        <h2 class="auth-title">Welcome Back</h2>
+        <p class="auth-sub">Sign in with your phone number to track orders and checkout faster.</p>
+        <form class="auth-form" id="loginForm" novalidate>
+          <label class="field-label">
+            Your Name
+            <input type="text" id="loginName" placeholder="Enter your name" class="field-input" autocomplete="name" required />
+          </label>
+          <label class="field-label">
+            Phone number
+            <input type="tel" id="loginPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" class="field-input" autocomplete="tel" required />
+          </label>
+          <button class="btn-primary" type="submit" id="loginSubmitBtn">Sign In</button>
+          <p class="auth-alt">Don't have an account? <button class="link-btn" type="button" data-goto="signup">Sign Up</button></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- ─── PAGE: SIGNUP ─────────────────────────── -->
+    <div class="page" id="page-signup">
+      <div class="auth-page-inner">
+        <button class="back-btn" type="button" data-goto-back aria-label="Go back">← Back</button>
+        <div class="auth-logo-row">
+          <img src="assets/sujaan-logo.png" alt="" class="auth-logo" />
+          <strong class="auth-brand-name">SUJAAN BITES</strong>
+        </div>
+        <h2 class="auth-title">Create Account</h2>
+        <form class="auth-form" id="signupForm" novalidate>
+          <label class="field-label">
+            Your Name
+            <input type="text" id="signupName" placeholder="Enter your name" class="field-input" autocomplete="name" required />
+          </label>
+          <label class="field-label">
+            Phone Number
+            <input type="tel" id="signupPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" class="field-input" autocomplete="tel" required />
+          </label>
+
+          <!-- Map / Location -->
+          <div class="field-label">
+            <span>Delivery Location</span>
+            <div class="map-location-card">
+              <div class="map-location-row">
+                <div>
+                  <strong>Pin your location</strong>
+                  <small>Tap the map or use GPS</small>
+                </div>
+                <button class="btn-sm-outline" type="button" id="useLocationBtn">📍 Use GPS</button>
+              </div>
+              <div class="map-canvas" id="signupMap" aria-label="Map for delivery location"></div>
+              <p class="field-hint" id="mapStatus">Tap anywhere on the map to place your pin.</p>
+            </div>
+          </div>
+
+          <label class="field-label">
+            House / Flat No.
+            <input type="text" id="signupHouse" placeholder="e.g. Flat 4B, Block C" class="field-input" required />
+          </label>
+          <label class="field-label">
+            Street / Area
+            <input type="text" id="signupStreet" placeholder="Street name or area" class="field-input" required />
+          </label>
+          <label class="field-label">
+            Full Address
+            <textarea id="signupAddress" rows="2" placeholder="Complete address (auto-filled from map)" class="field-input field-textarea"></textarea>
+          </label>
+          <label class="field-label">
+            Address Type
+            <select id="signupAddressType" class="field-input field-select">
+              <option value="Home">🏠 Home</option>
+              <option value="Work">💼 Work</option>
+              <option value="Other">📍 Other</option>
+            </select>
+          </label>
+          <button class="btn-primary" type="submit" id="signupSubmitBtn">Save &amp; Continue</button>
+          <p class="auth-alt">Already have an account? <button class="link-btn" type="button" data-goto="login">Sign In</button></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- ─── PAGE: PROFILE EDIT ───────────────────── -->
+    <div class="page" id="page-edit-profile">
+      <div class="auth-page-inner">
+        <button class="back-btn" type="button" data-goto-back>← Back</button>
+        <h2 class="auth-title">Edit Profile</h2>
+        <form class="auth-form" id="editProfileForm" novalidate>
+          <label class="field-label">
+            Your Name
+            <input type="text" id="editName" placeholder="Your name" class="field-input" required />
+          </label>
+          <label class="field-label">
+            Phone Number
+            <input type="tel" id="editPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" class="field-input" required />
+          </label>
+          <button class="btn-primary" type="submit">Save Profile</button>
+        </form>
+      </div>
+    </div>
+
+    <!-- ─── PAGE: ADDRESSES ──────────────────────── -->
+    <div class="page" id="page-addresses">
+      <div class="auth-page-inner">
+        <button class="back-btn" type="button" data-goto-back>← Back</button>
+        <h2 class="auth-title">Saved Addresses</h2>
+        <div id="addressList"></div>
+        <button class="btn-primary" type="button" id="addAddressBtn" style="margin-top:16px">+ Add Address</button>
+        <!-- Address form (hidden by default) -->
+        <form class="auth-form hidden" id="addressForm" style="margin-top:16px">
+          <h3 id="addressFormTitle" style="margin:0 0 12px;font-size:1rem">New Address</h3>
+          <div class="map-location-card">
+            <div class="map-location-row">
+              <div><strong>Pin location</strong><small>Tap map or use GPS</small></div>
+              <button class="btn-sm-outline" type="button" id="addrUseLocationBtn">📍 GPS</button>
+            </div>
+            <div class="map-canvas" id="addrMap" aria-label="Delivery location map"></div>
+            <p class="field-hint" id="addrMapStatus">Tap the map to set your pin.</p>
+          </div>
+          <label class="field-label">House / Flat No.<input type="text" id="addrHouse" class="field-input" placeholder="Flat / shop no." required /></label>
+          <label class="field-label">Street / Area<input type="text" id="addrStreet" class="field-input" placeholder="Street or area" required /></label>
+          <label class="field-label">Full Address<textarea id="addrFull" rows="2" class="field-input field-textarea" placeholder="Auto-filled from map"></textarea></label>
+          <label class="field-label">Address Type
+            <select id="addrType" class="field-input field-select">
+              <option value="Home">🏠 Home</option>
+              <option value="Work">💼 Work</option>
+              <option value="Other">📍 Other</option>
+            </select>
+          </label>
+          <input type="hidden" id="addrEditId" />
+          <div style="display:flex;gap:10px">
+            <button class="btn-primary" type="submit" style="flex:1">Save Address</button>
+            <button class="btn-outline" type="button" id="cancelAddressBtn" style="flex:1">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- ─── PAGE: ORDERS ─────────────────────────── -->
+    <div class="page" id="page-orders">
+      <div class="auth-page-inner">
+        <button class="back-btn" type="button" data-goto-back>← Back</button>
+        <h2 class="auth-title">Your Orders</h2>
+        <div id="ordersContent">
+          <div class="empty-state">Loading orders…</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE: SPENDS ─────────────────────────── -->
+    <div class="page" id="page-spends">
+      <div class="auth-page-inner">
+        <button class="back-btn" type="button" data-goto-back>← Back</button>
+        <h2 class="auth-title">Past Spends</h2>
+        <div id="spendsContent"></div>
+      </div>
+    </div>
+
+    <!-- ─── PAGE: HELP ───────────────────────────── -->
+    <div class="page" id="page-help">
+      <div class="auth-page-inner">
+        <button class="back-btn" type="button" data-goto-back>← Back</button>
+        <h2 class="auth-title">Help &amp; Support</h2>
+        <div class="help-card">
+          <p>💬 Need help? Reach us on WhatsApp and share your order ID for faster support.</p>
+          <a class="btn-primary" href="https://wa.me/916301000409" target="_blank" rel="noreferrer" style="display:flex;align-items:center;justify-content:center;text-decoration:none;margin-top:12px">Open WhatsApp</a>
+        </div>
+        <div class="help-card" style="margin-top:12px">
+          <p>📋 <strong>General Information</strong></p>
+          <p style="margin-top:8px">We deliver fresh baked cookies across India. All orders are prepaid via UPI/Razorpay. For returns or refunds, contact us within 2 hours of delivery.</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /app -->
+
+  <!-- ═══════════════════════════════════════════════
+       FLOATING CART BUTTON
+  ═══════════════════════════════════════════════ -->
+  <button class="cart-fab" id="cartFab" type="button" aria-label="View cart" aria-hidden="true">
+    <span class="cart-fab-icon">🛒</span>
+    <span class="cart-fab-badge hidden" id="cartBadge">0</span>
+  </button>
+
+  <!-- ═══════════════════════════════════════════════
+       BOTTOM NAV
+  ═══════════════════════════════════════════════ -->
+  <nav class="bottom-nav" aria-label="Main navigation">
+    <button class="nav-tab active" type="button" data-goto="home" aria-label="Home">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+      <small>Home</small>
+    </button>
+    <button class="nav-tab" type="button" data-goto="menu" aria-label="Menu">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+      <small>Menu</small>
+    </button>
+    <button class="nav-tab" type="button" data-goto="reorder" aria-label="Reorder">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      <small>Reorder</small>
+    </button>
+    <button class="nav-tab" type="button" data-goto="account" aria-label="Account">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+      <small>Account</small>
+    </button>
+  </nav>
+
+  <!-- ═══════════════════════════════════════════════
+       CART PANEL (slide-up)
+  ═══════════════════════════════════════════════ -->
+  <div class="cart-backdrop hidden" id="cartBackdrop"></div>
+  <aside class="cart-panel hidden" id="cartPanel" aria-label="Cart">
     <div class="cart-panel-handle"></div>
-    <div class="cart-panel-inner">
-      <div class="cart-header">
+    <div class="cart-panel-content">
+      <div class="cart-panel-header">
         <div>
           <p class="eyebrow">Cart</p>
-          <h2>Your order</h2>
+          <h2 style="font-size:1.3rem;margin:0">Your order</h2>
         </div>
-        <div style="display:flex;gap:10px;align-items:center">
-          <span id="itemCount" style="color:var(--muted);font-weight:700">0 items</span>
-          <button class="close-btn-round" id="cartPanelClose" type="button" aria-label="Close cart">✕</button>
-        </div>
+        <button class="icon-btn" type="button" id="closeCartBtn" aria-label="Close cart">✕</button>
       </div>
 
       <div class="cart-items" id="cartItems">
-        <p class="empty">Add cookies from the menu to begin.</p>
+        <p class="empty-state">Add cookies from the menu to begin.</p>
       </div>
 
-      <!-- Offers -->
-      <section class="offers-panel" aria-label="Offers and coupons">
-        <div class="coupon-card">
-          <div class="coupon-copy">
-            <strong>Apply coupon code</strong>
-            <p>Enter a valid code to unlock your offer.</p>
-          </div>
-          <div class="coupon-form">
-            <input id="couponCodeInput" type="text" placeholder="Enter coupon code" autocomplete="off" />
-            <button class="secondary-button" id="applyCouponButton" type="button">Apply</button>
-          </div>
-          <p class="coupon-status" id="couponStatus">No coupon applied.</p>
-          <button class="secondary-button hidden" id="clearCouponButton" type="button">Remove coupon</button>
-        </div>
-        <div class="offer-card">
-          <div class="offer-card-copy">
-            <strong>Orders above ₹1599 get free shipping</strong>
-            <p>Keep adding items to unlock free delivery.</p>
-          </div>
-          <div class="offer-progress-meta">
-            <span id="freeDeliveryProgressLabel">₹0 / ₹1599</span>
-            <small id="freeDeliveryProgressRemaining">₹1599 away from free delivery</small>
-          </div>
-          <div class="offer-progress-track" aria-hidden="true">
-            <div class="offer-progress-fill" id="freeDeliveryProgressBar"></div>
-          </div>
-        </div>
-      </section>
-
-      <!-- Totals -->
-      <div class="totals">
-        <div><span>Subtotal</span><strong id="subtotal">₹0</strong></div>
-        <div><span>Delivery</span><strong id="deliveryFee">₹0</strong></div>
-        <div class="grand-total"><span>To Pay</span><strong id="grandTotal">₹0</strong></div>
+      <div class="cart-totals">
+        <div class="cart-total-row"><span>Subtotal</span><strong id="subtotal">₹0</strong></div>
+        <div class="cart-total-row"><span>Delivery</span><strong id="deliveryFee">₹0</strong></div>
+        <div class="cart-total-row cart-total-grand"><span>Total</span><strong id="grandTotal">₹0</strong></div>
       </div>
 
-      <!-- Delivery address -->
-      <div class="selected-address" id="selectedAddressSummary">
-        <div class="selected-address-head">
+      <div class="cart-address-section" id="selectedAddressSummary">
+        <div class="cart-address-header">
           <strong>Delivery address</strong>
-          <button class="secondary-button" id="manageAddressesButton" type="button">Manage</button>
+          <button class="link-btn" type="button" data-goto="addresses">Change</button>
         </div>
-        <label class="address-picker">
-          <span class="sr-only">Choose saved address</span>
-          <select id="checkoutAddressSelect" aria-label="Choose saved address"></select>
-        </label>
-        <p id="selectedAddressText">No address saved yet.</p>
+        <p id="selectedAddressText" class="cart-address-text">No address saved yet.</p>
       </div>
 
-      <form class="customer-form" id="checkout" autocomplete="on">
+      <form id="checkout" autocomplete="on">
         <input type="hidden" id="customerName" name="name" />
         <input type="hidden" id="customerPhone" name="phone" />
         <input type="hidden" id="orderType" name="orderType" value="delivery" />
         <input type="hidden" id="paymentMethod" name="paymentMethod" value="prepaid" />
-        <button class="pay-button" type="submit">Place order</button>
+        <button class="btn-primary btn-checkout" type="submit">Place Order</button>
       </form>
     </div>
-  </div>
-  <div class="cart-panel-overlay hidden" id="cartPanelOverlay"></div>
+  </aside>
 
-  <!-- ── BOTTOM NAVIGATION ──────────────────────────────────── -->
-  <nav class="bottom-app-nav" aria-label="Primary navigation">
-    <span class="bottom-nav-indicator" id="bottomNavIndicator" aria-hidden="true"></span>
-    <button class="active" type="button" data-bottom-tab="home" data-nav-home aria-label="Home">
-      <span class="ios-svg-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
-      </span>
-      <small>Home</small>
-    </button>
-    <button type="button" data-bottom-tab="menu" data-nav-menu aria-label="Menu">
-      <span class="ios-svg-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M3 12h18M3 18h18"/></svg>
-      </span>
-      <small>Menu</small>
-    </button>
-    <button type="button" data-bottom-tab="account" data-nav-account aria-label="Account">
-      <span class="ios-svg-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-      </span>
-      <small>Account</small>
-    </button>
-    <button type="button" data-bottom-tab="search" data-nav-search aria-label="Search">
-      <span class="ios-svg-icon">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-      </span>
-      <small>Search</small>
-    </button>
-    <button type="button" id="cartNavBtn" data-bottom-tab="cart" data-open-cart aria-label="Cart">
-      <span class="ios-svg-icon" style="position:relative">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/></svg>
-        <span class="cart-badge hidden" id="cartBadge">0</span>
-      </span>
-      <small>Cart</small>
-    </button>
-  </nav>
-
-  <!-- ── TRACKING DOCK ──────────────────────────────────────── -->
-  <section class="tracking-dock hidden" id="trackingDock" aria-label="Order tracking panel">
+  <!-- ═══════════════════════════════════════════════
+       TRACKING DOCK
+  ═══════════════════════════════════════════════ -->
+  <section class="tracking-dock hidden" id="trackingDock" aria-label="Order tracking">
     <button class="tracking-toggle" id="trackingToggle" type="button" aria-expanded="false">
-      <span class="tracking-toggle-left">
+      <span class="tracking-left">
         <strong id="trackingBarTitle">Order confirmed</strong>
         <small id="trackingBarEta">Estimated delivery time will appear here.</small>
       </span>
-      <span class="tracking-toggle-right" id="trackingStatusPill">Accepted</span>
+      <span class="tracking-pill" id="trackingStatusPill">Accepted</span>
     </button>
     <div class="tracking-sheet hidden" id="trackingSheet">
-      <p class="tracking-note" id="trackingEta">Your order is being prepared.</p>
-      <div class="tracking-mini-map map-canvas" id="trackingMap"></div>
-      <div class="tracking-grid">
-        <article class="tracking-card">
+      <p id="trackingEta" class="tracking-note">Your order is being prepared.</p>
+      <div class="map-canvas tracking-map" id="trackingMap"></div>
+      <div class="tracking-details">
+        <div class="tracking-card">
           <h3>Receipt</h3>
           <p id="trackingReceiptId"></p>
           <ul id="trackingItems"></ul>
           <strong id="trackingTotal"></strong>
-        </article>
-        <article class="tracking-card">
-          <h3>Delivery address</h3>
+        </div>
+        <div class="tracking-card">
+          <h3>Address</h3>
           <p id="trackingAddress"></p>
-        </article>
+        </div>
       </div>
     </div>
   </section>
 
-  <!-- ── DIALOGS ────────────────────────────────────────────── -->
-  <dialog class="payment-dialog" id="paymentDialog">
-    <form method="dialog">
-      <button class="close-button" aria-label="Close payment window">×</button>
-    </form>
-    <div class="payment-content">
+  <!-- ═══════════════════════════════════════════════
+       DIALOGS
+  ═══════════════════════════════════════════════ -->
+  <dialog class="modal" id="paymentDialog">
+    <form method="dialog"><button class="modal-close" aria-label="Close">×</button></form>
+    <div class="modal-body">
       <p class="eyebrow">Payment</p>
       <h2>Complete your payment</h2>
       <p id="paymentSummary"></p>
-      <button class="pay-button hidden" id="razorpayRetryButton" type="button">Open Razorpay payment</button>
-      <small id="adminNotice">Payment will be verified by the server before the order is sent to the restaurant.</small>
+      <button class="btn-primary hidden" id="razorpayRetryButton" type="button">Open payment</button>
+      <small id="adminNotice" class="form-hint">Payment verified by server before order is sent.</small>
     </div>
   </dialog>
 
   <section class="order-received-overlay hidden" id="orderReceivedOverlay" aria-live="polite">
     <div class="order-received-card">
-      <div class="order-received-icon" aria-hidden="true">
-        <span id="orderReceivedSymbol">✓</span>
-      </div>
-      <h2 id="orderReceivedTitle">Yay! Order Received</h2>
-      <p class="order-received-address" id="orderReceivedAddress"></p>
-      <p class="order-received-eta" id="orderReceivedEta"></p>
-      <button class="secondary-button" id="closeOrderReceivedOverlay" type="button">Close</button>
+      <div class="order-received-icon" id="orderReceivedIconEl"><span id="orderReceivedSymbol">✓</span></div>
+      <h2 id="orderReceivedTitle">Order Received!</h2>
+      <p id="orderReceivedAddress" class="order-received-sub"></p>
+      <p id="orderReceivedEta" class="order-received-eta"></p>
+      <button class="btn-outline" id="closeOrderReceivedOverlay" type="button">Close</button>
     </div>
   </section>
 
-  <dialog class="payment-dialog" id="deliveryRatingDialog">
-    <form method="dialog">
-      <button class="close-button" aria-label="Close delivery rating">×</button>
-    </form>
-    <div class="payment-content">
+  <dialog class="modal" id="deliveryRatingDialog">
+    <form method="dialog"><button class="modal-close" aria-label="Close">×</button></form>
+    <div class="modal-body">
       <p class="eyebrow">Rate delivery</p>
       <h2>How was your delivery?</h2>
       <form id="deliveryRatingForm" class="auth-form">
         <input id="deliveryRatingInput" type="hidden" value="0" />
-        <div>
-          <p class="form-note">Tap to rate</p>
-          <div class="star-rating" id="deliveryRatingStars" data-rating-target="deliveryRatingInput" role="radiogroup" aria-label="Delivery rating">
-            <button type="button" class="star-button" data-star-value="1" aria-label="1 star">★</button>
-            <button type="button" class="star-button" data-star-value="2" aria-label="2 stars">★</button>
-            <button type="button" class="star-button" data-star-value="3" aria-label="3 stars">★</button>
-            <button type="button" class="star-button" data-star-value="4" aria-label="4 stars">★</button>
-            <button type="button" class="star-button" data-star-value="5" aria-label="5 stars">★</button>
-          </div>
+        <div class="star-rating" id="deliveryRatingStars" data-rating-target="deliveryRatingInput" role="radiogroup" aria-label="Delivery rating">
+          <button type="button" class="star-btn" data-star-value="1" aria-label="1 star">★</button>
+          <button type="button" class="star-btn" data-star-value="2" aria-label="2 stars">★</button>
+          <button type="button" class="star-btn" data-star-value="3" aria-label="3 stars">★</button>
+          <button type="button" class="star-btn" data-star-value="4" aria-label="4 stars">★</button>
+          <button type="button" class="star-btn" data-star-value="5" aria-label="5 stars">★</button>
         </div>
-        <label>Comment (optional)
-          <textarea id="deliveryRatingComment" rows="3" placeholder="Share your feedback"></textarea>
-        </label>
-        <button class="pay-button" type="submit">Submit delivery rating</button>
+        <label class="field-label">Comment (optional)<textarea id="deliveryRatingComment" rows="3" class="field-input field-textarea" placeholder="Share feedback"></textarea></label>
+        <button class="btn-primary" type="submit">Submit</button>
       </form>
     </div>
   </dialog>
 
-  <dialog class="payment-dialog" id="productRatingDialog">
-    <form method="dialog">
-      <button class="close-button" aria-label="Close product rating">×</button>
-    </form>
-    <div class="payment-content">
-      <p class="eyebrow">Order Ratings</p>
+  <dialog class="modal" id="productRatingDialog">
+    <form method="dialog"><button class="modal-close" aria-label="Close">×</button></form>
+    <div class="modal-body">
+      <p class="eyebrow">Rate your order</p>
       <h2>How was the taste?</h2>
       <form id="productRatingForm" class="auth-form">
-        <p class="form-note" id="productRatingSummary"></p>
+        <p id="productRatingSummary" class="form-hint"></p>
         <div id="productRatingItems"></div>
-        <label>Comment (optional)
-          <textarea id="productRatingComment" rows="3" placeholder="Tell us what you liked"></textarea>
-        </label>
-        <button class="pay-button" type="submit">Submit product ratings</button>
+        <label class="field-label">Comment (optional)<textarea id="productRatingComment" rows="3" class="field-input field-textarea" placeholder="Tell us what you liked"></textarea></label>
+        <button class="btn-primary" type="submit">Submit ratings</button>
       </form>
     </div>
   </dialog>
 
-  <dialog class="payment-dialog" id="customerMessageDialog">
-    <form method="dialog">
-      <button class="close-button" aria-label="Close update">×</button>
-    </form>
-    <div class="payment-content">
-      <p class="eyebrow">Delivery update</p>
-      <h2>Message from Sujaan Bites</h2>
+  <dialog class="modal" id="customerMessageDialog">
+    <form method="dialog"><button class="modal-close" aria-label="Close">×</button></form>
+    <div class="modal-body">
+      <p class="eyebrow">Message from us</p>
+      <h2>Sujaan Bites</h2>
       <p id="customerMessageText"></p>
-      <button class="secondary-button" id="closeCustomerMessageDialog" type="button">Okay</button>
+      <button class="btn-outline" id="closeCustomerMessageDialog" type="button">Okay</button>
     </div>
   </dialog>
 
+  <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
-    window.__API_BASE = "";
-    window.addEventListener("load", () => {
-      const splash = document.getElementById("splash");
-      if (!splash) return;
-      setTimeout(() => {
-        splash.classList.add("hide");
-        setTimeout(() => splash.remove(), 200);
-      }, 500);
+    window.__API_BASE = window.__API_BASE || "";
+    // Remove splash after load
+    window.addEventListener("load", function () {
+      setTimeout(function () {
+        var s = document.getElementById("splash");
+        if (s) { s.style.opacity = "0"; setTimeout(function () { s.remove(); }, 300); }
+      }, 600);
     });
   </script>
   <script src="app.js"></script>
 </body>
-
 </html>
