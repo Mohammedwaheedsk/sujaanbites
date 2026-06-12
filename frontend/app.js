@@ -101,6 +101,9 @@ function navigateTo(pageId, pushHistory = true) {
   if (pushHistory && prev !== pageId) state.pageHistory.push(prev);
   state.currentPage = pageId;
 
+  // Notify other modules (e.g. firebase-auth.js)
+  window.dispatchEvent(new CustomEvent("sb:page-change", { detail: pageId }));
+
   // Page-specific init
   if (pageId === "menu") initMenuPage();
   if (pageId === "reorder") initReorderPage();
@@ -111,6 +114,7 @@ function navigateTo(pageId, pushHistory = true) {
   if (pageId === "signup") initSignupMap();
   if (pageId === "addresses") setTimeout(initAddrMap, 100);
 }
+
 
 function goBack() {
   const prev = state.pageHistory.pop();
@@ -628,53 +632,39 @@ function initEditProfilePage() {
   if (phone) phone.value = state.profile?.phone || "";
 }
 
-/* ── Login flow ────────────────────────────────────── */
-async function handleLogin(event) {
-  event.preventDefault();
-  const phoneInput = $("loginPhone");
-  const nameInput  = $("loginName");
-  const btn = $("loginSubmitBtn");
-  const phone = normalizePhone(phoneInput?.value || "");
-  const enteredName = (nameInput?.value || "").trim();
 
-  if (!enteredName) { alert("Please enter your name."); return; }
-  if (phone.length !== 10) { alert("Please enter a valid 10-digit phone number."); return; }
+/* ── Login flow (Firebase OTP) ──────────────────────── */
+// Step 1 & 2 are handled in firebase-auth.js (ES module).
+// Once Firebase verifies the OTP and backend confirms the token,
+// it fires a custom event with the customer data.
 
-  if (btn) { btn.disabled = true; btn.textContent = "Signing in…"; }
-
+window.addEventListener("sb:firebase-login", async (e) => {
   try {
-    // Try to load existing customer state by phone
-    const result = await apiRequest(`/api/customer/state?phone=${encodeURIComponent(phone)}`);
-    if (result.profile) {
-      // Use server profile but update name if the server has the default placeholder
-      const serverName = result.profile.name || "";
-      const useName = (serverName && serverName !== "Customer") ? serverName : enteredName;
-      state.profile = { ...result.profile, name: useName };
-      state.addresses = Array.isArray(result.addresses) ? result.addresses.slice(0, MAX_ADDRESSES) : [];
-      state.selectedAddressId = result.selectedAddressId || state.addresses[0]?.id || null;
-    } else {
-      // New user — use the name they typed
-      state.profile = { name: enteredName, phone };
-      state.addresses = [];
-    }
+    const { profile, addresses, selectedAddressId } = e.detail || {};
+    if (!profile) { alert("Login failed. Please try again."); return; }
+
+    state.profile = profile;
+    state.addresses = Array.isArray(addresses) ? addresses.slice(0, MAX_ADDRESSES) : [];
+    state.selectedAddressId = selectedAddressId || state.addresses[0]?.id || null;
+
     writeJson(STORAGE_KEYS.profile, state.profile);
     writeJson(STORAGE_KEYS.addresses, state.addresses);
-    if (state.selectedAddressId) localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
-
-    // Persist the updated name back to server
-    try { await syncCustomerState(); } catch {}
+    if (state.selectedAddressId)
+      localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
 
     await loadOrdersForTracking();
     navigateTo("account");
-  } catch (e) {
-    // If API fails, create local profile with the entered name
-    state.profile = { name: enteredName, phone };
-    state.addresses = [];
-    writeJson(STORAGE_KEYS.profile, state.profile);
-    navigateTo("account");
-  } finally {
-    if (btn) { btn.disabled = false; btn.textContent = "Sign In"; }
+  } catch (err) {
+    console.error("Login completion error:", err);
+    alert("Something went wrong. Please try again.");
   }
+});
+
+// Kept for signup page which still uses phone directly (no OTP needed at signup —
+// the user will verify when they first sign in)
+async function handleLogin(event) {
+  // This function is now a no-op placeholder; OTP flow is in firebase-auth.js
+  event?.preventDefault();
 }
 
 
@@ -1286,8 +1276,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (acct === "info") { navigateTo("help"); return; }
   });
 
-  // Login form
-  $("loginForm")?.addEventListener("submit", handleLogin);
+  // Login form is handled by firebase-auth.js (ES module) — do NOT attach here
 
   // Signup form
   $("signupForm")?.addEventListener("submit", handleSignup);

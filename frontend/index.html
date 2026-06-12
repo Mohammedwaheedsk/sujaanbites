@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <meta name="theme-color" content="#0c0806" id="themeColorMeta" />
   <meta name="description" content="Sujaan Bites — Fresh baked cookies delivered to your door." />
+  <!-- iOS PWA standalone mode — prevents status bar overlap -->
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sujaan Bites" />
+  <meta name="mobile-web-app-capable" content="yes" />
   <title>Sujaan Bites | Fresh Baked Cookies</title>
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
   <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
@@ -188,29 +193,56 @@
       <div id="accountContent" style="padding-bottom:20px"></div>
     </div>
 
-    <!-- ─── PAGE: LOGIN ──────────────────────────── -->
+    <!-- ─── PAGE: LOGIN ───────────────────────────── -->
     <div class="page" id="page-login">
       <div class="auth-page-inner">
         <button class="back-btn" type="button" data-goto-back aria-label="Go back">← Back</button>
         <div class="auth-logo-row">
           <img src="assets/sujaan-logo.png" alt="Sujaan Bites" class="auth-logo" />
         </div>
-        <h2 class="auth-title">Welcome Back</h2>
-        <p class="auth-sub">Sign in with your phone number to track orders and checkout faster.</p>
-        <form class="auth-form" id="loginForm" novalidate>
-          <label class="field-label">
-            Your Name
-            <input type="text" id="loginName" placeholder="Enter your name" class="field-input" autocomplete="name" required />
-          </label>
-          <label class="field-label">
-            Phone number
-            <input type="tel" id="loginPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" class="field-input" autocomplete="tel" required />
-          </label>
-          <button class="btn-primary" type="submit" id="loginSubmitBtn">Sign In</button>
-          <p class="auth-alt">Don't have an account? <button class="link-btn" type="button" data-goto="signup">Sign Up</button></p>
-        </form>
+
+        <!-- STEP 1: Name + Phone -->
+        <div id="loginStep1">
+          <h2 class="auth-title">Welcome Back</h2>
+          <p class="auth-sub">We'll send a 6-digit OTP to verify your number.</p>
+          <form class="auth-form" id="loginForm" novalidate>
+            <label class="field-label">
+              Your Name
+              <input type="text" id="loginName" placeholder="Enter your name" class="field-input" autocomplete="name" />
+            </label>
+            <label class="field-label">
+              Phone Number
+              <div style="display:flex;gap:8px;align-items:center">
+                <span style="font-size:.95rem;font-weight:700;color:var(--ink);white-space:nowrap;padding:0 4px">+91</span>
+                <input type="tel" id="loginPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" class="field-input" autocomplete="tel" style="flex:1" />
+              </div>
+            </label>
+            <!-- Invisible reCAPTCHA mounts here -->
+            <div id="recaptcha-container"></div>
+            <button class="btn-primary" type="submit" id="loginSendOtpBtn">Send OTP</button>
+            <p class="auth-alt">New here? <button class="link-btn" type="button" data-goto="signup">Sign Up</button></p>
+          </form>
+        </div>
+
+        <!-- STEP 2: OTP entry -->
+        <div id="loginStep2" class="hidden">
+          <h2 class="auth-title">Enter OTP</h2>
+          <p class="auth-sub" id="loginOtpHint">Enter the 6-digit code we sent to your number.</p>
+          <form class="auth-form" id="otpForm" novalidate>
+            <label class="field-label">
+              6-digit OTP
+              <input type="tel" id="loginOtp" inputmode="numeric" maxlength="6" placeholder="● ● ● ● ● ●"
+                class="field-input" autocomplete="one-time-code"
+                style="letter-spacing:.25em;font-size:1.5rem;text-align:center;padding:14px" />
+            </label>
+            <button class="btn-primary" type="submit" id="loginVerifyBtn">Verify &amp; Sign In</button>
+            <button class="btn-outline" type="button" id="loginResendBtn" style="font-size:.85rem">Resend OTP</button>
+          </form>
+        </div>
+
       </div>
     </div>
+
 
     <!-- ─── PAGE: SIGNUP ─────────────────────────── -->
     <div class="page" id="page-signup">
@@ -541,7 +573,8 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
   <script>
-    window.__API_BASE = window.__API_BASE || "";
+    // Backend runs on :3000, frontend on :3500
+    window.__API_BASE = window.__API_BASE || "http://" + location.hostname + ":3000";
     // Remove splash after load
     window.addEventListener("load", function () {
       setTimeout(function () {
@@ -550,6 +583,9 @@
       }, 600);
     });
   </script>
-  <script src="app.js"></script>
+  <!-- Firebase Phone Auth (ES module — loads before app.js) -->
+  <script type="module" src="firebase-auth.js"></script>
+  <!-- App logic -->
+  <script src="app.js" defer></script>
 </body>
 </html>
