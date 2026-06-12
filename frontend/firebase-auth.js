@@ -89,6 +89,9 @@ async function sendOtp(phone, name, mode = "login") {
     if (err.code === "auth/unauthorized-domain") {
       msg = `Failed to send OTP: This domain/IP (${window.location.hostname}) is not authorized in your Firebase Project.\n\nPlease open Firebase Console -> Authentication -> Settings -> Authorized Domains, and add "${window.location.hostname}" to the authorized domains list to allow testing from this address.`;
     }
+    if (err.code === "auth/operation-not-allowed") {
+      msg = `Failed to send OTP: Phone Sign-In is disabled in your Firebase Project.\n\nPlease go to Firebase Console -> Authentication -> Sign-in method, click "Add new provider" (or edit "Phone"), enable Phone authentication, and click Save.`;
+    }
     alert(msg + (err.code ? `\n(Error code: ${err.code})` : ""));
   } finally {
     setBtn(btnId, label, false);
