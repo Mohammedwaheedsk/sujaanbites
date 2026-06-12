@@ -217,8 +217,6 @@
                 <input type="tel" id="loginPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" class="field-input" autocomplete="tel" style="flex:1" />
               </div>
             </label>
-            <!-- Invisible reCAPTCHA mounts here -->
-            <div id="recaptcha-container"></div>
             <button class="btn-primary" type="submit" id="loginSendOtpBtn">Send OTP</button>
             <p class="auth-alt">New here? <button class="link-btn" type="button" data-goto="signup">Sign Up</button></p>
           </form>
@@ -252,56 +250,76 @@
           <img src="assets/sujaan-logo.png" alt="" class="auth-logo" />
           <strong class="auth-brand-name">SUJAAN BITES</strong>
         </div>
-        <h2 class="auth-title">Create Account</h2>
-        <form class="auth-form" id="signupForm" novalidate>
-          <label class="field-label">
-            Your Name
-            <input type="text" id="signupName" placeholder="Enter your name" class="field-input" autocomplete="name" required />
-          </label>
-          <label class="field-label">
-            Phone Number
-            <input type="tel" id="signupPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile number" class="field-input" autocomplete="tel" required />
-          </label>
-
-          <!-- Map / Location -->
-          <div class="field-label">
-            <span>Delivery Location</span>
-            <div class="map-location-card">
-              <div class="map-location-row">
-                <div>
-                  <strong>Pin your location</strong>
-                  <small>Tap the map or use GPS</small>
-                </div>
-                <button class="btn-sm-outline" type="button" id="useLocationBtn">📍 Use GPS</button>
+        <div id="signupStep1">
+          <h2 class="auth-title">Create Account</h2>
+          <form class="auth-form" id="signupForm" novalidate>
+            <label class="field-label">
+              Your Name
+              <input type="text" id="signupName" placeholder="Enter your name" class="field-input" autocomplete="name" required />
+            </label>
+            <label class="field-label">
+              Phone Number
+              <div style="display:flex;gap:8px;align-items:center">
+                <span style="font-size:.95rem;font-weight:700;color:var(--ink);white-space:nowrap;padding:0 4px">+91</span>
+                <input type="tel" id="signupPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" class="field-input" autocomplete="tel" style="flex:1" required />
               </div>
-              <div class="map-canvas" id="signupMap" aria-label="Map for delivery location"></div>
-              <p class="field-hint" id="mapStatus">Tap anywhere on the map to place your pin.</p>
-            </div>
-          </div>
+            </label>
 
-          <label class="field-label">
-            House / Flat No.
-            <input type="text" id="signupHouse" placeholder="e.g. Flat 4B, Block C" class="field-input" required />
-          </label>
-          <label class="field-label">
-            Street / Area
-            <input type="text" id="signupStreet" placeholder="Street name or area" class="field-input" required />
-          </label>
-          <label class="field-label">
-            Full Address
-            <textarea id="signupAddress" rows="2" placeholder="Complete address (auto-filled from map)" class="field-input field-textarea"></textarea>
-          </label>
-          <label class="field-label">
-            Address Type
-            <select id="signupAddressType" class="field-input field-select">
-              <option value="Home">🏠 Home</option>
-              <option value="Work">💼 Work</option>
-              <option value="Other">📍 Other</option>
-            </select>
-          </label>
-          <button class="btn-primary" type="submit" id="signupSubmitBtn">Save &amp; Continue</button>
-          <p class="auth-alt">Already have an account? <button class="link-btn" type="button" data-goto="login">Sign In</button></p>
-        </form>
+            <!-- Map / Location -->
+            <div class="field-label">
+              <span>Delivery Location</span>
+              <div class="map-location-card">
+                <div class="map-location-row">
+                  <div>
+                    <strong>Pin your location</strong>
+                    <small>Tap the map or use GPS</small>
+                  </div>
+                  <button class="btn-sm-outline" type="button" id="useLocationBtn">📍 Use GPS</button>
+                </div>
+                <div class="map-canvas" id="signupMap" aria-label="Map for delivery location"></div>
+                <p class="field-hint" id="mapStatus">Tap anywhere on the map to place your pin.</p>
+              </div>
+            </div>
+
+            <label class="field-label">
+              House / Flat No.
+              <input type="text" id="signupHouse" placeholder="e.g. Flat 4B, Block C" class="field-input" required />
+            </label>
+            <label class="field-label">
+              Street / Area
+              <input type="text" id="signupStreet" placeholder="Street name or area" class="field-input" required />
+            </label>
+            <label class="field-label">
+              Full Address
+              <textarea id="signupAddress" rows="2" placeholder="Complete address (auto-filled from map)" class="field-input field-textarea"></textarea>
+            </label>
+            <label class="field-label">
+              Address Type
+              <select id="signupAddressType" class="field-input field-select">
+                <option value="Home">🏠 Home</option>
+                <option value="Work">💼 Work</option>
+                <option value="Other">📍 Other</option>
+              </select>
+            </label>
+            <button class="btn-primary" type="submit" id="signupSubmitBtn">Save &amp; Continue</button>
+            <p class="auth-alt">Already have an account? <button class="link-btn" type="button" data-goto="login">Sign In</button></p>
+          </form>
+        </div>
+
+        <div id="signupStep2" class="hidden">
+          <h2 class="auth-title">Verify Your Number</h2>
+          <p class="auth-sub" id="signupOtpHint">We'll send a 6-digit OTP to verify your number.</p>
+          <form class="auth-form" id="signupOtpForm" novalidate>
+            <label class="field-label">
+              6-digit OTP
+              <input type="tel" id="signupOtp" inputmode="numeric" maxlength="6" placeholder="● ● ● ● ● ●"
+                class="field-input" autocomplete="one-time-code"
+                style="letter-spacing:.25em;font-size:1.5rem;text-align:center;padding:14px" />
+            </label>
+            <button class="btn-primary" type="submit" id="signupVerifyBtn">Verify &amp; Create Account</button>
+            <button class="btn-outline" type="button" id="signupResendBtn" style="font-size:.85rem">Resend OTP</button>
+          </form>
+        </div>
       </div>
     </div>
 
@@ -568,6 +586,9 @@
       <button class="btn-outline" id="closeCustomerMessageDialog" type="button">Okay</button>
     </div>
   </dialog>
+
+  <!-- Global invisible reCAPTCHA container for Firebase Auth -->
+  <div id="recaptcha-container"></div>
 
   <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>

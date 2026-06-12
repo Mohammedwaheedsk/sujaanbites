@@ -660,6 +660,28 @@ window.addEventListener("sb:firebase-login", async (e) => {
   }
 });
 
+window.addEventListener("sb:firebase-signup", async (e) => {
+  try {
+    const { profile, addressRecord } = e.detail || {};
+    if (!profile) { alert("Registration failed. Please try again."); return; }
+
+    state.profile = profile;
+    state.addresses = [addressRecord];
+    state.selectedAddressId = addressRecord.id;
+
+    writeJson(STORAGE_KEYS.profile, state.profile);
+    writeJson(STORAGE_KEYS.addresses, state.addresses);
+    localStorage.setItem(STORAGE_KEYS.selectedAddressId, addressRecord.id);
+
+    try { await syncCustomerState(); } catch {}
+    await loadOrdersForTracking();
+    navigateTo("account");
+  } catch (err) {
+    console.error("Signup completion error:", err);
+    alert("Something went wrong. Please try again.");
+  }
+});
+
 // Kept for signup page which still uses phone directly (no OTP needed at signup —
 // the user will verify when they first sign in)
 async function handleLogin(event) {
@@ -725,7 +747,6 @@ function setSignupPin(lat, lng) {
 
 async function handleSignup(event) {
   event.preventDefault();
-  const btn = $("signupSubmitBtn");
   const name = $("signupName")?.value.trim();
   const phone = normalizePhone($("signupPhone")?.value || "");
   const house = $("signupHouse")?.value.trim();
@@ -738,9 +759,6 @@ async function handleSignup(event) {
   if (!signupLocationData) { alert("Please pin your delivery location on the map."); return; }
   if (!house) { alert("Please enter your house/flat number."); return; }
 
-  if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
-
-  const profile = { name, phone };
   const addressRecord = {
     id: Date.now().toString(),
     name, phone,
@@ -751,18 +769,10 @@ async function handleSignup(event) {
     location: signupLocationData,
   };
 
-  state.profile = profile;
-  state.addresses = [addressRecord];
-  state.selectedAddressId = addressRecord.id;
-
-  writeJson(STORAGE_KEYS.profile, profile);
-  writeJson(STORAGE_KEYS.addresses, state.addresses);
-  localStorage.setItem(STORAGE_KEYS.selectedAddressId, addressRecord.id);
-
-  try { await syncCustomerState(); } catch {}
-
-  if (btn) { btn.disabled = false; btn.textContent = "Save & Continue"; }
-  navigateTo("account");
+  // Dispatch trigger to firebase-auth.js to send OTP
+  window.dispatchEvent(new CustomEvent("sb:trigger-signup-otp", {
+    detail: { name, phone, addressRecord }
+  }));
 }
 
 /* ── Address map (addresses page) ──────────────────── */

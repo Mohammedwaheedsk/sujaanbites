@@ -27,12 +27,17 @@ auth.languageCode = "en";
 /* ── State ────────────────────────────────────────── */
 let confirmationResult = null;
 let recaptchaVerifier  = null;
+let signupData         = null; // Temporary storage for signup registration details
 
 /* ── Helpers ──────────────────────────────────────── */
 function $(id) { return document.getElementById(id); }
 function showStep(step) {
   $("loginStep1")?.classList.toggle("hidden", step !== 1);
   $("loginStep2")?.classList.toggle("hidden", step !== 2);
+}
+function showSignupStep(step) {
+  $("signupStep1")?.classList.toggle("hidden", step !== 1);
+  $("signupStep2")?.classList.toggle("hidden", step !== 2);
 }
 function setBtn(id, text, disabled) {
   const b = $(id);
@@ -53,34 +58,49 @@ function initRecaptcha() {
 }
 
 /* ── Step 1: Send OTP ─────────────────────────────── */
-async function sendOtp(phone, name) {
-  setBtn("loginSendOtpBtn", "Sending…", true);
+async function sendOtp(phone, name, mode = "login") {
+  const btnId = mode === "signup" ? "signupSubmitBtn" : "loginSendOtpBtn";
+  const label = mode === "signup" ? "Save & Continue" : "Send OTP";
+  setBtn(btnId, "Sending…", true);
   try {
     initRecaptcha();
     confirmationResult = await signInWithPhoneNumber(auth, "+91" + phone, recaptchaVerifier);
-    // Update hint
-    const hint = $("loginOtpHint");
-    if (hint) hint.textContent = `OTP sent to +91 ${phone}. Enter it below.`;
-    showStep(2);
-    $("loginOtp")?.focus();
+    
+    // Update hint and toggle step view
+    if (mode === "signup") {
+      const hint = $("signupOtpHint");
+      if (hint) hint.textContent = `OTP sent to +91 ${phone}. Enter it below.`;
+      showSignupStep(2);
+      $("signupOtp")?.focus();
+    } else {
+      const hint = $("loginOtpHint");
+      if (hint) hint.textContent = `OTP sent to +91 ${phone}. Enter it below.`;
+      showStep(2);
+      $("loginOtp")?.focus();
+    }
   } catch (err) {
-    console.error("OTP send error:", err);
+    console.error("OTP send error details:", err);
     // Reset recaptcha on error
     recaptchaVerifier?.clear?.();
     recaptchaVerifier = null;
     let msg = "Failed to send OTP. Please try again.";
     if (err.code === "auth/invalid-phone-number") msg = "Invalid phone number. Enter a valid 10-digit Indian number.";
     if (err.code === "auth/too-many-requests")    msg = "Too many attempts. Please wait a few minutes.";
-    alert(msg);
+    if (err.code === "auth/unauthorized-domain") {
+      msg = `Failed to send OTP: This domain/IP (${window.location.hostname}) is not authorized in your Firebase Project.\n\nPlease open Firebase Console -> Authentication -> Settings -> Authorized Domains, and add "${window.location.hostname}" to the authorized domains list to allow testing from this address.`;
+    }
+    alert(msg + (err.code ? `\n(Error code: ${err.code})` : ""));
   } finally {
-    setBtn("loginSendOtpBtn", "Send OTP", false);
+    setBtn(btnId, label, false);
   }
 }
 
 /* ── Step 2: Verify OTP ───────────────────────────── */
-async function verifyOtp(otp, name) {
+async function verifyOtp(otp, name, mode = "login") {
   if (!confirmationResult) { alert("Please request an OTP first."); return; }
-  setBtn("loginVerifyBtn", "Verifying…", true);
+  const btnId = mode === "signup" ? "signupVerifyBtn" : "loginVerifyBtn";
+  const label = mode === "signup" ? "Verify & Create Account" : "Verify & Sign In";
+  setBtn(btnId, "Verifying…", true);
   try {
     const credential = await confirmationResult.confirm(otp);
     const idToken = await credential.user.getIdToken();
@@ -99,8 +119,19 @@ async function verifyOtp(otp, name) {
     }
 
     const data = await res.json();
-    // Hand off to app.js via custom event
-    window.dispatchEvent(new CustomEvent("sb:firebase-login", { detail: data }));
+    
+    if (mode === "signup") {
+      // Hand off to app.js for signup completion
+      window.dispatchEvent(new CustomEvent("sb:firebase-signup", {
+        detail: {
+          profile: data.profile,
+          addressRecord: signupData?.addressRecord
+        }
+      }));
+    } else {
+      // Hand off to app.js for login completion
+      window.dispatchEvent(new CustomEvent("sb:firebase-login", { detail: data }));
+    }
 
     // Sign out of Firebase client-side (we use our own session)
     await signOut(auth);
@@ -113,9 +144,16 @@ async function verifyOtp(otp, name) {
     if (err.message && !err.code)           msg = err.message;
     alert(msg);
   } finally {
-    setBtn("loginVerifyBtn", "Verify & Sign In", false);
+    setBtn(btnId, label, false);
   }
 }
+
+/* ── Custom trigger for Signup OTP ────────────────── */
+window.addEventListener("sb:trigger-signup-otp", async (e) => {
+  const { name, phone, addressRecord } = e.detail || {};
+  signupData = { name, phone, addressRecord };
+  await sendOtp(phone, name, "signup");
+});
 
 /* ── Wire up forms ────────────────────────────────── */
 function attach() {
@@ -123,13 +161,16 @@ function attach() {
   const otpForm   = $("otpForm");
   const resendBtn = $("loginResendBtn");
 
+  const signupOtpForm = $("signupOtpForm");
+  const signupResendBtn = $("signupResendBtn");
+
   loginForm?.addEventListener("submit", async (e) => {
     e.preventDefault();
     const name  = ($("loginName")?.value || "").trim();
     const phone = ($("loginPhone")?.value || "").replace(/\D/g, "").slice(-10);
     if (!name)              { alert("Please enter your name.");              return; }
     if (phone.length !== 10){ alert("Enter a valid 10-digit phone number."); return; }
-    await sendOtp(phone, name);
+    await sendOtp(phone, name, "login");
   });
 
   otpForm?.addEventListener("submit", async (e) => {
@@ -137,26 +178,45 @@ function attach() {
     const otp  = ($("loginOtp")?.value || "").replace(/\D/g, "").slice(0, 6);
     const name = ($("loginName")?.value || "").trim();
     if (otp.length !== 6) { alert("Please enter the 6-digit OTP."); return; }
-    await verifyOtp(otp, name);
+    await verifyOtp(otp, name, "login");
   });
 
   resendBtn?.addEventListener("click", async () => {
     const name  = ($("loginName")?.value || "").trim();
     const phone = ($("loginPhone")?.value || "").replace(/\D/g, "").slice(-10);
     if (!name || phone.length !== 10) { showStep(1); return; }
-    // Reset confirmationResult and recaptcha
     recaptchaVerifier?.clear?.();
     recaptchaVerifier = null;
     confirmationResult = null;
     showStep(1);
-    await sendOtp(phone, name);
+    await sendOtp(phone, name, "login");
   });
 
-  // Reset to step 1 whenever the login page is shown
+  signupOtpForm?.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const otp = ($("signupOtp")?.value || "").replace(/\D/g, "").slice(0, 6);
+    if (otp.length !== 6) { alert("Please enter the 6-digit OTP."); return; }
+    if (!signupData) { alert("Registration data missing. Please start over."); showSignupStep(1); return; }
+    await verifyOtp(otp, signupData.name, "signup");
+  });
+
+  signupResendBtn?.addEventListener("click", async () => {
+    if (!signupData) { showSignupStep(1); return; }
+    recaptchaVerifier?.clear?.();
+    recaptchaVerifier = null;
+    confirmationResult = null;
+    showSignupStep(1);
+    await sendOtp(signupData.phone, signupData.name, "signup");
+  });
+
+  // Reset to step 1 whenever the login or signup page is shown
   window.addEventListener("sb:page-change", (e) => {
     if (e.detail === "login") {
       showStep(1);
       if ($("loginOtp")) $("loginOtp").value = "";
+    } else if (e.detail === "signup") {
+      showSignupStep(1);
+      if ($("signupOtp")) $("signupOtp").value = "";
     }
   });
 }
