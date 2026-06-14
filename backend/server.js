@@ -6,24 +6,7 @@ const path = require("node:path");
 const zlib = require("node:zlib");
 const { URL } = require("node:url");
 
-/* ── Firebase Admin (lazy) ─────────────────────────── */
-const FIREBASE_SERVICE_ACCOUNT_PATH = path.join(__dirname, "firebase-service-account.json");
-let _firebaseAdmin = null;
-async function getFirebaseAdmin() {
-  if (_firebaseAdmin) return _firebaseAdmin;
-  try {
-    const admin = await import("firebase-admin");
-    const serviceAccount = JSON.parse(await fs.readFile(FIREBASE_SERVICE_ACCOUNT_PATH, "utf8"));
-    if (!admin.default.apps.length) {
-      admin.default.initializeApp({ credential: admin.default.credential.cert(serviceAccount) });
-    }
-    _firebaseAdmin = admin.default;
-    return _firebaseAdmin;
-  } catch (e) {
-    console.error("Firebase Admin init failed:", e.message);
-    throw new Error("Firebase Admin not configured");
-  }
-}
+// Firebase Admin has been removed
 
 const PORT = Number(process.env.PORT || 3000);
 const ADMIN_PIN = process.env.ADMIN_PIN || "123456";
@@ -1312,38 +1295,67 @@ async function handleApi(req, res, url) {
     return;
   }
 
-  /* ── Firebase Phone Auth token verification ─────── */
-  if (req.method === "POST" && url.pathname === "/api/auth/verify-token") {
+  /* ── Password Authentication ─────── */
+  function hashPassword(password) {
+    const salt = crypto.randomBytes(16).toString("hex");
+    const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+    return `${salt}:${hash}`;
+  }
+
+  function verifyPassword(password, storedHash) {
+    if (!storedHash) return false;
+    const [salt, key] = storedHash.split(":");
+    if (!salt || !key) return false;
+    const hash = crypto.scryptSync(password, salt, 64).toString("hex");
+    return key === hash;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/signup") {
     try {
       const body = await readBody(req);
-      const { idToken, name } = body;
-      if (!idToken) { sendJson(res, 400, { error: "idToken is required" }); return; }
+      const { name, phone, password, addressRecord } = body;
+      if (!phone || !password || !name) { sendJson(res, 400, { error: "Missing fields" }); return; }
 
-      const admin = await getFirebaseAdmin();
-      const decoded = await admin.auth().verifyIdToken(idToken);
-
-      // Firebase phone auth stores phone as decoded.phone_number
-      const rawPhone = decoded.phone_number || "";
-      const phone = normalizePhone(rawPhone);
-      if (!phone) { sendJson(res, 400, { error: "Invalid phone in token" }); return; }
-
-      // Load or create customer record
       let customer = await getCustomerRecord(phone);
-      const enteredName = String(name || "").trim();
+      if (customer && customer.passwordHash) {
+        sendJson(res, 400, { error: "Account with this phone number already exists." });
+        return;
+      }
 
-      if (!customer) {
-        customer = {
-          phone,
-          profile: { name: enteredName || "Customer", phone },
-          addresses: [],
-          selectedAddressId: null,
-          activeSession: null,
-        };
-        await saveCustomerRecord(phone, customer);
-      } else if (enteredName && (!customer.profile?.name || customer.profile.name === "Customer")) {
-        // Update name if it was a placeholder
-        customer.profile = { ...customer.profile, name: enteredName };
-        await saveCustomerRecord(phone, customer);
+      const passwordHash = hashPassword(password);
+
+      customer = {
+        phone,
+        passwordHash,
+        profile: { name: name.trim(), phone },
+        addresses: addressRecord ? [addressRecord] : (customer?.addresses || []),
+        selectedAddressId: addressRecord ? addressRecord.id : (customer?.selectedAddressId || null),
+        activeSession: customer?.activeSession || null,
+      };
+      await saveCustomerRecord(phone, customer);
+
+      sendJson(res, 200, {
+        profile: customer.profile,
+        addresses: customer.addresses,
+        selectedAddressId: customer.selectedAddressId,
+      });
+    } catch (e) {
+      console.error("signup error:", e.message);
+      sendJson(res, 500, { error: "Server error" });
+    }
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/auth/login") {
+    try {
+      const body = await readBody(req);
+      const { phone, password } = body;
+      if (!phone || !password) { sendJson(res, 400, { error: "Phone and password required" }); return; }
+
+      let customer = await getCustomerRecord(phone);
+      if (!customer || !verifyPassword(password, customer.passwordHash)) {
+        sendJson(res, 401, { error: "Invalid phone number or password" });
+        return;
       }
 
       sendJson(res, 200, {
@@ -1352,13 +1364,8 @@ async function handleApi(req, res, url) {
         selectedAddressId: customer.selectedAddressId || null,
       });
     } catch (e) {
-      console.error("verify-token error:", e.message);
-      const code = e.code || "";
-      if (code.includes("auth/")) {
-        sendJson(res, 401, { error: "Invalid or expired Firebase token" });
-      } else {
-        sendJson(res, 500, { error: e.message || "Server error" });
-      }
+      console.error("login error:", e.message);
+      sendJson(res, 500, { error: "Server error" });
     }
     return;
   }
