@@ -34,6 +34,7 @@
   /* Nav height — used for safe bottom padding */
   --nav-h: 64px;
   --safe-b: env(safe-area-inset-bottom, 0px);
+  --safe-t: env(safe-area-inset-top, 0px);
 }
 
 [data-theme="dark"] {
@@ -63,6 +64,8 @@ body {
   font-size:16px; line-height:1.5;
   color:var(--ink); background:var(--bg);
   min-height:100dvh;
+  /* Push content below iOS status bar in PWA standalone mode */
+  padding-top: var(--safe-t);
   /* Bottom safe padding for nav */
   padding-bottom:calc(var(--nav-h) + var(--safe-b));
   transition:background .25s,color .25s;

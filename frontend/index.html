@@ -201,40 +201,23 @@
           <img src="assets/sujaan-logo.png" alt="Sujaan Bites" class="auth-logo" />
         </div>
 
-        <!-- STEP 1: Name + Phone -->
         <div id="loginStep1">
           <h2 class="auth-title">Welcome Back</h2>
-          <p class="auth-sub">We'll send a 6-digit OTP to verify your number.</p>
+          <p class="auth-sub">Enter your phone and password to log in.</p>
           <form class="auth-form" id="loginForm" novalidate>
-            <label class="field-label">
-              Your Name
-              <input type="text" id="loginName" placeholder="Enter your name" class="field-input" autocomplete="name" />
-            </label>
             <label class="field-label">
               Phone Number
               <div style="display:flex;gap:8px;align-items:center">
                 <span style="font-size:.95rem;font-weight:700;color:var(--ink);white-space:nowrap;padding:0 4px">+91</span>
-                <input type="tel" id="loginPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" class="field-input" autocomplete="tel" style="flex:1" />
+                <input type="tel" id="loginPhone" inputmode="numeric" maxlength="10" placeholder="10-digit mobile" class="field-input" autocomplete="tel" style="flex:1" required />
               </div>
             </label>
-            <button class="btn-primary" type="submit" id="loginSendOtpBtn">Send OTP</button>
-            <p class="auth-alt">New here? <button class="link-btn" type="button" data-goto="signup">Sign Up</button></p>
-          </form>
-        </div>
-
-        <!-- STEP 2: OTP entry -->
-        <div id="loginStep2" class="hidden">
-          <h2 class="auth-title">Enter OTP</h2>
-          <p class="auth-sub" id="loginOtpHint">Enter the 6-digit code we sent to your number.</p>
-          <form class="auth-form" id="otpForm" novalidate>
             <label class="field-label">
-              6-digit OTP
-              <input type="tel" id="loginOtp" inputmode="numeric" maxlength="6" placeholder="● ● ● ● ● ●"
-                class="field-input" autocomplete="one-time-code"
-                style="letter-spacing:.25em;font-size:1.5rem;text-align:center;padding:14px" />
+              4-Digit PIN
+              <input type="password" id="loginPassword" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="● ● ● ●" class="field-input" autocomplete="current-password" style="letter-spacing:.25em;text-align:center;" required />
             </label>
-            <button class="btn-primary" type="submit" id="loginVerifyBtn">Verify &amp; Sign In</button>
-            <button class="btn-outline" type="button" id="loginResendBtn" style="font-size:.85rem">Resend OTP</button>
+            <button class="btn-primary" type="submit" id="loginSubmitBtn">Log In</button>
+            <p class="auth-alt">New here? <button class="link-btn" type="button" data-goto="signup">Sign Up</button></p>
           </form>
         </div>
 
@@ -301,23 +284,12 @@
                 <option value="Other">📍 Other</option>
               </select>
             </label>
-            <button class="btn-primary" type="submit" id="signupSubmitBtn">Save &amp; Continue</button>
-            <p class="auth-alt">Already have an account? <button class="link-btn" type="button" data-goto="login">Sign In</button></p>
-          </form>
-        </div>
-
-        <div id="signupStep2" class="hidden">
-          <h2 class="auth-title">Verify Your Number</h2>
-          <p class="auth-sub" id="signupOtpHint">We'll send a 6-digit OTP to verify your number.</p>
-          <form class="auth-form" id="signupOtpForm" novalidate>
             <label class="field-label">
-              6-digit OTP
-              <input type="tel" id="signupOtp" inputmode="numeric" maxlength="6" placeholder="● ● ● ● ● ●"
-                class="field-input" autocomplete="one-time-code"
-                style="letter-spacing:.25em;font-size:1.5rem;text-align:center;padding:14px" />
+              Create 4-Digit PIN
+              <input type="password" id="signupPassword" inputmode="numeric" maxlength="4" pattern="[0-9]{4}" placeholder="● ● ● ●" class="field-input" autocomplete="new-password" style="letter-spacing:.25em;text-align:center;" required />
             </label>
-            <button class="btn-primary" type="submit" id="signupVerifyBtn">Verify &amp; Create Account</button>
-            <button class="btn-outline" type="button" id="signupResendBtn" style="font-size:.85rem">Resend OTP</button>
+            <button class="btn-primary" type="submit" id="signupSubmitBtn">Create Account</button>
+            <p class="auth-alt">Already have an account? <button class="link-btn" type="button" data-goto="login">Sign In</button></p>
           </form>
         </div>
       </div>
@@ -587,8 +559,12 @@
     </div>
   </dialog>
 
-  <!-- Global invisible reCAPTCHA container for Firebase Auth -->
-  <div id="recaptcha-container"></div>
+  <dialog class="modal" id="variantsDialog">
+    <form method="dialog"><button class="modal-close" aria-label="Close">×</button></form>
+    <div class="modal-body" id="variantsModalBody">
+      <!-- Populated dynamically -->
+    </div>
+  </dialog>
 
   <!-- Scripts -->
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -604,8 +580,6 @@
       }, 600);
     });
   </script>
-  <!-- Firebase Phone Auth (ES module — loads before app.js) -->
-  <script type="module" src="firebase-auth.js"></script>
   <!-- App logic -->
   <script src="app.js" defer></script>
 </body>

@@ -6,9 +6,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
   <title>Sujaan Bites Admin</title>
   <link rel="icon" type="image/png" href="assets/sujaan-logo.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Inter:wght@100..900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="styles.css" />
-  <link rel="stylesheet" href="admin.css?v=20260608-modern" />
+  <link rel="stylesheet" href="admin.css" />
 </head>
 
 <body>
@@ -321,11 +324,26 @@
       </div>
 
       <nav class="admin-bottom-nav" aria-label="Admin sections mobile">
-        <button class="active" type="button" data-admin-section-tab="orders">Orders</button>
-        <button type="button" data-admin-section-tab="location">Location</button>
-        <button type="button" data-admin-section-tab="menu">Menu Catalog</button>
-        <button type="button" data-admin-section-tab="income">Income</button>
-        <button type="button" data-admin-section-tab="offers">Offers</button>
+        <button class="active" type="button" data-admin-section-tab="orders">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+          Orders
+        </button>
+        <button type="button" data-admin-section-tab="location">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Location
+        </button>
+        <button type="button" data-admin-section-tab="menu">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          Menu
+        </button>
+        <button type="button" data-admin-section-tab="income">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+          Income
+        </button>
+        <button type="button" data-admin-section-tab="offers">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg>
+          Offers
+        </button>
       </nav>
     </section>
   </main>
@@ -334,7 +352,7 @@
   <script>
     window.__API_BASE = "";
   </script>
-  <script src="admin.js?v=20260608-modern"></script>
+  <script src="admin.js"></script>
 </body>
 
 </html>

@@ -357,29 +357,83 @@ function getFilteredMenu(search = "") {
   });
 }
 
-function productCardHTML(item) {
-  const stock = getStock(item);
-  const soldOut = item.available === false || stock <= 0;
-  const qty = state.cart.get(item.id) || 0;
-  const canAdd = !soldOut && qty < stock;
+let activeGroupBaseName = null;
+
+function renderVariantsModal(baseName) {
+  activeGroupBaseName = baseName;
+  const modalBody = $("variantsModalBody");
+  if (!modalBody) return;
+  
+  const items = state.menu.filter(item => {
+    const parts = item.name.split(" - ");
+    return parts[0].trim() === baseName;
+  });
+  
+  if (!items.length) return;
+  
+  const group = {
+    baseName: baseName,
+    image: items[0].image,
+    description: items[0].description,
+    category: items[0].category,
+    baseId: items[0].id,
+    variants: items.map(item => {
+      const parts = item.name.split(" - ");
+      const variantName = parts.slice(1).join(" - ").trim() || "Regular";
+      return { ...item, variantName };
+    })
+  };
+  
+  modalBody.innerHTML = `
+    <div style="text-align: center; border-bottom: 1px solid var(--border); padding-bottom: 12px; margin-bottom: 8px;">
+      <strong style="font-size: 1.1rem; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em;">Sujaan Bites</strong>
+    </div>
+    <img class="product-img" src="${group.image || "assets/hero-food.png"}" alt="${group.baseName}" style="border-radius: var(--r-md); max-height: 240px; object-fit: cover; width: 100%; border: 1px solid var(--border);" />
+    <div class="product-body" style="padding: 12px 0 0; display: flex; flex-direction: column; gap: 8px;">
+      <p class="product-name" style="font-size: 1.25rem; font-weight: 800; margin: 0; text-align: center;">${group.baseName}</p>
+      <p class="product-desc" style="margin: 0 0 8px; font-size: 0.82rem; color: var(--muted); line-height: 1.4; text-align: center;">${group.description || ""}</p>
+      <div class="variants-list" style="display: flex; flex-direction: column; gap: 8px;">
+        ${group.variants.map(item => {
+          const stock = getStock(item);
+          const soldOut = item.available === false || stock <= 0;
+          const qty = state.cart.get(item.id) || 0;
+          const canAdd = !soldOut && qty < stock;
+          return `
+            <div class="variant-row" style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px;">
+              <span class="variant-name" style="font-size: 0.95rem; flex: 1; color: var(--ink);">${item.variantName} - ${fmt(item.price)}</span>
+              <div class="variant-actions">
+                ${soldOut
+                  ? `<span class="sold-badge" style="font-size: 0.8rem;">Sold out</span>`
+                  : qty > 0
+                    ? `<div class="qty-ctrl" style="transform: scale(0.9); transform-origin: right center;">
+                         <button class="qty-btn" data-menu-decrease="${item.id}" aria-label="Remove">−</button>
+                         <span class="qty-num">${qty}</span>
+                         <button class="qty-btn" data-menu-increase="${item.id}" aria-label="Add" ${!canAdd ? "disabled" : ""}>+</button>
+                       </div>`
+                    : `<button class="add-btn" style="padding: 4px 12px; font-size: 0.9rem;" data-add="${item.id}">Add</button>`
+                }
+              </div>
+            </div>
+          `;
+        }).join("")}
+      </div>
+      <div style="margin-top: 12px; text-align: center;">
+        <a class="btn-outline" style="display: block; width: 100%; text-decoration: none; padding: 10px 0; border-radius: var(--r-md); text-align: center;" href="product-info.html?item=${group.baseId}">More info</a>
+      </div>
+    </div>
+  `;
+}
+
+function productCardHTML(group) {
+  const minPrice = Math.min(...group.variants.map(v => v.price));
   return `
-    <article class="product-card ${soldOut ? "unavailable" : ""}">
-      <img class="product-img" src="${item.image || "assets/hero-food.png"}" alt="${item.name}" loading="lazy" />
+    <article class="product-card" data-open-variants="${group.baseName}" style="cursor: pointer;">
+      <img class="product-img" src="${group.image || "assets/hero-food.png"}" alt="${group.baseName}" loading="lazy" />
       <div class="product-body">
-        <p class="product-name">${item.name}</p>
-        <p class="product-desc">${item.description || ""}</p>
-        <div class="product-footer">
-          <span class="product-price">${fmt(item.price)}</span>
-          ${soldOut
-            ? `<span class="sold-badge">Sold out</span>`
-            : qty > 0
-              ? `<div class="qty-ctrl">
-                   <button class="qty-btn" data-menu-decrease="${item.id}" aria-label="Remove">−</button>
-                   <span class="qty-num">${qty}</span>
-                   <button class="qty-btn" data-menu-increase="${item.id}" aria-label="Add" ${!canAdd ? "disabled" : ""}>+</button>
-                 </div>`
-              : `<button class="add-btn" data-add="${item.id}">Add</button>`
-          }
+        <p class="product-name" style="margin: 0; font-size: 0.95rem; font-weight: bold; color: var(--ink);">${group.baseName}</p>
+        <p class="product-desc" style="margin: 2px 0 6px; font-size: 0.8rem; color: var(--muted);">${group.variants.length} options</p>
+        <div class="product-footer" style="margin-top: auto; display: flex; align-items: center; justify-content: space-between;">
+          <span class="product-price" style="font-size: 0.85rem; color: var(--muted); font-weight: normal;">from <strong style="font-size: 0.95rem; color: var(--accent); font-weight: 800;">${fmt(minPrice)}</strong></span>
         </div>
       </div>
     </article>
@@ -395,7 +449,31 @@ function renderMenuGrid(container, items, cat) {
     container.innerHTML = '<p class="menu-loading">No items found.</p>';
     return;
   }
-  container.innerHTML = filtered.map(productCardHTML).join("");
+  
+  // Group items by base name
+  const grouped = [];
+  const groupMap = new Map();
+  for (const item of filtered) {
+    const parts = item.name.split(" - ");
+    const baseName = parts[0].trim();
+    const variantName = parts.slice(1).join(" - ").trim() || "Regular";
+    
+    if (!groupMap.has(baseName)) {
+      const newGroup = {
+        baseName: baseName,
+        image: item.image,
+        description: item.description,
+        category: item.category,
+        baseId: item.id,
+        variants: []
+      };
+      groupMap.set(baseName, newGroup);
+      grouped.push(newGroup);
+    }
+    groupMap.get(baseName).variants.push({ ...item, variantName });
+  }
+
+  container.innerHTML = grouped.map(productCardHTML).join("");
 }
 
 function renderCategoryTabs() {
@@ -633,60 +711,51 @@ function initEditProfilePage() {
 }
 
 
-/* ── Login flow (Firebase OTP) ──────────────────────── */
-// Step 1 & 2 are handled in firebase-auth.js (ES module).
-// Once Firebase verifies the OTP and backend confirms the token,
-// it fires a custom event with the customer data.
+/* ── Login flow ──────────────────────── */
+async function handleLogin(event) {
+  event.preventDefault();
+  const phone = normalizePhone($("loginPhone")?.value || "");
+  const password = $("loginPassword")?.value || "";
 
-window.addEventListener("sb:firebase-login", async (e) => {
+  if (phone.length !== 10) { alert("Please enter a valid 10-digit phone number."); return; }
+  if (!password || !/^\d{4}$/.test(password)) { alert("Please enter a 4-digit PIN."); return; }
+
+  const btn = $("loginSubmitBtn");
+  if (btn) btn.textContent = "Logging in...";
+
   try {
-    const { profile, addresses, selectedAddressId } = e.detail || {};
-    if (!profile) { alert("Login failed. Please try again."); return; }
+    const res = await fetch(`${window.__API_BASE}/api/auth/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ phone, password })
+    });
+    const data = await res.json();
 
-    state.profile = profile;
-    state.addresses = Array.isArray(addresses) ? addresses.slice(0, MAX_ADDRESSES) : [];
-    state.selectedAddressId = selectedAddressId || state.addresses[0]?.id || null;
+    if (!res.ok) {
+      alert(data.error || "Login failed");
+      if (btn) btn.textContent = "Log In";
+      return;
+    }
+
+    state.profile = data.profile;
+    state.addresses = Array.isArray(data.addresses) ? data.addresses.slice(0, MAX_ADDRESSES) : [];
+    state.selectedAddressId = data.selectedAddressId || state.addresses[0]?.id || null;
 
     writeJson(STORAGE_KEYS.profile, state.profile);
     writeJson(STORAGE_KEYS.addresses, state.addresses);
     if (state.selectedAddressId)
       localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
 
-    await loadOrdersForTracking();
-    navigateTo("account");
-  } catch (err) {
-    console.error("Login completion error:", err);
-    alert("Something went wrong. Please try again.");
-  }
-});
-
-window.addEventListener("sb:firebase-signup", async (e) => {
-  try {
-    const { profile, addressRecord } = e.detail || {};
-    if (!profile) { alert("Registration failed. Please try again."); return; }
-
-    state.profile = profile;
-    state.addresses = [addressRecord];
-    state.selectedAddressId = addressRecord.id;
-
-    writeJson(STORAGE_KEYS.profile, state.profile);
-    writeJson(STORAGE_KEYS.addresses, state.addresses);
-    localStorage.setItem(STORAGE_KEYS.selectedAddressId, addressRecord.id);
-
     try { await syncCustomerState(); } catch {}
     await loadOrdersForTracking();
     navigateTo("account");
-  } catch (err) {
-    console.error("Signup completion error:", err);
-    alert("Something went wrong. Please try again.");
-  }
-});
 
-// Kept for signup page which still uses phone directly (no OTP needed at signup —
-// the user will verify when they first sign in)
-async function handleLogin(event) {
-  // This function is now a no-op placeholder; OTP flow is in firebase-auth.js
-  event?.preventDefault();
+  } catch (err) {
+    console.error("Login error:", err);
+    alert("Network error. Please try again.");
+  } finally {
+    if (btn) btn.textContent = "Log In";
+  }
 }
 
 
@@ -749,6 +818,7 @@ async function handleSignup(event) {
   event.preventDefault();
   const name = $("signupName")?.value.trim();
   const phone = normalizePhone($("signupPhone")?.value || "");
+  const password = $("signupPassword")?.value || "";
   const house = $("signupHouse")?.value.trim();
   const street = $("signupStreet")?.value.trim();
   const address = $("signupAddress")?.value.trim();
@@ -756,6 +826,7 @@ async function handleSignup(event) {
 
   if (!name) { alert("Please enter your name."); return; }
   if (phone.length !== 10) { alert("Please enter a valid 10-digit phone number."); return; }
+  if (!password || !/^\d{4}$/.test(password)) { alert("Please enter a 4-digit PIN."); return; }
   if (!signupLocationData) { alert("Please pin your delivery location on the map."); return; }
   if (!house) { alert("Please enter your house/flat number."); return; }
 
@@ -769,10 +840,42 @@ async function handleSignup(event) {
     location: signupLocationData,
   };
 
-  // Dispatch trigger to firebase-auth.js to send OTP
-  window.dispatchEvent(new CustomEvent("sb:trigger-signup-otp", {
-    detail: { name, phone, addressRecord }
-  }));
+  const btn = $("signupSubmitBtn");
+  if (btn) btn.textContent = "Creating Account...";
+
+  try {
+    const res = await fetch(`${window.__API_BASE}/api/auth/signup`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name, phone, password, addressRecord })
+    });
+    const data = await res.json();
+
+    if (!res.ok) {
+      alert(data.error || "Signup failed");
+      if (btn) btn.textContent = "Create Account";
+      return;
+    }
+
+    state.profile = data.profile;
+    state.addresses = Array.isArray(data.addresses) ? data.addresses.slice(0, MAX_ADDRESSES) : [];
+    state.selectedAddressId = data.selectedAddressId || state.addresses[0]?.id || null;
+
+    writeJson(STORAGE_KEYS.profile, state.profile);
+    writeJson(STORAGE_KEYS.addresses, state.addresses);
+    if (state.selectedAddressId)
+      localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+
+    try { await syncCustomerState(); } catch {}
+    await loadOrdersForTracking();
+    navigateTo("account");
+
+  } catch (err) {
+    console.error("Signup error:", err);
+    alert("Network error. Please try again.");
+  } finally {
+    if (btn) btn.textContent = "Create Account";
+  }
 }
 
 /* ── Address map (addresses page) ──────────────────── */
@@ -1238,12 +1341,38 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Menu grid click
   $("menuGrid")?.addEventListener("click", (e) => {
+    const card = e.target.closest("[data-open-variants]");
+    if (card) {
+      const baseName = card.dataset.openVariants;
+      renderVariantsModal(baseName);
+      $("variantsDialog")?.showModal();
+      return;
+    }
     const add = e.target.closest("[data-add]");
     const inc = e.target.closest("[data-menu-increase]");
     const dec = e.target.closest("[data-menu-decrease]");
     if (add) updateQuantity(add.dataset.add, 1);
     if (inc) updateQuantity(inc.dataset.menuIncrease, 1);
     if (dec) updateQuantity(dec.dataset.menuDecrease, -1);
+  });
+
+  // Variants dialog click
+  $("variantsDialog")?.addEventListener("click", (e) => {
+    const add = e.target.closest("[data-add]");
+    const inc = e.target.closest("[data-menu-increase]");
+    const dec = e.target.closest("[data-menu-decrease]");
+    if (add) {
+      updateQuantity(add.dataset.add, 1);
+      if (activeGroupBaseName) renderVariantsModal(activeGroupBaseName);
+    }
+    if (inc) {
+      updateQuantity(inc.dataset.menuIncrease, 1);
+      if (activeGroupBaseName) renderVariantsModal(activeGroupBaseName);
+    }
+    if (dec) {
+      updateQuantity(dec.dataset.menuDecrease, -1);
+      if (activeGroupBaseName) renderVariantsModal(activeGroupBaseName);
+    }
   });
 
   // Menu search
@@ -1253,6 +1382,13 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // Reorder grid click (delegate to same handler)
   document.getElementById("reorderGrid")?.addEventListener("click", (e) => {
+    const card = e.target.closest("[data-open-variants]");
+    if (card) {
+      const baseName = card.dataset.openVariants;
+      renderVariantsModal(baseName);
+      $("variantsDialog")?.showModal();
+      return;
+    }
     const add = e.target.closest("[data-add]");
     const inc = e.target.closest("[data-menu-increase]");
     const dec = e.target.closest("[data-menu-decrease]");
@@ -1286,7 +1422,8 @@ document.addEventListener("DOMContentLoaded", () => {
     if (acct === "info") { navigateTo("help"); return; }
   });
 
-  // Login form is handled by firebase-auth.js (ES module) — do NOT attach here
+  // Auth forms
+  $("loginForm")?.addEventListener("submit", handleLogin);
 
   // Signup form
   $("signupForm")?.addEventListener("submit", handleSignup);
