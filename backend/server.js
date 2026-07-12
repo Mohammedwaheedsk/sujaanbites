@@ -9,7 +9,7 @@ const { URL } = require("node:url");
 // Firebase Admin has been removed
 
 const PORT = Number(process.env.PORT || 3000);
-const ADMIN_PIN = process.env.ADMIN_PIN || "123456";
+const ADMIN_PIN = process.env.ADMIN_PIN || "1234";
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID || "";
 const RAZORPAY_KEY_SECRET = process.env.RAZORPAY_KEY_SECRET || "";
 const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET || "";
@@ -228,6 +228,7 @@ function fromCustomerRow(row) {
   const activeSession = payload.activeSession && typeof payload.activeSession === "object" ? payload.activeSession : null;
   return {
     phone: row.phone || payload.phone || "",
+    passwordHash: payload.passwordHash || row.passwordHash || null,
     profile: payload.profile || null,
     addresses: Array.isArray(payload.addresses) ? payload.addresses : [],
     selectedAddressId: payload.selectedAddressId || null,
@@ -241,6 +242,7 @@ function toCustomerRow(phone, state) {
     phone,
     updated_at: new Date().toISOString(),
     payload: {
+      passwordHash: state.passwordHash || null,
       profile: state.profile || null,
       addresses: Array.isArray(state.addresses) ? state.addresses.slice(0, 10) : [],
       selectedAddressId: state.selectedAddressId || null,
@@ -1316,28 +1318,31 @@ async function handleApi(req, res, url) {
       const { name, phone, password, addressRecord } = body;
       if (!phone || !password || !name) { sendJson(res, 400, { error: "Missing fields" }); return; }
 
-      let customer = await getCustomerRecord(phone);
-      if (customer && customer.passwordHash) {
+      let existing = await getCustomerRecord(phone);
+      if (existing && existing.passwordHash) {
         sendJson(res, 400, { error: "Account with this phone number already exists." });
         return;
       }
 
       const passwordHash = hashPassword(password);
+      const sessionToken = crypto.randomBytes(32).toString("hex");
+      const sessionLock = buildSessionLock(normalizePhone(phone), sessionToken, req);
 
-      customer = {
-        phone,
+      const customer = {
+        phone: normalizePhone(phone),
         passwordHash,
-        profile: { name: name.trim(), phone },
-        addresses: addressRecord ? [addressRecord] : (customer?.addresses || []),
-        selectedAddressId: addressRecord ? addressRecord.id : (customer?.selectedAddressId || null),
-        activeSession: customer?.activeSession || null,
+        profile: { name: name.trim(), phone: normalizePhone(phone) },
+        addresses: addressRecord ? [addressRecord] : (existing?.addresses || []),
+        selectedAddressId: addressRecord ? addressRecord.id : (existing?.selectedAddressId || null),
+        activeSession: sessionLock,
       };
-      await saveCustomerRecord(phone, customer);
+      await saveCustomerRecord(normalizePhone(phone), customer);
 
       sendJson(res, 200, {
         profile: customer.profile,
         addresses: customer.addresses,
         selectedAddressId: customer.selectedAddressId,
+        sessionToken,
       });
     } catch (e) {
       console.error("signup error:", e.message);
@@ -1352,16 +1357,23 @@ async function handleApi(req, res, url) {
       const { phone, password } = body;
       if (!phone || !password) { sendJson(res, 400, { error: "Phone and password required" }); return; }
 
-      let customer = await getCustomerRecord(phone);
+      let customer = await getCustomerRecord(normalizePhone(phone));
       if (!customer || !verifyPassword(password, customer.passwordHash)) {
         sendJson(res, 401, { error: "Invalid phone number or password" });
         return;
       }
 
+      // Issue a new session token on login
+      const sessionToken = crypto.randomBytes(32).toString("hex");
+      const sessionLock = buildSessionLock(normalizePhone(phone), sessionToken, req, customer.activeSession);
+      customer.activeSession = sessionLock;
+      await saveCustomerRecord(normalizePhone(phone), customer);
+
       sendJson(res, 200, {
         profile: customer.profile,
         addresses: customer.addresses || [],
         selectedAddressId: customer.selectedAddressId || null,
+        sessionToken,
       });
     } catch (e) {
       console.error("login error:", e.message);
@@ -1771,6 +1783,110 @@ async function handleApi(req, res, url) {
     });
     return;
   }
+
+  if (req.method === "POST" && url.pathname === "/api/payments/upi/create-order") {
+    const body = await readBody(req);
+    const menu = await getMenu();
+    const customerPhone = normalizePhone(body.customerPhone || body.address?.phone);
+    const customerName = String(body.customerName || body.address?.name || "").trim();
+    const orderType = body.orderType === "pickup" ? "pickup" : "delivery";
+    const settings = await getSettings();
+
+    let calculated;
+    try {
+      calculated = calculateOrder(menu, body.items, orderType, {
+        address: body.address || null,
+        settings,
+        couponCode: body.couponCode || "",
+      });
+    } catch (err) {
+      sendJson(res, 400, { error: err.message });
+      return;
+    }
+
+    if (!customerPhone) {
+      sendJson(res, 400, { error: "A valid phone number is required" });
+      return;
+    }
+    if (!customerName) {
+      sendJson(res, 400, { error: "Customer name is required" });
+      return;
+    }
+    if (!calculated.rows.length) {
+      sendJson(res, 400, { error: "Cart is empty" });
+      return;
+    }
+    if (orderType === "delivery") {
+      try { validateAddress(body.address); } catch (err) { sendJson(res, 400, { error: err.message }); return; }
+    }
+
+    // Create a pending order awaiting UPI confirmation
+    const order = {
+      id: `ST${Date.now().toString().slice(-7)}`,
+      createdAt: new Date().toISOString(),
+      status: "received",
+      adminStatus: "pending",
+      paymentMethod: "prepaid",
+      paymentStatus: "pending_upi",
+      customerPhone,
+      customerName,
+      orderType,
+      address: body.address || null,
+      items: calculated.rows,
+      totals: calculated.totals,
+      deliveryMeta: calculated.deliveryMeta,
+      notes: body.notes || "",
+    };
+    if (calculated.deliveryMeta?.restaurantLocation) order.restaurantLocation = calculated.deliveryMeta.restaurantLocation;
+
+    const reservedMenu = applyMenuStockChange(menu, calculated.rows, -1);
+    const orders = await getOrders();
+    orders.push(order);
+    try {
+      await saveMenu(reservedMenu);
+      await saveOrders(orders);
+    } catch (err) {
+      try { await saveMenu(menu); } catch {}
+      sendJson(res, 500, { error: "Failed to save order" });
+      return;
+    }
+
+    sendJson(res, 201, {
+      order,
+      upi: {
+        upiId: BUSINESS.upiId,
+        payeeName: BUSINESS.upiPayeeName,
+        amount: calculated.totals.total,
+        orderId: order.id,
+        upiUrl: `upi://pay?pa=${BUSINESS.upiId}&pn=${encodeURIComponent(BUSINESS.upiPayeeName)}&am=${calculated.totals.total}&cu=INR&tn=${encodeURIComponent("Sujaan Bites Order " + order.id)}`,
+      },
+      deliveryMeta: calculated.deliveryMeta,
+      totals: calculated.totals,
+    });
+    return;
+  }
+
+  if (req.method === "POST" && url.pathname === "/api/payments/upi/confirm") {
+    const body = await readBody(req);
+    const { orderId, utrNumber } = body;
+    if (!orderId || !utrNumber) {
+      sendJson(res, 400, { error: "Order ID and UTR number are required" });
+      return;
+    }
+    const orders = await getOrders();
+    const order = orders.find(o => o.id === orderId);
+    if (!order) {
+      sendJson(res, 404, { error: "Order not found" });
+      return;
+    }
+    order.paymentStatus = "upi_pending_verification";
+    order.utrNumber = String(utrNumber).trim();
+    order.utrSubmittedAt = new Date().toISOString();
+    await saveOrders(orders);
+    sendJson(res, 200, { order });
+    return;
+  }
+
 
   if (req.method === "POST" && url.pathname === "/api/payments/razorpay/verify") {
     const body = await readBody(req);
