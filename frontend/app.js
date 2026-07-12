@@ -24,6 +24,8 @@ const STORAGE_KEYS = {
   profile: "spiceTableProfile",
   addresses: "spiceTableAddresses",
   selectedAddressId: "spiceTableSelectedAddressId",
+  sessionToken: "spiceTableSessionToken",
+  cart: "spiceTableCart",
   theme: "sbTheme",
   lastAcceptedOrderShown: "spiceTableLastAcceptedOrderShown",
   lastCustomerMessageShown: "spiceTableLastCustomerMessageShown",
@@ -128,6 +130,8 @@ function apiRequest(path, options = {}) {
   const activeAddr = getActiveAddress();
   if (activeAddr?.phone) headers["x-customer-phone"] = activeAddr.phone;
   else if (state.profile?.phone) headers["x-customer-phone"] = state.profile.phone;
+  const sessionToken = localStorage.getItem(STORAGE_KEYS.sessionToken);
+  if (sessionToken) headers["x-customer-session"] = sessionToken;
   return fetch(`${API_BASE}${path}`, { ...options, headers }).then(async (res) => {
     const payload = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(payload.error || "Request failed");
@@ -177,13 +181,31 @@ async function syncCustomerState() {
   } catch (e) { console.warn("Sync skipped:", e.message); }
 }
 
+function saveCartToStorage() {
+  try {
+    const cartObj = Object.fromEntries(state.cart);
+    localStorage.setItem(STORAGE_KEYS.cart, JSON.stringify(cartObj));
+  } catch {}
+}
+
+function loadCartFromStorage() {
+  try {
+    const cartObj = readJson(STORAGE_KEYS.cart);
+    if (cartObj && typeof cartObj === "object") {
+      state.cart = new Map(Object.entries(cartObj).map(([k, v]) => [k, Number(v)]).filter(([, v]) => v > 0));
+    }
+  } catch {}
+}
+
 function clearSession() {
   state.profile = null;
   state.addresses = [];
   state.selectedAddressId = null;
   state.previousOrders = [];
   state.cart.clear();
+  saveCartToStorage();
   [STORAGE_KEYS.profile, STORAGE_KEYS.addresses, STORAGE_KEYS.selectedAddressId,
+   STORAGE_KEYS.sessionToken,
    STORAGE_KEYS.lastAcceptedOrderShown, STORAGE_KEYS.lastCustomerMessageShown,
    STORAGE_KEYS.lastCancelledOrderShown, STORAGE_KEYS.lastCompletedOrderShown,
    STORAGE_KEYS.lastDeliveryRatingShown, STORAGE_KEYS.lastProductRatingShown
@@ -295,6 +317,7 @@ function updateQuantity(id, change) {
   const next = Math.max(0, current + change);
   if (change > 0 && next > stock) { alert(`Max stock reached for ${item.name}.`); return; }
   if (next === 0) state.cart.delete(id); else state.cart.set(id, next);
+  saveCartToStorage();
   updateCartUI();
   // Re-render all visible menu grids
   if (state.currentPage === "menu") renderMenuGrid($("menuGrid"), getFilteredMenu(), state.activeCategory);
@@ -745,6 +768,8 @@ async function handleLogin(event) {
     writeJson(STORAGE_KEYS.addresses, state.addresses);
     if (state.selectedAddressId)
       localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+    if (data.sessionToken)
+      localStorage.setItem(STORAGE_KEYS.sessionToken, data.sessionToken);
 
     try { await syncCustomerState(); } catch {}
     await loadOrdersForTracking();
@@ -865,6 +890,8 @@ async function handleSignup(event) {
     writeJson(STORAGE_KEYS.addresses, state.addresses);
     if (state.selectedAddressId)
       localStorage.setItem(STORAGE_KEYS.selectedAddressId, state.selectedAddressId);
+    if (data.sessionToken)
+      localStorage.setItem(STORAGE_KEYS.sessionToken, data.sessionToken);
 
     try { await syncCustomerState(); } catch {}
     await loadOrdersForTracking();
@@ -994,7 +1021,11 @@ async function handleCheckout(event) {
   const totals = getTotals();
   if (!totals.rows.length) { alert("Please add at least one item to your cart."); return; }
 
+  const btn = $("cartPagePayLabel") || $("checkoutBtn");
+  if (btn) { btn.disabled = true; btn.textContent = "Processing…"; }
+
   try {
+    // Try Razorpay first
     const intent = await apiRequest("/api/payments/razorpay/create-intent", {
       method: "POST",
       body: JSON.stringify({
@@ -1014,7 +1045,123 @@ async function handleCheckout(event) {
     if (rrb) rrb.classList.add("hidden");
     $("paymentDialog")?.showModal();
     openRazorpayCheckout(intent, intent.paymentSessionId);
-  } catch (e) { alert(e.message); }
+  } catch (razorpayErr) {
+    // Razorpay not configured — fall back to UPI direct payment
+    try {
+      const result = await apiRequest("/api/payments/upi/create-order", {
+        method: "POST",
+        body: JSON.stringify({
+          customerName: state.profile.name,
+          customerPhone: state.profile.phone,
+          orderType: "delivery",
+          address: getActiveAddress(),
+          items: getCartRows().map(r => ({ id: r.id, quantity: r.quantity })),
+        }),
+      });
+      showUpiPaymentModal(result);
+    } catch (upiErr) {
+      alert(upiErr.message || "Could not place order. Please try again.");
+    }
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = btn.id === "cartPagePayLabel" ? `Pay ${fmt(totals.total)}` : "Place Order"; }
+  }
+}
+
+function showUpiPaymentModal(result) {
+  const { order, upi } = result;
+  const total = order.totals?.total || 0;
+
+  // Remove any existing UPI modal
+  const existing = document.getElementById("upiPayModal");
+  if (existing) existing.remove();
+
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(upi.upiUrl)}`;
+
+  const modal = document.createElement("dialog");
+  modal.id = "upiPayModal";
+  modal.className = "payment-dialog";
+  modal.innerHTML = `
+    <form method="dialog">
+      <button class="close-button" aria-label="Close">×</button>
+    </form>
+    <div class="payment-content" style="text-align:center;max-width:360px;margin:0 auto;">
+      <p class="eyebrow">UPI Payment</p>
+      <h2 style="margin:4px 0 12px;">Pay ₹${total}</h2>
+      <p style="font-size:0.85rem;color:var(--muted);margin-bottom:12px;">Order <strong>${order.id}</strong> placed! Complete payment to confirm.</p>
+      
+      <div style="background:white;border-radius:12px;padding:12px;display:inline-block;margin-bottom:12px;">
+        <img src="${qrUrl}" alt="UPI QR Code" width="220" height="220" style="display:block;" />
+      </div>
+      
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:12px;text-align:left;">
+        <p style="margin:0 0 4px;font-size:0.8rem;color:var(--muted);">UPI ID</p>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <strong style="font-size:0.95rem;flex:1;">${upi.upiId}</strong>
+          <button type="button" onclick="navigator.clipboard?.writeText('${upi.upiId}').then(()=>alert('Copied!'))" style="padding:4px 10px;font-size:0.8rem;border:1px solid var(--accent);color:var(--accent);background:transparent;border-radius:6px;cursor:pointer;">Copy</button>
+        </div>
+        <p style="margin:6px 0 0;font-size:0.8rem;color:var(--muted);">Pay exactly <strong>₹${total}</strong> to this UPI ID</p>
+      </div>
+
+      <a href="${upi.upiUrl}" class="btn-primary" style="display:block;text-decoration:none;text-align:center;padding:14px;margin-bottom:12px;font-size:1rem;">
+        📱 Open UPI App
+      </a>
+
+      <div style="border-top:1px solid var(--border);padding-top:12px;text-align:left;">
+        <p style="margin:0 0 8px;font-weight:600;font-size:0.9rem;">After paying, enter your UTR/Transaction ID:</p>
+        <input type="text" id="utrInput" placeholder="12-digit UTR number" 
+          style="width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface);color:var(--ink);font-size:0.9rem;margin-bottom:8px;" />
+        <button type="button" id="confirmUtrBtn" class="btn-primary" style="width:100%;padding:14px;">
+          Confirm Payment
+        </button>
+        <p style="margin:8px 0 0;font-size:0.75rem;color:var(--muted);">
+          Your order is already placed. We'll confirm after verifying your payment.
+        </p>
+      </div>
+
+      <div style="margin-top:12px;">
+        <a href="https://wa.me/91${BUSINESS.whatsappNumber}?text=${encodeURIComponent("Hi! I've placed order " + order.id + " and paid ₹" + total + " via UPI. Please confirm.")}" 
+           target="_blank" rel="noreferrer"
+           style="display:flex;align-items:center;justify-content:center;gap:8px;padding:12px;border:1px solid var(--border);border-radius:8px;text-decoration:none;color:var(--ink);font-size:0.85rem;">
+          💬 Share on WhatsApp for faster confirmation
+        </a>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  modal.showModal();
+
+  document.getElementById("confirmUtrBtn")?.addEventListener("click", async () => {
+    const utr = document.getElementById("utrInput")?.value.trim();
+    if (!utr || utr.length < 6) { alert("Please enter a valid UTR/transaction number."); return; }
+    const confirmBtn = document.getElementById("confirmUtrBtn");
+    if (confirmBtn) confirmBtn.textContent = "Submitting…";
+    try {
+      await apiRequest("/api/payments/upi/confirm", {
+        method: "POST",
+        body: JSON.stringify({ orderId: order.id, utrNumber: utr }),
+      });
+      state.cart.clear();
+      updateCartUI();
+      modal.close();
+      modal.remove();
+      // Show success
+      const overlay = $("orderReceivedOverlay");
+      if (overlay) {
+        const title = $("orderReceivedTitle"); if (title) title.textContent = "Order Placed!";
+        const sym = $("orderReceivedSymbol"); if (sym) sym.textContent = "✓";
+        const addr = $("orderReceivedAddress"); if (addr) addr.textContent = `Order ${order.id} · UTR: ${utr}`;
+        const eta = $("orderReceivedEta"); if (eta) eta.textContent = "Payment verification pending. You'll hear from us soon!";
+        overlay.classList.remove("hidden");
+      } else {
+        alert(`Order ${order.id} placed! UTR submitted. We'll confirm soon.`);
+      }
+      await loadOrdersForTracking();
+    } catch (e) {
+      alert(e.message || "Could not submit UTR. Please try again.");
+      if (confirmBtn) confirmBtn.textContent = "Confirm Payment";
+    }
+  });
 }
 
 function openRazorpayCheckout(intent, paymentSessionId) {
@@ -1061,6 +1208,7 @@ function openRazorpayCheckout(intent, paymentSessionId) {
   if (rrb) rrb.onclick = () => instance.open();
   instance.open();
 }
+
 
 /* ── Tracking ──────────────────────────────────────── */
 let trackingMap = null;
@@ -1600,6 +1748,7 @@ async function boot() {
   applyTheme(savedTheme);
 
   loadLocalState();
+  loadCartFromStorage();
   await loadCustomerState();
   updateCartUI();
   await loadMenu();
